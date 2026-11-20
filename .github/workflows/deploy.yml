@@ -114,16 +114,17 @@ jobs:
             --image "$IMAGE_NAME:latest" \
             .
 
+      # `az rest` instead of `az postgres flexible-server firewall-rule`: that command's arguments changed between CLI versions.
       - name: Open database firewall for this runner
         id: firewall
         run: |
           IP=$(curl -fsS https://api.ipify.org)
           RULE="gha-${{ github.run_id }}"
-          az postgres flexible-server firewall-rule create \
-            --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
-            --server-name "${{ steps.infra.outputs.pg_server }}" \
-            --rule-name "$RULE" --start-ip-address "$IP" --end-ip-address "$IP" --output none
+          URL="https://management.azure.com/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ vars.AZURE_RESOURCE_GROUP }}/providers/Microsoft.DBforPostgreSQL/flexibleServers/${{ steps.infra.outputs.pg_server }}/firewallRules/$RULE?api-version=2024-08-01"
+          az rest --method put --url "$URL" \
+            --body "{\"properties\":{\"startIpAddress\":\"$IP\",\"endIpAddress\":\"$IP\"}}" --output none
           echo "rule=$RULE" >> "$GITHUB_OUTPUT"
+          sleep 30 # the rule is applied asynchronously
 
       - name: Run database migrations
         run: |
@@ -137,10 +138,8 @@ jobs:
       - name: Close database firewall
         if: always() && steps.firewall.outputs.rule != ''
         run: |
-          az postgres flexible-server firewall-rule delete \
-            --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
-            --server-name "${{ steps.infra.outputs.pg_server }}" \
-            --rule-name "${{ steps.firewall.outputs.rule }}" --yes --output none
+          az rest --method delete --output none \
+            --url "https://management.azure.com/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ vars.AZURE_RESOURCE_GROUP }}/providers/Microsoft.DBforPostgreSQL/flexibleServers/${{ steps.infra.outputs.pg_server }}/firewallRules/${{ steps.firewall.outputs.rule }}?api-version=2024-08-01"
 
       # Phase 2 — deploy the container app with the new image.
       - name: Deploy app (Bicep)

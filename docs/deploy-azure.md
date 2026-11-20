@@ -137,14 +137,14 @@ Open the PostgreSQL firewall for your own IP address temporarily, run the migrat
 
 ```bash
 MY_IP=$(curl -fsS https://api.ipify.org)
-az postgres flexible-server firewall-rule create -g "$RG" --server-name "$PG_SERVER" \
+az postgres flexible-server firewall-rule create -g "$RG" -n "$PG_SERVER" \
   --rule-name my-laptop --start-ip-address "$MY_IP" --end-ip-address "$MY_IP" -o none
 
 export DATABASE_URL="postgresql://speakerdesk:$(node -p 'encodeURIComponent(process.env.SPEAKERDESK_PG_PASSWORD)')@$PG_HOST:5432/speakerdesk?sslmode=require"
 npm ci
 npm run db:deploy        # prisma migrate deploy — applies everything in prisma/migrations
 
-az postgres flexible-server firewall-rule delete -g "$RG" --server-name "$PG_SERVER" --rule-name my-laptop --yes -o none
+az postgres flexible-server firewall-rule delete -g "$RG" -n "$PG_SERVER" --rule-name my-laptop --yes -o none
 ```
 
 ### 3.5 Phase 2: deploy the app
