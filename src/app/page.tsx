@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
+import { AccountButton } from "@/components/account-button";
 import { EventCard } from "@/components/events/event-card";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ButtonLink, Eyebrow, Logo } from "@/components/ui";
@@ -34,7 +35,7 @@ export default function Home() {
             <Link href="/events" className="hidden text-white/80 hover:text-white sm:inline">Open calls</Link>
             <Link href="/speakers" className="hidden text-white/80 hover:text-white sm:inline">Speakers</Link>
             <ThemeToggle className="text-white/80 hover:bg-white/10 hover:text-white" />
-            <Link href="/sign-in" className="rounded-lg bg-white px-3.5 py-2 font-medium text-night hover:bg-white/90">Sign in</Link>
+            <AccountButton variant="light" />
           </nav>
         </header>
         <div className="mx-auto max-w-6xl px-6 pb-24 pt-20 sm:pt-28">

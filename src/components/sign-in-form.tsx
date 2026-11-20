@@ -70,7 +70,7 @@ export function SignInForm({ providers, emailPassword, devMailHint }: { provider
           if (!r.error) {
             setEmail(field("email"));
             go("code-verify");
-            setInfo(`We emailed a 6-digit code to ${field("email")}.`);
+            setInfo(`If ${field("email")} has an account, a 6-digit code is on its way.`);
           }
           return r;
         }
@@ -182,10 +182,13 @@ export function SignInForm({ providers, emailPassword, devMailHint }: { provider
         )}
         {view === "sign-up" && <p>Already have an account? <button type="button" className={link} onClick={() => go("password")}>Sign in</button></p>}
         {view === "code-email" && (
-          <p>
-            No password needed — new here? The code creates your account.
-            {emailPassword && <> <button type="button" className={link} onClick={() => go("password")}>Use a password instead</button></>}
-          </p>
+          <>
+            <p>
+              No password needed — we&apos;ll email a code to your account address.
+              {emailPassword && <> <button type="button" className={link} onClick={() => go("password")}>Use a password instead</button></>}
+            </p>
+            {emailPassword && <p>New to SpeakerDesk? <button type="button" className={link} onClick={() => go("sign-up")}>Create an account</button></p>}
+          </>
         )}
         {(view === "code-verify" || view === "reset-verify") && (
           <p>

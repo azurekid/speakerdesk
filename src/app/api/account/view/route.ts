@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { appUrl } from "@/lib/app-url";
+import { appUrl, safeNextPath } from "@/lib/app-url";
 import { getCurrentUser } from "@/lib/dal";
 
 /**
@@ -15,8 +15,7 @@ export async function GET(request: Request) {
   const origin = appUrl();
   const param = url.searchParams.get("role");
   const role = param === "organizer" ? "ORGANIZER" : param === "sponsor" ? "SPONSOR" : "SPEAKER";
-  const rawNext = url.searchParams.get("next") ?? "";
-  const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : HOME[role];
+  const next = safeNextPath(url.searchParams.get("next")) ?? HOME[role];
 
   const user = await getCurrentUser();
   if (!user) {

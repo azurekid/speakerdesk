@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { appUrl } from "@/lib/app-url";
+import { appUrl, safeNextPath } from "@/lib/app-url";
 import { getCurrentUser, getPrimaryRole } from "@/lib/dal";
 
 const HOME = { SPEAKER: "/dashboard", ORGANIZER: "/organize", SPONSOR: "/sponsor" } as const;
@@ -23,8 +23,7 @@ export async function GET(request: Request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.redirect(new URL("/sign-in", origin));
 
-  const raw = url.searchParams.get("next") ?? "";
-  const next = raw.startsWith("/") && !raw.startsWith("//") ? raw : null;
+  const next = safeNextPath(url.searchParams.get("next"));
   if (next) {
     const role = roleFor(next);
     if (role) await prisma.user.update({ where: { id: user.id }, data: { primaryRole: role } });

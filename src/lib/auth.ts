@@ -1,11 +1,13 @@
 import "server-only";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { APIError, createAuthMiddleware } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
 import { admin, emailOTP } from "better-auth/plugins";
 import { emailPasswordEnabled, enabledSocialProviders } from "@/lib/auth-providers";
 import { prisma } from "@/lib/db";
 import { sendMail } from "@/lib/mailer";
+import { consume, throttleEmail } from "@/lib/rate-limit";
 import { claimInvites } from "@/lib/team";
 
 function social() {
@@ -38,12 +40,41 @@ const OTP_COPY = {
   "change-email": { subject: "Confirm your new email for SpeakerDesk", line: "Use this code to confirm your new email address" },
 } as const;
 
+/** Rate limits are on in production; AUTH_RATE_LIMIT=true|false overrides (e.g. to test them locally). */
+const rateLimitEnabled = process.env.AUTH_RATE_LIMIT
+  ? process.env.AUTH_RATE_LIMIT.toLowerCase() === "true"
+  : process.env.NODE_ENV === "production";
+
 export const auth = betterAuth({
   // Build (e.g. in Docker) has no secrets; runtime without BETTER_AUTH_SECRET fails in production as it should.
   secret: process.env.BETTER_AUTH_SECRET || (process.env.NEXT_PHASE === "phase-production-build" ? "build-time-placeholder-never-used-at-runtime" : undefined),
   database: prismaAdapter(prisma, { provider: "postgresql" }),
   emailAndPassword: { enabled: emailPasswordEnabled(), minPasswordLength: 10 },
   socialProviders: social(),
+  // Per-IP limits, stored in Postgres so all replicas share one count.
+  // The emailOTP plugin adds 3/min on its send and verify endpoints.
+  rateLimit: {
+    enabled: rateLimitEnabled,
+    customStorage: { consume },
+    customRules: {
+      "/sign-in/email": { window: 60, max: 5 },
+      "/sign-in/email-otp": { window: 60, max: 5 },
+    },
+  },
+  // Per-email limits across all IPs — see src/lib/rate-limit.ts.
+  hooks: {
+    before: createAuthMiddleware(async (ctx) => {
+      if (!rateLimitEnabled) return;
+      const { allowed, retryAfter } = await throttleEmail(ctx.path, (ctx.body as { email?: unknown } | undefined)?.email);
+      if (!allowed) {
+        throw new APIError(
+          "TOO_MANY_REQUESTS",
+          { message: "Too many attempts for this email address. Please wait a while and try again." },
+          { "Retry-After": String(retryAfter ?? 60) },
+        );
+      }
+    }),
+  },
   databaseHooks: {
     user: {
       create: {
@@ -70,6 +101,9 @@ export const auth = betterAuth({
     admin({ defaultRole: "user", adminRoles: ["admin"] }),
     // Passcode sign-in, email verification, password reset and email change — all by 6-digit code.
     emailOTP({
+      // Codes only sign in existing accounts. For unknown emails the send endpoint still answers
+      // "success" without sending anything, so it can't be used to discover who has an account.
+      disableSignUp: true,
       otpLength: 6,
       expiresIn: 10 * 60,
       allowedAttempts: 5,

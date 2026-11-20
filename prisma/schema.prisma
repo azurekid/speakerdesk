@@ -108,6 +108,16 @@ model Verification {
   @@map("verification")
 }
 
+/// Fixed-window counters shared by every replica: Better Auth's per-IP limits and the
+/// per-email sign-in throttle (src/lib/rate-limit.ts). Rows are tiny and self-resetting.
+model RateLimit {
+  key         String @id
+  count       Int
+  windowStart BigInt // epoch ms when the current window began
+
+  @@map("rate_limit")
+}
+
 // ─── Speaker profile ─────────────────────────────────────────────────────────
 
 model SpeakerProfile {
