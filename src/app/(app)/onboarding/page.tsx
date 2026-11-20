@@ -63,7 +63,7 @@ async function Onboarding() {
                     <DetailsStep
                       timezones={Intl.supportedValuesOf("timeZone")}
                       values={{
-                        fullName: p?.fullName || user.name, pronouns: p?.pronouns ?? "", phone: p?.phone ?? "", country: p?.country ?? "", city: p?.city ?? "",
+                        fullName: p?.fullName || user.name, pronouns: p?.pronouns ?? "", country: p?.country ?? "", city: p?.city ?? "",
                         timezone: p?.timezone ?? "", company: p?.company ?? "", jobTitle: p?.jobTitle ?? "", primaryRole: o.role, termsAccepted: Boolean(o.termsAcceptedAt),
                       }}
                     />

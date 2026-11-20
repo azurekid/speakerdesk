@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { Suspense } from "react";
-import { EmailSettings, PasswordSettings, SignOutOthers } from "@/components/account-settings";
+import { DeleteAccount, EmailSettings, PasswordSettings, SignOutOthers } from "@/components/account-settings";
 import { Badge, Card, formatDate, PageHeader, Skeleton } from "@/components/ui";
+import { soleOwnedEvents } from "@/lib/account-deletion";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/dal";
@@ -22,7 +23,7 @@ function device(ua: string | null) {
 export default function AccountPage() {
   return (
     <>
-      <PageHeader eyebrow="Settings" title="Account" description="Sign-in details and security." />
+      <PageHeader eyebrow="Settings" title="Account" description="Sign-in details, security and your data." />
       <Suspense fallback={<Skeleton rows={4} />}>
         <Account />
       </Suspense>
@@ -32,10 +33,11 @@ export default function AccountPage() {
 
 async function Account() {
   const user = await requireUser();
-  const [accounts, sessions, current] = await Promise.all([
+  const [accounts, sessions, current, blockingEvents] = await Promise.all([
     prisma.account.findMany({ where: { userId: user.id }, select: { providerId: true, password: true, createdAt: true } }),
     prisma.session.findMany({ where: { userId: user.id, expiresAt: { gt: new Date() } }, orderBy: { updatedAt: "desc" } }),
     auth.api.getSession({ headers: await headers() }),
+    soleOwnedEvents(user.id),
   ]);
   const hasPassword = accounts.some((a) => a.providerId === "credential" && a.password);
 
@@ -63,6 +65,7 @@ async function Account() {
           ))}
         </ul>
       </Card>
+      {!user.impersonatedBy && <DeleteAccount email={user.email} hasPassword={hasPassword} blockingEvents={blockingEvents} />}
     </div>
   );
 }

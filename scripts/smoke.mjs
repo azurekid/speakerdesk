@@ -79,7 +79,7 @@ await check("sign-in page lists sign-in methods", async () => {
 });
 
 console.log("\nPublic pages");
-for (const path of ["/", "/events", "/speakers", "/sign-in"]) {
+for (const path of ["/", "/events", "/speakers", "/sign-in", "/terms", "/privacy"]) {
   await check(`GET ${path}`, async () => {
     const res = await get(path);
     assert(res.status === 200, `status ${res.status}`);

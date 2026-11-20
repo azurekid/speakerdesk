@@ -30,6 +30,10 @@ export default function SignInPage() {
           <Suspense fallback={<Skeleton rows={2} />}>
             <Methods />
           </Suspense>
+          <p className="mt-8 text-center text-xs text-ink-soft">
+            New accounts are asked to accept the <Link href="/terms" className="underline">terms of use</Link> and{" "}
+            <Link href="/privacy" className="underline">privacy notice</Link> before using SpeakerDesk.
+          </p>
         </div>
       </section>
     </main>

@@ -52,7 +52,7 @@ async function Overview() {
     prisma.outboundEmail.count({ where: { createdAt: { gte: weekAgo } } }),
     prisma.outboundEmail.count({ where: { status: "FAILED" } }),
     prisma.user.findMany({ orderBy: { createdAt: "desc" }, take: 6, select: { id: true, name: true, email: true, createdAt: true, primaryRole: true } }),
-    prisma.adminAuditLog.findMany({ orderBy: { createdAt: "desc" }, take: 6, include: { actor: { select: { name: true } } } }),
+    prisma.auditLog.findMany({ where: { category: "admin" }, orderBy: { createdAt: "desc" }, take: 6, include: { actor: { select: { name: true } } } }),
   ]);
   const roleCount = (r: string) => byRole.find((x) => x.primaryRole === r)?._count ?? 0;
   const sponsorship = summarizeBudget(null, 0, deals);
@@ -96,7 +96,7 @@ async function Overview() {
               {recentAudit.map((a) => (
                 <li key={a.id} className="flex items-center justify-between gap-3 py-2.5">
                   <span className="min-w-0 truncate"><Badge>{a.action}</Badge> <span className="text-ink-soft">{a.summary}</span></span>
-                  <span className="shrink-0 text-xs text-ink-soft">{a.actor?.name ?? "—"}</span>
+                  <span className="shrink-0 text-xs text-ink-soft">{a.actor?.name ?? (a.actorEmail || "—")}</span>
                 </li>
               ))}
             </ul>

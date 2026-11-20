@@ -3,6 +3,8 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { NavLinks, NavList, SignOutButton, StopImpersonating } from "@/components/nav";
 import { OnboardingBanner } from "@/components/onboarding-banner";
+import { acceptCurrentTerms } from "@/lib/actions/onboarding";
+import { TERMS_VERSION } from "@/lib/legal";
 import { prisma } from "@/lib/db";
 import { getOnboarding } from "@/lib/onboarding";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -43,10 +45,12 @@ function SidebarBody({ nav, footer, home = "/dashboard" }: { nav?: React.ReactNo
 /** Impersonation warning and the onboarding nudge. */
 async function Notices() {
   const user = await requireUser();
-  const [o, admin] = await Promise.all([
+  const [o, admin, terms] = await Promise.all([
     getOnboarding(user.id),
     user.impersonatedBy ? prisma.user.findUnique({ where: { id: user.impersonatedBy }, select: { name: true } }) : null,
+    prisma.user.findUnique({ where: { id: user.id }, select: { termsAcceptedAt: true, termsVersion: true } }),
   ]);
+  const termsOutdated = Boolean(terms?.termsAcceptedAt) && terms?.termsVersion !== TERMS_VERSION;
   return (
     <>
       {user.impersonatedBy && (
@@ -54,6 +58,16 @@ async function Notices() {
           <span><span className="font-semibold">Support mode:</span> {admin?.name ?? "An admin"} is viewing SpeakerDesk as {user.name}.</span>
           <StopImpersonating />
         </div>
+      )}
+      {termsOutdated && !user.impersonatedBy && (
+        <form action={acceptCurrentTerms} className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-surface px-5 py-3 text-sm">
+          <span>
+            <span className="font-semibold">We&apos;ve updated our terms.</span>{" "}
+            Please read the <Link href="/terms" target="_blank" className="underline">terms of use</Link> and the{" "}
+            <Link href="/privacy" target="_blank" className="underline">privacy notice</Link>.
+          </span>
+          <button type="submit" className="rounded-lg bg-ink px-3.5 py-1.5 font-medium text-paper">I agree</button>
+        </form>
       )}
       {!o.onboardedAt && !o.requiredDone && <OnboardingBanner left={o.requiredLeft} total={o.steps.length} done={o.done} />}
     </>

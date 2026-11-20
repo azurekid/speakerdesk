@@ -1,5 +1,16 @@
 // Client-safe domain constants. Values mirror the Prisma enums in prisma/schema.prisma.
 
+export const EVENT_FORMATS = ["IN_PERSON", "ONLINE", "HYBRID"] as const;
+export type EventFormat = (typeof EVENT_FORMATS)[number];
+export const EVENT_FORMAT_LABELS: Record<EventFormat, string> = { IN_PERSON: "In person", ONLINE: "Online", HYBRID: "Hybrid" };
+
+/** One line for where an event happens: "Amsterdam, NL", "Online · Zoom", "Amsterdam, NL + online". */
+export function eventWhere(e: { format: EventFormat; location: string; onlinePlatform: string }): string {
+  if (e.format === "ONLINE") return ["Online", e.onlinePlatform].filter(Boolean).join(" · ");
+  if (e.format === "HYBRID") return e.location ? `${e.location} + online` : "Hybrid";
+  return e.location;
+}
+
 export const TALK_FORMATS = ["SESSION", "WORKSHOP", "LIGHTNING_TALK", "PANEL", "KEYNOTE", "OTHER"] as const;
 export type TalkFormat = (typeof TALK_FORMATS)[number];
 export const FORMAT_LABELS: Record<TalkFormat, string> = {

@@ -1,11 +1,13 @@
 import "server-only";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { APIError, createAuthMiddleware } from "better-auth/api";
+import { APIError, createAuthMiddleware, isAPIError } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
 import { admin, emailOTP } from "better-auth/plugins";
+import { eraseLeftovers, soleOwnedEvents } from "@/lib/account-deletion";
+import { audit } from "@/lib/audit";
 import { emailPasswordEnabled, enabledSocialProviders } from "@/lib/auth-providers";
-import { prisma } from "@/lib/db";
+import { prisma, prismaBase } from "@/lib/db";
 import { sendMail } from "@/lib/mailer";
 import { consume, throttleEmail } from "@/lib/rate-limit";
 import { claimInvites } from "@/lib/team";
@@ -40,6 +42,11 @@ const OTP_COPY = {
   "change-email": { subject: "Confirm your new email for SpeakerDesk", line: "Use this code to confirm your new email address" },
 } as const;
 
+/** Read-only or noisy auth endpoints that aren't audited. */
+const AUTH_NOT_AUDITED = new Set(["/ok", "/error", "/sign-in/social", "/is-username-available"]);
+/** Auth endpoints about managing your own account rather than signing in. */
+const ACCOUNT_PATHS = ["/change-", "/set-password", "/update-user", "/revoke-", "/delete-user", "/email-otp/verify-email", "/email-otp/request-email-change", "/email-otp/change-email", "/unlink-account", "/link-social"];
+
 /** Rate limits are on in production; AUTH_RATE_LIMIT=true|false overrides (e.g. to test them locally). */
 const rateLimitEnabled = process.env.AUTH_RATE_LIMIT
   ? process.env.AUTH_RATE_LIMIT.toLowerCase() === "true"
@@ -48,7 +55,8 @@ const rateLimitEnabled = process.env.AUTH_RATE_LIMIT
 export const auth = betterAuth({
   // Build (e.g. in Docker) has no secrets; runtime without BETTER_AUTH_SECRET fails in production as it should.
   secret: process.env.BETTER_AUTH_SECRET || (process.env.NEXT_PHASE === "phase-production-build" ? "build-time-placeholder-never-used-at-runtime" : undefined),
-  database: prismaAdapter(prisma, { provider: "postgresql" }),
+  // The raw client: auth events are audited through the hooks below, not per table write.
+  database: prismaAdapter(prismaBase, { provider: "postgresql" }),
   emailAndPassword: { enabled: emailPasswordEnabled(), minPasswordLength: 10 },
   socialProviders: social(),
   // Per-IP limits, stored in Postgres so all replicas share one count.
@@ -65,8 +73,13 @@ export const auth = betterAuth({
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
       if (!rateLimitEnabled) return;
-      const { allowed, retryAfter } = await throttleEmail(ctx.path, (ctx.body as { email?: unknown } | undefined)?.email);
+      const email = (ctx.body as { email?: unknown } | undefined)?.email;
+      const { allowed, retryAfter } = await throttleEmail(ctx.path, email);
       if (!allowed) {
+        await audit({
+          category: "auth", action: `auth${ctx.path.replaceAll("/", ".")}`, outcome: "failure", targetType: "email",
+          targetId: String(email ?? ""), metadata: { reason: "rate-limited" }, actor: null, requestHeaders: ctx.headers ?? null,
+        });
         throw new APIError(
           "TOO_MANY_REQUESTS",
           { message: "Too many attempts for this email address. Please wait a while and try again." },
@@ -74,6 +87,51 @@ export const auth = betterAuth({
         );
       }
     }),
+    // Every auth request that changes state is audited: sign-ins (and failures), sign-ups,
+    // sign-outs, codes requested, password and email changes, session revocations…
+    after: createAuthMiddleware(async (ctx) => {
+      if (AUTH_NOT_AUDITED.has(ctx.path) || ctx.path.startsWith("/get-") || ctx.path.startsWith("/list-")) return;
+      const returned = ctx.context.returned;
+      const failed = isAPIError(returned);
+      if (ctx.path === "/delete-user" && !failed) return; // recorded by deleteUser.afterDelete
+      const body = (ctx.body ?? {}) as { email?: unknown; type?: unknown; provider?: unknown };
+      const user = ctx.context.newSession?.user ?? ctx.context.session?.user ?? null;
+      const session = (ctx.context.newSession?.session ?? ctx.context.session?.session) as { impersonatedBy?: string | null } | undefined;
+      const email = user?.email ?? (typeof body.email === "string" ? body.email.toLowerCase() : "");
+      await audit({
+        category: ACCOUNT_PATHS.some((p) => ctx.path.startsWith(p)) ? "account" : "auth",
+        action: `auth${ctx.path.replace(/\/:[^/]+/g, "").replaceAll("/", ".")}`,
+        outcome: failed ? "failure" : "success",
+        targetType: user ? "user" : "email",
+        targetId: user?.id ?? email,
+        summary: email,
+        metadata: {
+          ...(typeof body.type === "string" ? { type: body.type } : {}),
+          ...(ctx.params && "id" in ctx.params ? { provider: String(ctx.params.id) } : typeof body.provider === "string" ? { provider: body.provider } : {}),
+          ...(failed ? { error: (returned as APIError).body?.code ?? (returned as APIError).status } : {}),
+        },
+        actor: user ? { id: user.id, email: user.email, impersonatedBy: session?.impersonatedBy ?? null } : null,
+        requestHeaders: ctx.headers ?? null,
+      });
+    }),
+  },
+  user: {
+    // Self-service account deletion (Account → Delete account). Needs a recent sign-in
+    // (session under a day old) or the password, so a stolen old session can't erase the account.
+    deleteUser: {
+      enabled: true,
+      beforeDelete: async (user, request) => {
+        const session = request ? await auth.api.getSession({ headers: request.headers }) : null;
+        if ((session?.session as { impersonatedBy?: string | null } | undefined)?.impersonatedBy)
+          throw new APIError("FORBIDDEN", { message: "Support sessions can't delete the account. Use Admin → Users instead." });
+        const blocking = await soleOwnedEvents(user.id);
+        if (blocking.length)
+          throw new APIError("BAD_REQUEST", { message: `You're the only owner of: ${blocking.join(", ")}. Add another owner or delete those events first.` });
+      },
+      afterDelete: async (user) => {
+        await eraseLeftovers(user, "self");
+      },
+    },
   },
   databaseHooks: {
     user: {

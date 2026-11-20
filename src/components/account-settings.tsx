@@ -201,3 +201,76 @@ export function SignOutOthers() {
     </button>
   );
 }
+
+/**
+ * Self-service account deletion. Better Auth requires a sign-in from the last 24 hours or the
+ * password, so a stolen old session can't erase someone's account.
+ */
+export function DeleteAccount({ email, hasPassword, blockingEvents }: { email: string; hasPassword: boolean; blockingEvents: string[] }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [msg, setMsg] = useState<Msg>(null);
+  const [pending, setPending] = useState(false);
+
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = new FormData(e.currentTarget);
+    if (String(form.get("confirm")).trim().toLowerCase() !== email.toLowerCase()) return setMsg({ ok: false, message: "Type your email address exactly to confirm." });
+    const password = String(form.get("password") ?? "");
+    setPending(true);
+    setMsg(null);
+    const r = await authClient.deleteUser(password ? { password } : {});
+    setPending(false);
+    if (r.error) {
+      const expired = r.error.code === "SESSION_EXPIRED";
+      return setMsg({
+        ok: false,
+        message: expired
+          ? hasPassword
+            ? "For your security, enter your password — or sign out and back in — then try again."
+            : "For your security, sign out and sign in again (with a fresh code), then delete your account within 24 hours."
+          : (r.error.message ?? "Couldn't delete the account."),
+      });
+    }
+    router.replace("/goodbye");
+  }
+
+  return (
+    <Card title="Delete account" description="Permanently remove your account and everything in it.">
+      {blockingEvents.length > 0 ? (
+        <p className="text-sm">
+          You&apos;re the only owner of <span className="font-medium">{blockingEvents.join(", ")}</span>. Add another owner on the event&apos;s Team tab, or delete the event, before you can delete your account.
+        </p>
+      ) : !open ? (
+        <button type="button" onClick={() => setOpen(true)} className={cx(buttonClass("secondary"), "text-rose-700")}>Delete my account…</button>
+      ) : (
+        <form onSubmit={onSubmit} className="max-w-lg space-y-4">
+          <div className="rounded-lg bg-rose-50 px-4 py-3 text-sm text-rose-900">
+            <p className="font-medium">This can&apos;t be undone. We&apos;ll delete:</p>
+            <ul className="mt-1 list-disc pl-5">
+              <li>your profile, headshots, sessions and submission tracker</li>
+              <li>your proposals to events, and your reviews</li>
+              <li>your sponsor company profile and its sponsorship requests</li>
+              <li>your event team memberships and invitations</li>
+            </ul>
+            <p className="mt-2">Database backups roll off within 14 days. A record that the account was deleted stays in the security log for 90 days.</p>
+            <p className="mt-2">Want a copy first? <a href="/api/export/json" className="underline">Download your data</a>.</p>
+          </div>
+          <Field label={`Type ${email} to confirm`} htmlFor="del-confirm">
+            <input id="del-confirm" name="confirm" autoComplete="off" className="control" required />
+          </Field>
+          {hasPassword && (
+            <Field label="Password" htmlFor="del-password" hint="Needed if you signed in more than 24 hours ago.">
+              <input id="del-password" name="password" type="password" autoComplete="current-password" className="control" />
+            </Field>
+          )}
+          <Notice msg={msg} />
+          <div className="flex gap-2">
+            <button type="submit" disabled={pending} className={cx(buttonClass("primary"), "bg-rose-700 hover:bg-rose-800")}>{pending ? "Deleting…" : "Delete my account permanently"}</button>
+            <button type="button" onClick={() => { setOpen(false); setMsg(null); }} className={buttonClass("ghost")}>Cancel</button>
+          </div>
+        </form>
+      )}
+    </Card>
+  );
+}

@@ -5,18 +5,13 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/dal";
+import { TERMS_VERSION } from "@/lib/legal";
 import { getOnboarding } from "@/lib/onboarding";
 import { type ActionState, fieldErrors, formToObject } from "@/lib/validation";
 
 const detailsSchema = z.object({
   fullName: z.string().trim().min(2, "Enter your full name").max(120),
   pronouns: z.string().trim().max(40).default(""),
-  phone: z
-    .string()
-    .trim()
-    .max(40)
-    .default("")
-    .refine((v) => v === "" || /^\+?[0-9 ()-]{6,}$/.test(v), "Use digits, spaces and an optional +country code"),
   country: z.string().trim().min(2, "Where are you based?").max(80),
   city: z.string().trim().max(80).default(""),
   timezone: z.string().trim().min(1, "Pick your timezone").max(80).refine((v) => Intl.supportedValuesOf("timeZone").includes(v) || v === "UTC", "Pick a timezone from the list"),
@@ -35,11 +30,26 @@ export async function saveOnboardingDetails(_prev: ActionState, form: FormData):
     prisma.speakerProfile.upsert({ where: { userId: user.id }, create: { userId: user.id, ...profile }, update: profile }),
     prisma.user.update({
       where: { id: user.id },
-      data: { name: profile.fullName, primaryRole, termsAcceptedAt: (await prisma.user.findUnique({ where: { id: user.id }, select: { termsAcceptedAt: true } }))?.termsAcceptedAt ?? new Date() },
+      data: { name: profile.fullName, primaryRole, ...(await termsAcceptance(user.id)) },
     }),
   ]);
   revalidatePath("/", "layout");
   return { ok: true, message: "Saved." };
+}
+
+/** Records acceptance of the current terms version; keeps the original date if it was already this version. */
+async function termsAcceptance(userId: string) {
+  const current = await prisma.user.findUnique({ where: { id: userId }, select: { termsAcceptedAt: true, termsVersion: true } });
+  if (current?.termsAcceptedAt && current.termsVersion === TERMS_VERSION) return {};
+  return { termsAcceptedAt: new Date(), termsVersion: TERMS_VERSION };
+}
+
+/** From the "terms have changed" banner. */
+export async function acceptCurrentTerms(): Promise<void> {
+  const user = await requireUser();
+  if (user.impersonatedBy) return; // an admin can't accept terms on someone's behalf
+  await prisma.user.update({ where: { id: user.id }, data: { termsAcceptedAt: new Date(), termsVersion: TERMS_VERSION } });
+  revalidatePath("/", "layout");
 }
 
 export async function finishOnboarding(): Promise<void> {

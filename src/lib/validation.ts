@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { CURRENCIES, PLATFORMS, SUBMISSION_STATUSES, TALK_FORMATS, TALK_LEVELS } from "@/lib/domain";
+import { DEFAULT_CONFIRMATION_BODY, DEFAULT_CONFIRMATION_SUBJECT, unknownPlaceholders } from "@/lib/confirmation-email";
+import { CURRENCIES, EVENT_FORMATS, PLATFORMS, SUBMISSION_STATUSES, TALK_FORMATS, TALK_LEVELS } from "@/lib/domain";
 import { isPresentationRequirement, isSponsorRequirement } from "@/lib/requirements";
 
 /** Only http(s) URLs are allowed so stored links can never become `javascript:` hrefs. */
@@ -62,8 +63,6 @@ export const profileSchema = z.object({
     .default("")
     .refine((v) => v === "" || /^[A-Z]{3}$/.test(v), "Use a 3-letter IATA code, e.g. AMS"),
   tshirtSize: text(10),
-  dietaryRestrictions: text(500),
-  accessibilityNeeds: text(500),
   travelNotes: text(2000),
 });
 export type ProfileInput = z.infer<typeof profileSchema>;
@@ -156,6 +155,8 @@ export const eventSchema = z
     name: z.string().trim().min(2, "Give the event a name").max(150),
     tagline: text(200),
     description: text(10000),
+    format: z.enum(EVENT_FORMATS).default("IN_PERSON"),
+    onlinePlatform: text(100),
     location: text(150),
     venue: text(150),
     address: text(300),
@@ -174,6 +175,23 @@ export const eventSchema = z
     abstractLimit: optionalInt(100, 20000),
     maxProposalsPerSpeaker: z.coerce.number().int().min(1, "At least 1").max(20, "At most 20"),
     blindReview: z.string().optional().transform((v) => v === "on"),
+    confirmationEmailEnabled: z.string().optional().transform((v) => v === "on"),
+    confirmationEmailSubject: text(200),
+    confirmationEmailBody: text(5000),
+  })
+  // Online events have no venue; keep stale venue data from being shown or mapped.
+  .transform((e) => (e.format === "ONLINE" ? { ...e, location: "Online", venue: "", address: "", latitude: null, longitude: null } : { ...e, onlinePlatform: e.format === "IN_PERSON" ? "" : e.onlinePlatform }))
+  // Store "" when the organizer kept the built-in text, so improvements to the default reach them.
+  .transform((e) => ({
+    ...e,
+    confirmationEmailSubject: e.confirmationEmailSubject === DEFAULT_CONFIRMATION_SUBJECT ? "" : e.confirmationEmailSubject,
+    confirmationEmailBody: e.confirmationEmailBody.replace(/\r\n/g, "\n") === DEFAULT_CONFIRMATION_BODY ? "" : e.confirmationEmailBody,
+  }))
+  .superRefine((e, ctx) => {
+    for (const field of ["confirmationEmailSubject", "confirmationEmailBody"] as const) {
+      const unknown = unknownPlaceholders(e[field]);
+      if (unknown.length) ctx.addIssue({ code: "custom", path: [field], message: `Unknown placeholder: ${unknown.map((p) => `{${p}}`).join(", ")}` });
+    }
   })
   .refine((e) => !e.startDate || !e.endDate || e.endDate >= e.startDate, { message: "End date must be after start date", path: ["endDate"] })
   .refine((e) => !e.cfpOpensAt || !e.cfpClosesAt || e.cfpClosesAt >= e.cfpOpensAt, { message: "CfP must close after it opens", path: ["cfpClosesAt"] });

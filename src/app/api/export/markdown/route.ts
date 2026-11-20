@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { audit } from "@/lib/audit";
 import { getCurrentUser } from "@/lib/dal";
 import { speakerKitMarkdown } from "@/lib/export";
 
@@ -7,6 +8,7 @@ import { speakerKitMarkdown } from "@/lib/export";
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+  await audit({ category: "account", action: "account.export.markdown", targetType: "user", targetId: user.id, summary: user.email });
   const [profile, talks] = await Promise.all([
     prisma.speakerProfile.findUnique({ where: { userId: user.id } }),
     prisma.talk.findMany({ where: { userId: user.id, archived: false }, orderBy: { title: "asc" } }),

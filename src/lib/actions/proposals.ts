@@ -2,9 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { renderConfirmation } from "@/lib/confirmation-email";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/dal";
 import { cfpState } from "@/lib/domain";
+import { sendMail } from "@/lib/mailer";
 import { appUrl } from "@/lib/organizer";
 import { type ActionState, fieldErrors, formToObject, proposalSchema } from "@/lib/validation";
 
@@ -54,6 +56,27 @@ export async function submitProposal(eventId: string, _prev: ActionState, form: 
       data: { ...data, eventId, speakerId: user.id, talkId: ownsTalk ? talkId : null, submissionId: submission.id },
     });
   });
+
+  if (event.confirmationEmailEnabled) {
+    // After the commit, and never fatal: the proposal is in even if mail delivery fails
+    // (failures show up in Admin → Email outbox).
+    try {
+      const profile = await prisma.speakerProfile.findUnique({ where: { userId: user.id }, select: { fullName: true } });
+      const mail = renderConfirmation(
+        { subject: event.confirmationEmailSubject, body: event.confirmationEmailBody },
+        {
+          SPEAKER_NAME: profile?.fullName || user.name,
+          SESSION_NAME: data.title,
+          EVENT_NAME: event.name,
+          EVENT_URL: `${appUrl()}/events/${event.slug}`,
+          DASHBOARD_URL: `${appUrl()}/submissions`,
+        },
+      );
+      await sendMail({ to: user.email, ...mail, kind: "proposal-confirmation" });
+    } catch (e) {
+      console.error("proposal confirmation email failed", e);
+    }
+  }
 
   revalidatePath("/submissions");
   revalidatePath("/dashboard");

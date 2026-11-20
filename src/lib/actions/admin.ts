@@ -5,12 +5,14 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
+import { eraseLeftovers, soleOwnedEvents } from "@/lib/account-deletion";
+import { audit as writeAudit } from "@/lib/audit";
 import { prisma } from "@/lib/db";
 import { type CurrentUser, requireAdmin } from "@/lib/dal";
 import type { ActionState } from "@/lib/validation";
 
 async function audit(actor: CurrentUser, action: string, targetType: string, targetId: string, summary = "") {
-  await prisma.adminAuditLog.create({ data: { actorId: actor.id, action, targetType, targetId, summary } });
+  await writeAudit({ category: "admin", action, targetType, targetId, summary, actor: { id: actor.id, email: actor.email, impersonatedBy: actor.impersonatedBy } });
 }
 
 const done = (message: string): ActionState => ({ ok: true, message });
@@ -143,9 +145,7 @@ export async function adminDeleteUser(userId: string, _prev: ActionState, form: 
   if (!user) return fail("User not found.");
   if (String(form.get("confirm") ?? "").trim().toLowerCase() !== user.email.toLowerCase()) return fail("Type the user's email to confirm.");
   // Don't orphan events: the user must not be the only owner anywhere.
-  const owned = await prisma.eventMember.findMany({ where: { userId, role: "OWNER" }, select: { eventId: true, event: { select: { name: true } } } });
-  const soleOwner = [];
-  for (const m of owned) if ((await prisma.eventMember.count({ where: { eventId: m.eventId, role: "OWNER" } })) <= 1) soleOwner.push(m.event.name);
+  const soleOwner = await soleOwnedEvents(userId);
   if (soleOwner.length) return fail(`They're the only owner of: ${soleOwner.join(", ")}. Add another owner or delete those events first.`);
   try {
     await auth.api.removeUser({ body: { userId }, headers: await headers() });
@@ -153,6 +153,7 @@ export async function adminDeleteUser(userId: string, _prev: ActionState, form: 
     return fail(errMsg(e));
   }
   await audit(admin, "user.delete", "user", userId, user.email);
+  await eraseLeftovers(user, "admin");
   revalidatePath("/admin", "layout");
   redirect("/admin/users?deleted=1");
 }

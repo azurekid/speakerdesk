@@ -1,6 +1,6 @@
 import "server-only";
 import { BlobServiceClient } from "@azure/storage-blob";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 /**
@@ -30,6 +30,23 @@ export async function putPublicFile(key: string, body: Buffer, contentType: stri
   await writeFile(target, body);
   const base = process.env.BETTER_AUTH_URL?.replace(/\/+$/, "") ?? "http://localhost:3000";
   return `${base}/uploads/${key}`;
+}
+
+/** Deletes every file stored under `${prefix}/` (all of a user's headshots). Returns how many. */
+export async function deletePublicFiles(prefix: string): Promise<number> {
+  if (!/^[A-Za-z0-9_-]+$/.test(prefix)) throw new Error("Invalid storage prefix");
+  const conn = process.env.AZURE_STORAGE_CONNECTION_STRING;
+  if (conn) {
+    const container = BlobServiceClient.fromConnectionString(conn).getContainerClient(process.env.AZURE_STORAGE_CONTAINER || "headshots");
+    let n = 0;
+    for await (const blob of container.listBlobsFlat({ prefix: `${prefix}/` })) {
+      await container.deleteBlob(blob.name, { deleteSnapshots: "include" });
+      n++;
+    }
+    return n;
+  }
+  await rm(path.join(process.cwd(), "public", "uploads", prefix), { recursive: true, force: true });
+  return 0;
 }
 
 /** Detects the image type from magic bytes (never trust the client-sent MIME type). */

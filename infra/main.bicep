@@ -82,7 +82,7 @@ resource logs 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   location: location
   properties: {
     sku: { name: 'PerGB2018' }
-    retentionInDays: 30
+    retentionInDays: 90 // matches the audit retention promised in /privacy (src/lib/audit-constants.ts)
   }
 }
 

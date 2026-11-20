@@ -1,5 +1,5 @@
 import "server-only";
-import { prisma } from "@/lib/db";
+import { prismaBase as prisma } from "@/lib/db";
 
 export type RateLimitRule = { window: number; max: number }; // window in seconds
 

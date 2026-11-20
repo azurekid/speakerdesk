@@ -48,7 +48,7 @@ flowchart LR
 | Storage account | Standard LRS, `headshots` container with public blob read | Speaker headshots. Their URLs are pasted into CfPs, so they must be public |
 | Azure Maps | Gen2 | Venue search in the event form |
 | Communication Services + Email | Azure-managed sender domain | Sign-in codes, email verification, password resets, email changes |
-| Log Analytics | Pay-as-you-go, 30-day retention | Container logs |
+| Log Analytics | Pay-as-you-go, 90-day retention | Container logs, including one structured `audit` line per audited action |
 
 These are the smallest sensible production tiers. Check current prices for your region in the [Azure pricing calculator](https://azure.microsoft.com/pricing/calculator/).
 

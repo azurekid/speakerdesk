@@ -39,7 +39,7 @@ async function UserDetail({ params }: { params: Props["params"] }) {
   if (!u) notFound();
   const [emails, audit] = await Promise.all([
     prisma.outboundEmail.findMany({ where: { to: u.email }, orderBy: { createdAt: "desc" }, take: 5 }),
-    prisma.adminAuditLog.findMany({ where: { targetType: "user", targetId: u.id }, orderBy: { createdAt: "desc" }, take: 8, include: { actor: { select: { name: true } } } }),
+    prisma.auditLog.findMany({ where: { OR: [{ targetType: "user", targetId: u.id }, { actorId: u.id }] }, orderBy: { createdAt: "desc" }, take: 12, include: { actor: { select: { name: true } } } }),
   ]);
   const self = u.id === me.id;
   const hasPassword = u.accounts.some((a) => a.providerId === "credential" && a.password);
@@ -68,7 +68,6 @@ async function UserDetail({ params }: { params: Props["params"] }) {
           <dl className="grid grid-cols-[120px_1fr] gap-y-1.5 text-sm">
             <dt className="text-ink-soft">Main role</dt><dd>{{ SPEAKER: "Speaker", ORGANIZER: "Organizer", SPONSOR: "Sponsor" }[u.primaryRole]}</dd>
             <dt className="text-ink-soft">Location</dt><dd>{[p?.city, p?.country].filter(Boolean).join(", ") || "—"}{p?.timezone && ` · ${p.timezone}`}</dd>
-            <dt className="text-ink-soft">Phone</dt><dd>{p?.phone || "—"}</dd>
             <dt className="text-ink-soft">Work</dt><dd>{[p?.jobTitle, p?.company].filter(Boolean).join(" at ") || "—"}</dd>
             <dt className="text-ink-soft">Sign-in</dt><dd>{[hasPassword && "Password", ...u.accounts.filter((a) => a.providerId !== "credential").map((a) => a.providerId), "Email code"].filter(Boolean).join(", ")}</dd>
             <dt className="text-ink-soft">Content</dt><dd>{u._count.talks} talks · {u._count.proposals} proposals · {u._count.submissions} tracked submissions</dd>
@@ -135,10 +134,15 @@ async function UserDetail({ params }: { params: Props["params"] }) {
             </ul>
           )}
         </Card>
-        <Card title="Admin history">
-          {audit.length === 0 ? <p className="text-sm text-ink-soft">No admin actions on this account.</p> : (
+        <Card title="Recent activity" actions={<Link href={`/admin/audit?user=${u.id}`} className="text-sm text-ink-soft hover:text-ink">Full history →</Link>}>
+          {audit.length === 0 ? <p className="text-sm text-ink-soft">No activity in the last 90 days.</p> : (
             <ul className="divide-y divide-line text-sm">
-              {audit.map((a) => <li key={a.id} className="flex justify-between gap-3 py-2"><span><Badge>{a.action}</Badge></span><span className="text-xs text-ink-soft">{a.actor?.name ?? "—"} · {formatDate(a.createdAt)}</span></li>)}
+              {audit.map((a) => (
+                <li key={a.id} className="flex justify-between gap-3 py-2">
+                  <span><Badge className={a.outcome === "failure" ? "bg-rose-50 text-rose-800 ring-rose-200" : undefined}>{a.action}</Badge></span>
+                  <span className="text-xs text-ink-soft">{a.actor?.name ?? (a.actorEmail || "—")} · {formatDate(a.createdAt)}</span>
+                </li>
+              ))}
             </ul>
           )}
         </Card>

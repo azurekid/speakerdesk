@@ -6,20 +6,23 @@ import { useState } from "react";
 import { FormMessage, SubmitButton, TagInput, useFormAction } from "@/components/form-controls";
 import { VenuePicker } from "@/components/organizer/venue-picker";
 import { buttonClass, Card, cx, Field } from "@/components/ui";
-import { COVER_IMAGES, FORMAT_LABELS, TALK_FORMATS, type TalkFormat } from "@/lib/domain";
+import { CONFIRMATION_PLACEHOLDERS, DEFAULT_CONFIRMATION_BODY, DEFAULT_CONFIRMATION_SUBJECT, renderConfirmation } from "@/lib/confirmation-email";
+import { COVER_IMAGES, EVENT_FORMAT_LABELS, EVENT_FORMATS, type EventFormat, FORMAT_LABELS, TALK_FORMATS, type TalkFormat } from "@/lib/domain";
 import type { ActionState } from "@/lib/validation";
 
 export type EventFormValues = {
-  name: string; tagline: string; description: string; location: string; venue: string; address: string; latitude: number | null; longitude: number | null;
+  name: string; tagline: string; description: string; format: EventFormat; onlinePlatform: string; location: string; venue: string; address: string; latitude: number | null; longitude: number | null;
   website: string; coverImage: string;
   startDate: string; endDate: string; cfpOpensAt: string; cfpClosesAt: string; cfpGuidelines: string;
   tracks: string[]; formats: TalkFormat[]; titleLimit: string; abstractLimit: string; maxProposalsPerSpeaker: number; blindReview: boolean;
+  confirmationEmailEnabled: boolean; confirmationEmailSubject: string; confirmationEmailBody: string;
 };
 
 export const EMPTY_EVENT: EventFormValues = {
-  name: "", tagline: "", description: "", location: "", venue: "", address: "", latitude: null, longitude: null, website: "", coverImage: COVER_IMAGES[0].src,
+  name: "", tagline: "", description: "", format: "IN_PERSON", onlinePlatform: "", location: "", venue: "", address: "", latitude: null, longitude: null, website: "", coverImage: COVER_IMAGES[0].src,
   startDate: "", endDate: "", cfpOpensAt: "", cfpClosesAt: "", cfpGuidelines: "",
   tracks: [], formats: ["SESSION", "WORKSHOP", "LIGHTNING_TALK"], titleLimit: "", abstractLimit: "1000", maxProposalsPerSpeaker: 3, blindReview: false,
+  confirmationEmailEnabled: true, confirmationEmailSubject: "", confirmationEmailBody: "",
 };
 
 export function EventForm({ values, action, submitLabel, cancelHref }: {
@@ -31,6 +34,7 @@ export function EventForm({ values, action, submitLabel, cancelHref }: {
   const [state, onSubmit, pending] = useFormAction(action, undefined);
   const e = state?.errors;
   const [cover, setCover] = useState(values.coverImage);
+  const [format, setFormat] = useState<EventFormat>(values.format);
   const isCustom = !COVER_IMAGES.some((c) => c.src === cover);
   const input = (name: keyof EventFormValues, label: string, opts: { type?: string; placeholder?: string; className?: string; hint?: string } = {}) => (
     <Field label={label} htmlFor={name} error={e?.[name]} className={opts.className} hint={opts.hint}>
@@ -49,7 +53,22 @@ export function EventForm({ values, action, submitLabel, cancelHref }: {
           </Field>
           {input("startDate", "Starts", { type: "date" })}
           {input("endDate", "Ends", { type: "date" })}
-          <VenuePicker initial={{ venue: values.venue, address: values.address, location: values.location, latitude: values.latitude, longitude: values.longitude }} errors={e} />
+          <fieldset className="sm:col-span-2">
+            <legend className="mb-2 text-sm font-medium text-ink">Where does it happen?</legend>
+            <div className="flex flex-wrap gap-2">
+              {EVENT_FORMATS.map((f) => (
+                <label key={f} className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-line bg-surface px-3 py-1.5 text-sm has-checked:border-ink has-checked:bg-neutral-50">
+                  <input type="radio" name="format" value={f} checked={format === f} onChange={() => setFormat(f)} className="accent-ink" />
+                  {EVENT_FORMAT_LABELS[f]}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          {format !== "ONLINE" && (
+            <VenuePicker initial={{ venue: values.venue, address: values.address, location: values.location === "Online" ? "" : values.location, latitude: values.latitude, longitude: values.longitude }} errors={e} />
+          )}
+          {format !== "IN_PERSON" &&
+            input("onlinePlatform", "Online platform", { placeholder: "e.g. YouTube Live, Zoom, Hopin", className: "sm:col-span-2", hint: "Shown on the public page. Don't put private join links here." })}
           {input("website", "Website", { type: "url", placeholder: "https://", className: "sm:col-span-2" })}
         </div>
       </Card>
@@ -106,11 +125,63 @@ export function EventForm({ values, action, submitLabel, cancelHref }: {
         </div>
       </Card>
 
+      <ConfirmationEmail values={values} errors={e} />
+
       <div className="flex items-center justify-end gap-3">
         <div className="flex-1"><FormMessage state={state} /></div>
         <Link href={cancelHref} className={buttonClass("ghost")}>Cancel</Link>
         <SubmitButton pending={pending}>{submitLabel}</SubmitButton>
       </div>
     </form>
+  );
+}
+
+/** The email a speaker gets right after submitting. Placeholders are filled when it's sent. */
+function ConfirmationEmail({ values, errors }: { values: EventFormValues; errors?: Record<string, string[] | undefined> }) {
+  const [enabled, setEnabled] = useState(values.confirmationEmailEnabled);
+  const [subject, setSubject] = useState(values.confirmationEmailSubject || DEFAULT_CONFIRMATION_SUBJECT);
+  const [body, setBody] = useState(values.confirmationEmailBody || DEFAULT_CONFIRMATION_BODY);
+  const preview = renderConfirmation(
+    { subject, body },
+    { SPEAKER_NAME: "Alex Example", SESSION_NAME: "Scaling Kubernetes for Fun", EVENT_NAME: values.name || "Your event", EVENT_URL: "https://…/events/your-event", DASHBOARD_URL: "#" },
+  );
+
+  return (
+    <Card title="Submission confirmation email" description="Sent to the speaker as soon as they submit a proposal.">
+      <label className="mb-4 flex items-start gap-3 text-sm">
+        <input type="checkbox" name="confirmationEmailEnabled" checked={enabled} onChange={(ev) => setEnabled(ev.target.checked)} className="mt-0.5 accent-ink" />
+        <span className="font-medium">Send a confirmation email</span>
+      </label>
+      <div className={cx("grid gap-4 lg:grid-cols-2", !enabled && "opacity-50")}>
+        <div className="space-y-4">
+          <Field label="Subject" htmlFor="confirmationEmailSubject" error={errors?.confirmationEmailSubject}>
+            <input id="confirmationEmailSubject" name="confirmationEmailSubject" value={subject} onChange={(ev) => setSubject(ev.target.value)} disabled={!enabled} className="control" />
+          </Field>
+          <Field label="Message" htmlFor="confirmationEmailBody" error={errors?.confirmationEmailBody}>
+            <textarea id="confirmationEmailBody" name="confirmationEmailBody" rows={14} value={body} onChange={(ev) => setBody(ev.target.value)} disabled={!enabled} className="control font-mono text-xs" />
+          </Field>
+          <div className="text-xs text-ink-soft">
+            <p className="mb-1 font-medium text-ink">Placeholders</p>
+            <ul className="space-y-0.5">
+              {Object.entries(CONFIRMATION_PLACEHOLDERS).map(([k, label]) => (
+                <li key={k}><code className="rounded bg-neutral-100 px-1">{`{${k}}`}</code> {label}</li>
+              ))}
+            </ul>
+            <button type="button" disabled={!enabled} onClick={() => { setSubject(DEFAULT_CONFIRMATION_SUBJECT); setBody(DEFAULT_CONFIRMATION_BODY); }} className="mt-2 underline">Reset to the default text</button>
+          </div>
+        </div>
+        <div>
+          <p className="mb-1 text-sm font-medium">Preview</p>
+          <div className="rounded-lg border border-line bg-neutral-50 p-4 text-sm">
+            <p className="mb-3 border-b border-line pb-2 font-medium">{preview.subject}</p>
+            <div className="whitespace-pre-wrap">
+              {preview.text.split(/(Open your speaker dashboard: #)/).map((part, i) =>
+                part === "Open your speaker dashboard: #" ? <span key={i} className="my-1 inline-block rounded-md bg-ink px-3 py-1.5 text-xs font-semibold text-paper">Open speaker dashboard</span> : part,
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </Card>
   );
 }

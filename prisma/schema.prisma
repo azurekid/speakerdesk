@@ -37,6 +37,7 @@ model User {
 
   // Onboarding
   termsAcceptedAt DateTime?
+  termsVersion    String?   // version of /terms + /privacy accepted (src/lib/legal.ts)
   onboardedAt     DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -53,7 +54,7 @@ model User {
   proposals        Proposal[]
   reviews          Review[]
   sponsorOrg       SponsorOrg?
-  adminActions     AdminAuditLog[] @relation("AdminActor")
+  auditEntries     AuditLog[] @relation("AuditActor")
   invitesSent      EventInvite[] @relation("InvitedBy")
   tasksAssigned    RunbookTask[] @relation("TaskAssignee")
 
@@ -130,7 +131,6 @@ model SpeakerProfile {
   company  String  @default("")
   jobTitle String  @default("")
   pronouns String  @default("")
-  phone    String  @default("")
 
   bioShort  String @default("") // ~300 chars
   bioMedium String @default("") // ~1000 chars
@@ -155,8 +155,6 @@ model SpeakerProfile {
   // Travel / logistics (often requested after acceptance)
   homeAirport         String @default("") // IATA code
   tshirtSize          String @default("")
-  dietaryRestrictions String @default("")
-  accessibilityNeeds  String @default("")
   travelNotes         String @default("")
 
   // Public speaker page (opt-in)
@@ -300,6 +298,12 @@ enum EventRole {
   VOLUNTEER // runbook only: see tasks, update own tasks
 }
 
+enum EventFormat {
+  IN_PERSON
+  ONLINE
+  HYBRID
+}
+
 model Event {
   id   String @id @default(cuid())
   slug String @unique
@@ -307,7 +311,9 @@ model Event {
   name        String
   tagline     String    @default("")
   description String    @default("")
-  location    String    @default("") // "Amsterdam, NL" or "Online"
+  format         EventFormat @default(IN_PERSON)
+  onlinePlatform String      @default("") // e.g. "Zoom", "YouTube Live" — not a join link, this is public
+  location    String    @default("") // "Amsterdam, NL"; "Online" for online events
   venue       String    @default("")
   address     String    @default("")
   latitude    Float?
@@ -329,6 +335,12 @@ model Event {
   maxProposalsPerSpeaker Int          @default(3)
   blindReview            Boolean      @default(false) // hide speaker identity from reviewers
   programPublished       Boolean      @default(false) // show accepted sessions on the public page
+
+  // Email sent to a speaker right after they submit. Empty subject/body = the built-in
+  // template (src/lib/confirmation-email.ts), so improvements to it reach every event.
+  confirmationEmailEnabled Boolean @default(true)
+  confirmationEmailSubject String  @default("")
+  confirmationEmailBody    String  @default("")
 
   // Sponsorship & budget (amounts in whole currency units)
   currency        String  @default("EUR")
@@ -652,17 +664,30 @@ model OutboundEmail {
   @@map("outbound_email")
 }
 
-model AdminAuditLog {
-  id         String   @id @default(cuid())
-  actorId    String?
-  actor      User?    @relation("AdminActor", fields: [actorId], references: [id], onDelete: SetNull)
-  action     String   // e.g. "user.ban", "user.set-password", "event.delete"
-  targetType String   // "user" | "event" | "sponsor"
-  targetId   String
-  summary    String   @default("")
-  createdAt  DateTime @default(now())
+/// Security and data audit trail: sign-ins, account changes, every data change and every
+/// admin action. Kept for 90 days (pruned by src/lib/audit.ts). Values of changed fields are
+/// never copied in — only which fields changed — so the log doesn't become a second copy of
+/// personal data.
+model AuditLog {
+  id             String   @id @default(cuid())
+  actorId        String?
+  actor          User?    @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+  actorEmail     String   @default("") // snapshot, so entries stay readable after the actor is deleted
+  impersonatorId String?  // set when an admin acted through "View as"
+  category       String   @default("admin") // "auth" | "account" | "data" | "admin"
+  action         String   // e.g. "auth.sign-in", "data.talk.update", "user.ban"
+  outcome        String   @default("success") // "success" | "failure"
+  targetType     String   // "user" | "event" | "talk" | …
+  targetId       String
+  summary        String   @default("")
+  metadata       Json?    // e.g. { fields: ["title", "abstractLong"] } or an error code
+  ipAddress      String   @default("")
+  userAgent      String   @default("")
+  createdAt      DateTime @default(now())
 
   @@index([createdAt])
   @@index([targetType, targetId])
+  @@index([actorId, createdAt])
+  @@index([category, createdAt])
   @@map("admin_audit_log")
 }

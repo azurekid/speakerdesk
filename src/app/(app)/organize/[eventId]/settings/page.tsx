@@ -31,12 +31,13 @@ async function Settings({ params }: { params: Props["params"] }) {
         cancelHref={`/organize/${eventId}`}
         action={updateEvent.bind(null, eventId)}
         values={{
-          name: event.name, tagline: event.tagline, description: event.description, location: event.location, venue: event.venue,
+          name: event.name, tagline: event.tagline, description: event.description, format: event.format, onlinePlatform: event.onlinePlatform, location: event.location, venue: event.venue,
           address: event.address, latitude: event.latitude, longitude: event.longitude,
           website: event.website, coverImage: event.coverImage, startDate: toDateInput(event.startDate), endDate: toDateInput(event.endDate),
           cfpOpensAt: toDateInput(event.cfpOpensAt), cfpClosesAt: toDateInput(event.cfpClosesAt), cfpGuidelines: event.cfpGuidelines,
           tracks: event.tracks, formats: event.formats, titleLimit: event.titleLimit?.toString() ?? "", abstractLimit: event.abstractLimit?.toString() ?? "",
           maxProposalsPerSpeaker: event.maxProposalsPerSpeaker, blindReview: event.blindReview,
+          confirmationEmailEnabled: event.confirmationEmailEnabled, confirmationEmailSubject: event.confirmationEmailSubject, confirmationEmailBody: event.confirmationEmailBody,
         }}
       />
       {owner && (

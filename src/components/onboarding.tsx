@@ -1,6 +1,7 @@
 "use client";
 
 import { Building2, Megaphone, Mic } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { FormMessage, SubmitButton, useFormAction } from "@/components/form-controls";
@@ -9,7 +10,7 @@ import { saveOnboardingDetails } from "@/lib/actions/onboarding";
 import { authClient } from "@/lib/auth-client";
 
 type Details = {
-  fullName: string; pronouns: string; phone: string; country: string; city: string; timezone: string; company: string; jobTitle: string;
+  fullName: string; pronouns: string; country: string; city: string; timezone: string; company: string; jobTitle: string;
   primaryRole: "SPEAKER" | "ORGANIZER" | "SPONSOR"; termsAccepted: boolean;
 };
 
@@ -78,7 +79,6 @@ export function DetailsStep({ values, timezones }: { values: Details; timezones:
         {input("country", "Country", { autoComplete: "country-name", placeholder: "Netherlands" })}
         {input("city", "City", { autoComplete: "address-level2", placeholder: "Amsterdam" })}
         {input("timezone", "Timezone", { list: "ob-tz", defaultValue: values.timezone || guessTz, hint: "Used for deadlines and schedules." })}
-        {input("phone", "Phone (optional)", { type: "tel", autoComplete: "tel", placeholder: "+31 6 1234 5678", hint: "Only shared with organizers of events you speak at." })}
         {input("company", "Company (optional)", { autoComplete: "organization" })}
         {input("jobTitle", "Job title (optional)", { autoComplete: "organization-title" })}
         <datalist id="ob-tz">{timezones.map((tz) => <option key={tz} value={tz} />)}</datalist>
@@ -86,7 +86,11 @@ export function DetailsStep({ values, timezones }: { values: Details; timezones:
 
       <label className="flex items-start gap-3 text-sm">
         <input type="checkbox" name="terms" defaultChecked={values.termsAccepted} className="mt-0.5 accent-ink" />
-        <span>I agree to the terms of use and the privacy policy.{e?.terms && <span className="block text-xs text-rose-700">{e.terms[0]}</span>}</span>
+        <span>
+          I have read and agree to the{" "}
+          <Link href="/terms" target="_blank" className="underline">terms of use</Link> and the{" "}
+          <Link href="/privacy" target="_blank" className="underline">privacy notice</Link> (open in a new tab).
+          {e?.terms && <span className="block text-xs text-rose-700">{e.terms[0]}</span>}</span>
       </label>
 
       <div className="flex items-center gap-3">

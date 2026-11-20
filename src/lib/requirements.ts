@@ -48,10 +48,9 @@ export const PRESENTATION_REQUIREMENTS: RequirementGroup[] = [
     ],
   },
   {
-    group: "Accessibility & recording",
+    // No disability-related items: those are health data (GDPR Art. 9) and aren't needed to plan a session.
+    group: "Captioning & recording",
     items: [
-      { id: "step_free", label: "Step-free access to the stage" },
-      { id: "stage_seat", label: "A seat on stage" },
       { id: "captioning", label: "Live captioning or sign language" },
       { id: "no_recording", label: "Please don't record this session" },
     ],
