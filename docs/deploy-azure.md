@@ -258,7 +258,8 @@ gh secret set SPEAKERDESK_AUTH_SECRET  --env production --body "$(openssl rand -
 gh variable set AZURE_RESOURCE_GROUP --env production --body speakerdesk-prod
 gh variable set AZURE_LOCATION       --env production --body westeurope
 gh variable set ADMIN_EMAILS         --env production --body "you@example.com"
-gh variable set PUBLIC_URL           --env production --body ""   # custom domain, e.g. https://speakerdesk.example.com (section 4)
+# Optional: only set PUBLIC_URL once you have a custom domain, e.g. https://speakerdesk.example.com (section 4). Leave it unset otherwise.
+# gh variable set PUBLIC_URL --env production --body "https://speakerdesk.example.com"
 ```
 
 Optional sign-in providers (section 6): set `OAUTH_<PROVIDER>_CLIENT_ID` and `OAUTH_<PROVIDER>_CLIENT_SECRET` as environment secrets, for `GITHUB`, `GOOGLE`, `LINKEDIN` and `MICROSOFT`.

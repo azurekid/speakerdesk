@@ -19,6 +19,6 @@ export function enabledSocialProviders(): SocialProvider[] {
 /** Email + password: on by default in development, opt-in in production. */
 export function emailPasswordEnabled(): boolean {
   const flag = process.env.AUTH_EMAIL_PASSWORD;
-  if (flag !== undefined && flag !== "") return flag === "true";
+  if (flag !== undefined && flag !== "") return flag.toLowerCase() === "true";
   return process.env.NODE_ENV !== "production";
 }

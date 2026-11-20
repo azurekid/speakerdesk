@@ -223,7 +223,7 @@ resource containerEnv 'Microsoft.App/managedEnvironments@2024-03-01' = {
 }
 
 var defaultUrl = 'https://${names.app}.${containerEnv.properties.defaultDomain}'
-var appUrl = empty(publicUrl) ? defaultUrl : publicUrl
+var appUrl = startsWith(publicUrl, 'http') ? publicUrl : defaultUrl // anything else (empty, stray quotes) falls back to the default URL
 var databaseUrl = 'postgresql://${postgresAdminLogin}:${uriComponent(postgresAdminPassword)}@${postgres.properties.fullyQualifiedDomainName}:5432/${database.name}?sslmode=require'
 var storageConnection = 'DefaultEndpointsProtocol=https;AccountName=${storage.name};AccountKey=${storage.listKeys().keys[0].value};EndpointSuffix=${environment().suffixes.storage}'
 
@@ -273,7 +273,7 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = if (deployApp) {
             { name: 'DATABASE_URL', secretRef: 'database-url' }
             { name: 'BETTER_AUTH_SECRET', secretRef: 'better-auth-secret' }
             { name: 'BETTER_AUTH_URL', value: appUrl }
-            { name: 'AUTH_EMAIL_PASSWORD', value: string(allowEmailPassword) }
+            { name: 'AUTH_EMAIL_PASSWORD', value: toLower(string(allowEmailPassword)) }
             { name: 'ADMIN_EMAILS', value: adminEmails }
             { name: 'AZURE_STORAGE_CONNECTION_STRING', secretRef: 'storage-connection' }
             { name: 'AZURE_STORAGE_CONTAINER', value: headshots.name }
