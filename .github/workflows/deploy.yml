@@ -121,7 +121,7 @@ jobs:
           RULE="gha-${{ github.run_id }}"
           az postgres flexible-server firewall-rule create \
             --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
-            --name "${{ steps.infra.outputs.pg_server }}" \
+            --server-name "${{ steps.infra.outputs.pg_server }}" \
             --rule-name "$RULE" --start-ip-address "$IP" --end-ip-address "$IP" --output none
           echo "rule=$RULE" >> "$GITHUB_OUTPUT"
 
@@ -139,7 +139,7 @@ jobs:
         run: |
           az postgres flexible-server firewall-rule delete \
             --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
-            --name "${{ steps.infra.outputs.pg_server }}" \
+            --server-name "${{ steps.infra.outputs.pg_server }}" \
             --rule-name "${{ steps.firewall.outputs.rule }}" --yes --output none
 
       # Phase 2 — deploy the container app with the new image.
