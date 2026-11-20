@@ -71,8 +71,8 @@ async function EventList() {
       {memberships.map(({ event, role }) => (
         <li key={event.id}>
           <Link href={`/organize/${event.id}`} className="group grid overflow-hidden rounded-xl border border-line bg-surface transition-colors hover:border-ink/30 sm:grid-cols-[240px_1fr]">
-            <div className="relative aspect-[16/9] sm:aspect-auto">
-              <CoverImage src={event.coverImage} sizes="240px" className="object-cover" />
+            <div className="relative aspect-[16/9] bg-night sm:aspect-auto">
+              <CoverImage src={event.coverImage} fit={event.coverFit} position={event.coverPosition} sizes="240px" />
             </div>
             <div className="p-5">
               <div className="flex flex-wrap items-center gap-2">

@@ -1,5 +1,12 @@
 // Client-safe domain constants. Values mirror the Prisma enums in prisma/schema.prisma.
 
+export const COVER_FITS = ["cover", "contain"] as const;
+export type CoverFit = (typeof COVER_FITS)[number];
+export const COVER_POSITIONS = ["top", "center", "bottom"] as const;
+export type CoverPosition = (typeof COVER_POSITIONS)[number];
+/** Recommended cover size. Cards crop to 16:9, the event banner to a wide strip. */
+export const COVER_RECOMMENDED = { width: 1920, height: 1080, minWidth: 1200, minHeight: 675 } as const;
+
 export const EVENT_FORMATS = ["IN_PERSON", "ONLINE", "HYBRID"] as const;
 export type EventFormat = (typeof EVENT_FORMATS)[number];
 export const EVENT_FORMAT_LABELS: Record<EventFormat, string> = { IN_PERSON: "In person", ONLINE: "Online", HYBRID: "Hybrid" };

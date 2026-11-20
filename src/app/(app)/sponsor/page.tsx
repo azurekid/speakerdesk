@@ -55,8 +55,8 @@ async function Opportunities() {
             const soldOut = tiers.filter((p) => p.left === 0).length;
             return (
               <Link key={e.id} href={`/sponsor/${e.slug}`} className="group overflow-hidden rounded-2xl border border-line bg-surface transition hover:border-neutral-400">
-                <div className="relative aspect-[2/1]">
-                  <CoverImage src={e.coverImage} sizes="(min-width: 768px) 50vw, 100vw" className="object-cover transition-transform duration-500 group-hover:scale-[1.02]" />
+                <div className="relative aspect-[2/1] bg-night">
+                  <CoverImage src={e.coverImage} fit={e.coverFit} position={e.coverPosition} sizes="(min-width: 768px) 50vw, 100vw" className="transition-transform duration-500 group-hover:scale-[1.02]" />
                 </div>
                 <div className="p-5">
                   <p className="text-xs text-ink-soft">{formatDateRange(e.startDate, e.endDate)}{eventWhere(e) && ` · ${eventWhere(e)}`}</p>

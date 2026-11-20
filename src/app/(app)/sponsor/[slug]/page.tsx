@@ -35,7 +35,7 @@ async function Prospectus({ params }: { params: Props["params"] }) {
 
   return (
     <div className="space-y-10">
-      <PhotoBanner src={event.coverImage} priority>
+      <PhotoBanner src={event.coverImage} fit={event.coverFit} position={event.coverPosition} priority>
         <div className="flex min-h-[300px] flex-col justify-end p-8 sm:p-10">
           <p className="text-sm font-medium text-white/80">Sponsor prospectus</p>
           <h1 className="mt-1 text-4xl font-semibold tracking-tight sm:text-5xl">{event.name}</h1>

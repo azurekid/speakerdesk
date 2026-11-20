@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { DEFAULT_CONFIRMATION_BODY, DEFAULT_CONFIRMATION_SUBJECT, unknownPlaceholders } from "@/lib/confirmation-email";
-import { CURRENCIES, EVENT_FORMATS, PLATFORMS, SUBMISSION_STATUSES, TALK_FORMATS, TALK_LEVELS } from "@/lib/domain";
+import { COVER_FITS, COVER_POSITIONS, CURRENCIES, EVENT_FORMATS, PLATFORMS, SUBMISSION_STATUSES, TALK_FORMATS, TALK_LEVELS } from "@/lib/domain";
 import { isPresentationRequirement, isSponsorRequirement } from "@/lib/requirements";
 
 /** Only http(s) URLs are allowed so stored links can never become `javascript:` hrefs. */
@@ -156,6 +156,8 @@ export const eventSchema = z
     tagline: text(200),
     description: text(10000),
     format: z.enum(EVENT_FORMATS).default("IN_PERSON"),
+    coverFit: z.enum(COVER_FITS).default("cover"),
+    coverPosition: z.enum(COVER_POSITIONS).default("center"),
     onlinePlatform: text(100),
     location: text(150),
     venue: text(150),

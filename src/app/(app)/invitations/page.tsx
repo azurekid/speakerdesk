@@ -60,8 +60,8 @@ async function Invitations({ searchParams }: { searchParams: Props["searchParams
       ) : (
         invitations.map((inv) => (
           <article key={inv.id} className="grid overflow-hidden rounded-2xl border border-line bg-surface md:grid-cols-[260px_1fr]">
-            <div className="relative min-h-40">
-              <CoverImage src={inv.event.coverImage} sizes="260px" className="object-cover" />
+            <div className="relative min-h-40 bg-night">
+              <CoverImage src={inv.event.coverImage} fit={inv.event.coverFit} position={inv.event.coverPosition} sizes="260px" />
             </div>
             <div className="space-y-4 p-6">
               <div className="flex flex-wrap items-start justify-between gap-2">

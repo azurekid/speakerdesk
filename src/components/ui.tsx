@@ -59,21 +59,31 @@ export function PageHeader({ title, description, actions, eyebrow }: { title: Re
 }
 
 /** A full-bleed event photo with text set on a bottom scrim. */
-export function PhotoBanner({ src, children, className, priority }: { src: string; children: ReactNode; className?: string; priority?: boolean }) {
+export function PhotoBanner({ src, children, className, priority, fit, position }: { src: string; children: ReactNode; className?: string; priority?: boolean; fit?: string; position?: string }) {
   return (
     <section className={cx("relative isolate overflow-hidden rounded-2xl bg-night text-white", className)}>
-      <CoverImage src={src} priority={priority} className="absolute inset-0 -z-10 size-full object-cover" sizes="(min-width: 1024px) 1024px, 100vw" />
+      <CoverImage src={src} priority={priority} fit={fit} position={position} className="absolute inset-0 -z-10 size-full" sizes="(min-width: 1024px) 1024px, 100vw" />
       <div className="photo-scrim absolute inset-0 -z-10" />
       {children}
     </section>
   );
 }
 
-/** Bundled photos go through next/image; organizer-supplied URLs render as plain <img>. */
-export function CoverImage({ src, className, sizes, priority, alt = "" }: { src: string; className?: string; sizes?: string; priority?: boolean; alt?: string }) {
-  if (src.startsWith("/")) return <Image src={src} alt={alt} fill sizes={sizes ?? "100vw"} priority={priority} className={className} />;
+const FIT_CLASS = { cover: "object-cover", contain: "object-contain" } as const;
+const POSITION_CLASS = { top: "object-top", center: "object-center", bottom: "object-bottom" } as const;
+
+/**
+ * An event cover. Bundled photos go through next/image; organizer-supplied URLs render as plain <img>.
+ * `fit`/`position` are the organizer's scaling choice: fill-and-crop with a focus, or show the whole image.
+ * Put it in a container with a background (e.g. bg-night) so "contain" letterboxing looks deliberate.
+ */
+export function CoverImage({ src, className, sizes, priority, alt = "", fit = "cover", position = "center" }: {
+  src: string; className?: string; sizes?: string; priority?: boolean; alt?: string; fit?: string; position?: string;
+}) {
+  const cls = cx(FIT_CLASS[fit as keyof typeof FIT_CLASS] ?? "object-cover", POSITION_CLASS[position as keyof typeof POSITION_CLASS] ?? "object-center", className);
+  if (src.startsWith("/")) return <Image src={src} alt={alt} fill sizes={sizes ?? "100vw"} priority={priority} className={cls} />;
   // eslint-disable-next-line @next/next/no-img-element -- arbitrary organizer-provided hosts
-  return <img src={src} alt={alt} className={className} />;
+  return <img src={src} alt={alt} className={cls} />;
 }
 
 export function Card({ title, description, actions, children, className }: { title?: ReactNode; description?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string }) {

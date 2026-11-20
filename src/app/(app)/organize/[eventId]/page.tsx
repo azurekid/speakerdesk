@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import { ActionButton, CopyButton } from "@/components/form-controls";
+import { ActionButton } from "@/components/form-controls";
+import { ShareButtons } from "@/components/share";
 import { Badge, ButtonLink, Card, DecisionBadge, formatDate, Skeleton } from "@/components/ui";
 import { HEALTH_LABELS, HEALTH_STYLES } from "@/lib/runbook";
 import { getRunbook } from "@/lib/runbook-queries";
@@ -60,17 +61,21 @@ async function Overview({ params }: { params: Params }) {
               {state === "upcoming" && <p>Published — opens {formatDate(event.cfpOpensAt)}.</p>}
               {state === "open" && <p>Accepting proposals{event.cfpClosesAt ? ` until ${formatDate(event.cfpClosesAt)}` : ""}.</p>}
               {state === "closed" && <p>Closed on {formatDate(event.cfpClosesAt)}.</p>}
-              {state !== "draft" && (
-                <div className="mt-2 flex items-center gap-2">
-                  <code className="rounded bg-neutral-100 px-2 py-1 text-xs">{publicUrl}</code>
-                  <CopyButton text={publicUrl} label="Copy link" />
-                </div>
-              )}
+              {state !== "draft" && <code className="mt-2 inline-block break-all rounded bg-neutral-100 px-2 py-1 text-xs">{publicUrl}</code>}
             </div>
             <ActionButton action={setCfpPublished.bind(null, event.id, !event.cfpPublished)} variant={event.cfpPublished ? "secondary" : "accent"}>
               {event.cfpPublished ? "Unpublish CfP" : "Publish CfP"}
             </ActionButton>
           </div>
+          {(state === "open" || state === "upcoming") && (
+            <ShareButtons
+              title="Promote your call for papers"
+              className="mt-5 border-t border-line pt-4"
+              url={publicUrl}
+              text={`Call for papers ${state === "open" ? "open" : `opens ${formatDate(event.cfpOpensAt)}`}: ${event.name}${event.cfpClosesAt ? ` — submit by ${formatDate(event.cfpClosesAt)}` : ""}`}
+              subject={`Speak at ${event.name}`}
+            />
+          )}
         </Card>
       )}
 

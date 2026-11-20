@@ -6,12 +6,30 @@ import { Suspense } from "react";
 import { ActionButton } from "@/components/form-controls";
 import { Badge, ButtonLink, buttonClass, CfpBadge, ExternalLink, formatDate, formatDateRange, PhotoBanner, Skeleton, StatusBadge } from "@/components/ui";
 import { VenueMap } from "@/components/venue-map";
+import { ShareButtons, ShareMenu } from "@/components/share";
 import { withdrawProposal } from "@/lib/actions/proposals";
+import { appUrl } from "@/lib/app-url";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/dal";
 import { cfpState, FORMAT_LABELS, LEVEL_LABELS, eventWhere } from "@/lib/domain";
 
-export const metadata: Metadata = { title: "Event" };
+/** Title, description and cover for link previews (LinkedIn, X, Slack, WhatsApp…). */
+export async function generateMetadata({ params }: PageProps<"/events/[slug]">): Promise<Metadata> {
+  const { slug } = await params;
+  const event = await prisma.event.findUnique({ where: { slug } });
+  if (!event || (!event.cfpPublished && !event.programPublished)) return { title: "Event" };
+  const description = (event.tagline || event.description || `${event.name} on SpeakerDesk`).slice(0, 200);
+  const url = `${appUrl()}/events/${event.slug}`;
+  const image = event.coverImage.startsWith("/") ? `${appUrl()}${event.coverImage}` : event.coverImage;
+  const title = cfpState(event) === "open" ? `Call for papers: ${event.name}` : event.name;
+  return {
+    title: event.name,
+    description,
+    alternates: { canonical: url },
+    openGraph: { type: "website", url, title, description, siteName: "SpeakerDesk", images: [{ url: image, alt: event.name }] },
+    twitter: { card: "summary_large_image", title, description, images: [image] },
+  };
+}
 
 type Params = PageProps<"/events/[slug]">["params"];
 type SearchParams = PageProps<"/events/[slug]">["searchParams"];
@@ -34,7 +52,7 @@ async function EventDetail({ params, searchParams }: { params: Params; searchPar
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-8">
-      <PhotoBanner src={event.coverImage} priority className="min-h-[380px]">
+      <PhotoBanner src={event.coverImage} fit={event.coverFit} position={event.coverPosition} priority className="min-h-[380px]">
         <div className="flex min-h-[380px] flex-col justify-end p-8 sm:p-12">
           <div className="mb-4"><CfpBadge state={state} /></div>
           <h1 className="max-w-3xl font-display text-5xl font-semibold leading-[1.02] tracking-tighter tracking-tight">{event.name}</h1>
@@ -74,11 +92,18 @@ async function EventDetail({ params, searchParams }: { params: Params; searchPar
               <VenueMap latitude={event.latitude} longitude={event.longitude} title={event.venue || event.name} className="mt-4 h-72" />
             </section>
           )}
-          {event.programPublished && <Program eventId={event.id} />}
+          {event.programPublished && <Program event={event} />}
           <Sponsors eventId={event.id} />
         </div>
 
         <aside className="space-y-6 lg:sticky lg:top-8 lg:self-start">
+          <ShareButtons
+            title="Share this event"
+            url={`${appUrl()}/events/${event.slug}`}
+            text={state === "open" ? `Call for papers open: ${event.name}${event.cfpClosesAt ? ` (closes ${formatDate(event.cfpClosesAt)})` : ""}` : `${event.name} — ${[formatDateRange(event.startDate, event.endDate), eventWhere(event)].filter(Boolean).join(" · ")}`}
+            subject={event.name}
+            className="rounded-xl border border-line bg-surface p-5"
+          />
           <section className="rounded-xl border border-line bg-surface p-5">
             <h2 className="font-display tracking-tight text-xl font-semibold">Call for papers</h2>
             <dl className="mt-4 space-y-3 text-sm">
@@ -142,9 +167,9 @@ async function MyProposals({ eventId }: { eventId: string }) {
   );
 }
 
-async function Program({ eventId }: { eventId: string }) {
+async function Program({ event }: { event: { id: string; slug: string; name: string } }) {
   const sessions = await prisma.proposal.findMany({
-    where: { eventId, decision: "ACCEPTED", decisionPublished: true, withdrawn: false },
+    where: { eventId: event.id, decision: "ACCEPTED", decisionPublished: true, withdrawn: false },
     include: { speaker: { include: { profile: true } } },
     orderBy: [{ track: "asc" }, { title: "asc" }],
   });
@@ -156,19 +181,26 @@ async function Program({ eventId }: { eventId: string }) {
         {sessions.map((s) => {
           const p = s.speaker.profile;
           return (
-            <li key={s.id} className="flex gap-4 py-5">
+            <li key={s.id} id={`session-${s.id}`} className="flex scroll-mt-6 gap-4 py-5">
               {p?.headshotSquareUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element -- arbitrary CDN hosts
                 <img src={p.headshotSquareUrl} alt="" className="size-14 shrink-0 rounded-full object-cover" />
               ) : (
                 <span className="grid size-14 shrink-0 place-items-center rounded-full bg-neutral-200 font-display tracking-tight text-lg">{(p?.fullName || s.speaker.name)[0]}</span>
               )}
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="text-xs text-brand-700">{[s.track, FORMAT_LABELS[s.format], `${s.durationMinutes} min`, LEVEL_LABELS[s.level]].filter(Boolean).join(" · ")}</p>
                 <h3 className="mt-1 font-display tracking-tight text-xl font-semibold">{s.title}</h3>
                 <p className="text-sm text-ink-soft">{p?.fullName || s.speaker.name}{p?.tagline && `, ${p.tagline}`}</p>
                 <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-ink-soft">{s.abstract}</p>
-                {p?.websiteUrl && <ExternalLink href={p.websiteUrl} className="mt-1 inline-block text-xs">Speaker website</ExternalLink>}
+                <div className="mt-1 flex flex-wrap items-center gap-x-4">
+                  {p?.websiteUrl && <ExternalLink href={p.websiteUrl} className="text-xs">Speaker website</ExternalLink>}
+                  <ShareMenu
+                    url={`${appUrl()}/events/${event.slug}#session-${s.id}`}
+                    text={`“${s.title}” by ${p?.fullName || s.speaker.name} at ${event.name}`}
+                    subject={`${s.title} — ${event.name}`}
+                  />
+                </div>
               </div>
             </li>
           );

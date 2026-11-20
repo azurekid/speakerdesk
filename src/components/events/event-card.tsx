@@ -10,6 +10,8 @@ export type EventCardData = {
   format: EventFormat;
   onlinePlatform: string;
   coverImage: string;
+  coverFit: string;
+  coverPosition: string;
   startDate: Date | null;
   endDate: Date | null;
   cfpPublished: boolean;
@@ -22,8 +24,8 @@ export function EventCard({ event, href }: { event: EventCardData; href?: string
   const state = cfpState(event);
   return (
     <Link href={href ?? `/events/${event.slug}`} className="group block overflow-hidden rounded-xl border border-line bg-surface transition-colors hover:border-ink/30">
-      <div className="relative aspect-[16/9] overflow-hidden bg-neutral-200">
-        <CoverImage src={event.coverImage} sizes="(min-width: 1024px) 33vw, 100vw" className="object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
+      <div className="relative aspect-[16/9] overflow-hidden bg-night">
+        <CoverImage src={event.coverImage} fit={event.coverFit} position={event.coverPosition} sizes="(min-width: 1024px) 33vw, 100vw" className="transition-transform duration-500 group-hover:scale-[1.03]" />
         <div className="absolute left-3 top-3"><CfpBadge state={state} /></div>
       </div>
       <div className="p-4">

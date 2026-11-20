@@ -2,24 +2,24 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FormMessage, SubmitButton, TagInput, useFormAction } from "@/components/form-controls";
 import { VenuePicker } from "@/components/organizer/venue-picker";
-import { buttonClass, Card, cx, Field } from "@/components/ui";
+import { buttonClass, Card, CoverImage, cx, Field } from "@/components/ui";
 import { CONFIRMATION_PLACEHOLDERS, DEFAULT_CONFIRMATION_BODY, DEFAULT_CONFIRMATION_SUBJECT, renderConfirmation } from "@/lib/confirmation-email";
-import { COVER_IMAGES, EVENT_FORMAT_LABELS, EVENT_FORMATS, type EventFormat, FORMAT_LABELS, TALK_FORMATS, type TalkFormat } from "@/lib/domain";
+import { COVER_IMAGES, COVER_RECOMMENDED, type CoverFit, type CoverPosition, EVENT_FORMAT_LABELS, EVENT_FORMATS, type EventFormat, FORMAT_LABELS, TALK_FORMATS, type TalkFormat } from "@/lib/domain";
 import type { ActionState } from "@/lib/validation";
 
 export type EventFormValues = {
   name: string; tagline: string; description: string; format: EventFormat; onlinePlatform: string; location: string; venue: string; address: string; latitude: number | null; longitude: number | null;
-  website: string; coverImage: string;
+  website: string; coverImage: string; coverFit: CoverFit; coverPosition: CoverPosition;
   startDate: string; endDate: string; cfpOpensAt: string; cfpClosesAt: string; cfpGuidelines: string;
   tracks: string[]; formats: TalkFormat[]; titleLimit: string; abstractLimit: string; maxProposalsPerSpeaker: number; blindReview: boolean;
   confirmationEmailEnabled: boolean; confirmationEmailSubject: string; confirmationEmailBody: string;
 };
 
 export const EMPTY_EVENT: EventFormValues = {
-  name: "", tagline: "", description: "", format: "IN_PERSON", onlinePlatform: "", location: "", venue: "", address: "", latitude: null, longitude: null, website: "", coverImage: COVER_IMAGES[0].src,
+  name: "", tagline: "", description: "", format: "IN_PERSON", onlinePlatform: "", location: "", venue: "", address: "", latitude: null, longitude: null, website: "", coverImage: COVER_IMAGES[0].src, coverFit: "cover", coverPosition: "center",
   startDate: "", endDate: "", cfpOpensAt: "", cfpClosesAt: "", cfpGuidelines: "",
   tracks: [], formats: ["SESSION", "WORKSHOP", "LIGHTNING_TALK"], titleLimit: "", abstractLimit: "1000", maxProposalsPerSpeaker: 3, blindReview: false,
   confirmationEmailEnabled: true, confirmationEmailSubject: "", confirmationEmailBody: "",
@@ -33,9 +33,7 @@ export function EventForm({ values, action, submitLabel, cancelHref }: {
 }) {
   const [state, onSubmit, pending] = useFormAction(action, undefined);
   const e = state?.errors;
-  const [cover, setCover] = useState(values.coverImage);
   const [format, setFormat] = useState<EventFormat>(values.format);
-  const isCustom = !COVER_IMAGES.some((c) => c.src === cover);
   const input = (name: keyof EventFormValues, label: string, opts: { type?: string; placeholder?: string; className?: string; hint?: string } = {}) => (
     <Field label={label} htmlFor={name} error={e?.[name]} className={opts.className} hint={opts.hint}>
       <input id={name} name={name} type={opts.type ?? "text"} defaultValue={String(values[name] ?? "")} placeholder={opts.placeholder} aria-invalid={e?.[name] ? true : undefined} className="control" />
@@ -73,26 +71,7 @@ export function EventForm({ values, action, submitLabel, cancelHref }: {
         </div>
       </Card>
 
-      <Card title="Cover photo" description="Shown on your public event page and in the list of open calls.">
-        <input type="hidden" name="coverImage" value={cover} />
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-          {COVER_IMAGES.map((c) => (
-            <button
-              key={c.src}
-              type="button"
-              onClick={() => setCover(c.src)}
-              aria-pressed={cover === c.src}
-              className={cx("relative aspect-[4/3] overflow-hidden rounded-md ring-offset-2 transition", cover === c.src ? "ring-2 ring-brand-600" : "opacity-80 hover:opacity-100")}
-            >
-              <Image src={c.src} alt={c.label} fill sizes="200px" className="object-cover" />
-              <span className="absolute inset-x-0 bottom-0 bg-black/55 px-2 py-1 text-left text-[11px] text-paper">{c.label}</span>
-            </button>
-          ))}
-        </div>
-        <Field label="…or use your own image URL" htmlFor="customCover" error={e?.coverImage} className="mt-4">
-          <input id="customCover" type="url" placeholder="https://your-cdn.example/cover.jpg" defaultValue={isCustom ? cover : ""} onChange={(ev) => ev.target.value && setCover(ev.target.value)} className="control" />
-        </Field>
-      </Card>
+      <CoverPicker values={values} error={e?.coverImage} />
 
       <Card title="Call for papers" description="Speakers see these rules on the event page, and SpeakerDesk enforces them when they submit.">
         <div className="grid gap-4 sm:grid-cols-2">
@@ -179,6 +158,131 @@ function ConfirmationEmail({ values, errors }: { values: EventFormValues; errors
                 part === "Open your speaker dashboard: #" ? <span key={i} className="my-1 inline-block rounded-md bg-ink px-3 py-1.5 text-xs font-semibold text-paper">Open speaker dashboard</span> : part,
               )}
             </div>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+/**
+ * Cover photo: a bundled photo or the organizer's own image URL, with the recommended size,
+ * a warning when an image is too small or oddly shaped, the scaling choice, and previews of
+ * every place the cover appears (they crop differently).
+ */
+function CoverPicker({ values, error }: { values: EventFormValues; error?: string[] }) {
+  const [cover, setCover] = useState(values.coverImage);
+  const [fit, setFit] = useState<CoverFit>(values.coverFit);
+  const [position, setPosition] = useState<CoverPosition>(values.coverPosition);
+  const [size, setSize] = useState<{ w: number; h: number } | null>(null);
+  const [broken, setBroken] = useState(false);
+  const isCustom = !COVER_IMAGES.some((c) => c.src === cover);
+  const R = COVER_RECOMMENDED;
+
+  // Read the real pixel size of the organizer's image. Done in an effect, not with <img onLoad>,
+  // because a server-rendered image can finish loading before React attaches the handler.
+  useEffect(() => {
+    if (!isCustom) return;
+    const probe = new window.Image();
+    probe.onload = () => setSize({ w: probe.naturalWidth, h: probe.naturalHeight });
+    probe.onerror = () => setBroken(true);
+    probe.src = cover;
+    return () => {
+      probe.onload = null;
+      probe.onerror = null;
+    };
+  }, [cover, isCustom]);
+
+  const ratio = size ? size.w / size.h : null;
+  const warnings = !isCustom || !size
+    ? []
+    : [
+        ...(size.w < R.minWidth || size.h < R.minHeight ? [`It's ${size.w} × ${size.h} px — smaller than ${R.minWidth} × ${R.minHeight}, so it will look blurry on large screens.`] : []),
+        ...(ratio && (ratio < 1.3 || ratio > 2.2) && fit === "cover" ? [`It isn't close to 16:9 (it's ${ratio.toFixed(2)}:1), so a lot will be cropped. Consider “Show the whole image”.`] : []),
+      ];
+
+  const preview = (label: string, aspect: string, w: string) => (
+    <figure className={w}>
+      <div className={cx("relative overflow-hidden rounded-md bg-night", aspect)}>
+        <CoverImage src={cover} fit={fit} position={position} sizes="300px" className="absolute inset-0 size-full" />
+      </div>
+      <figcaption className="mt-1 text-[11px] text-ink-soft">{label}</figcaption>
+    </figure>
+  );
+
+  return (
+    <Card title="Cover photo" description="Shown on your public event page, in the list of open calls and in link previews when people share your event.">
+      <input type="hidden" name="coverImage" value={cover} />
+      <input type="hidden" name="coverFit" value={fit} />
+      <input type="hidden" name="coverPosition" value={position} />
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+        {COVER_IMAGES.map((c) => (
+          <button
+            key={c.src}
+            type="button"
+            onClick={() => { setCover(c.src); setSize(null); setBroken(false); }}
+            aria-pressed={cover === c.src}
+            className={cx("relative aspect-[4/3] overflow-hidden rounded-md ring-offset-2 transition", cover === c.src ? "ring-2 ring-brand-600" : "opacity-80 hover:opacity-100")}
+          >
+            <Image src={c.src} alt={c.label} fill sizes="200px" className="object-cover" />
+            <span className="absolute inset-x-0 bottom-0 bg-black/60 px-2 py-1 text-left text-[11px] text-white">{c.label}</span>
+          </button>
+        ))}
+      </div>
+
+      <Field
+        label="…or use your own image URL"
+        htmlFor="customCover"
+        error={error}
+        className="mt-4"
+        hint={<>Recommended: <strong>{R.width} × {R.height} px</strong> (16:9), at least {R.minWidth} × {R.minHeight}. JPG or WebP, under 1 MB. Keep text and faces near the middle.</>}
+      >
+        <input
+          id="customCover"
+          type="url"
+          placeholder="https://your-cdn.example/cover.jpg"
+          defaultValue={isCustom ? cover : ""}
+          onChange={(ev) => { if (ev.target.value) { setCover(ev.target.value); setSize(null); setBroken(false); } }}
+          className="control"
+        />
+      </Field>
+      {isCustom && broken && <p className="mt-2 text-sm text-rose-700">That image couldn&apos;t be loaded. Check that the URL is public and points straight at an image.</p>}
+      {isCustom && size && !broken && warnings.length === 0 && <p className="mt-2 text-sm text-emerald-700">{size.w} × {size.h} px — looks good.</p>}
+      {warnings.map((w) => <p key={w} className="mt-2 text-sm text-amber-700">{w}</p>)}
+
+      <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_1.4fr]">
+        <div className="space-y-4">
+          <fieldset>
+            <legend className="mb-2 text-sm font-medium text-ink">Scaling</legend>
+            <div className="grid gap-2">
+              {([["cover", "Fill and crop", "Best for photos. Edges may be cut off on some screens."], ["contain", "Show the whole image", "Best for logos and posters. Adds dark bars where needed."]] as const).map(([v, label, hint]) => (
+                <label key={v} className="flex cursor-pointer items-start gap-3 rounded-md border border-line bg-surface px-3 py-2.5 text-sm has-checked:border-ink">
+                  <input type="radio" name="coverFitChoice" checked={fit === v} onChange={() => setFit(v)} className="mt-0.5 accent-ink" />
+                  <span><span className="font-medium">{label}</span><br /><span className="text-xs text-ink-soft">{hint}</span></span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          {fit === "cover" && (
+            <fieldset>
+              <legend className="mb-2 text-sm font-medium text-ink">Keep in view when cropping</legend>
+              <div className="flex gap-2">
+                {(["top", "center", "bottom"] as const).map((v) => (
+                  <label key={v} className="inline-flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-md border border-line bg-surface px-3 py-2 text-sm capitalize has-checked:border-ink has-checked:bg-neutral-50">
+                    <input type="radio" name="coverPositionChoice" checked={position === v} onChange={() => setPosition(v)} className="sr-only" />
+                    {v}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          )}
+        </div>
+        <div>
+          <p className="mb-2 text-sm font-medium text-ink">Preview</p>
+          <div className="flex flex-wrap items-end gap-3">
+            {preview("Event card (16:9)", "aspect-[16/9]", "w-40")}
+            {preview("Page banner, desktop", "aspect-[8/3]", "w-56")}
+            {preview("Page banner, phone", "aspect-square", "w-24")}
           </div>
         </div>
       </div>

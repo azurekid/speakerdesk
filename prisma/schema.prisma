@@ -320,6 +320,8 @@ model Event {
   longitude   Float?
   website     String    @default("")
   coverImage  String    @default("/images/events/main-stage.jpg")
+  coverFit      String  @default("cover")  // "cover" = fill and crop, "contain" = show the whole image
+  coverPosition String  @default("center") // focus when cropping: "top" | "center" | "bottom"
   startDate   DateTime?
   endDate     DateTime?
 

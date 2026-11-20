@@ -26,8 +26,8 @@ async function Header({ params }: { params: LayoutProps<"/organize/[eventId]">["
     <header className="mb-8">
       <Link href="/organize" className="text-xs text-ink-soft hover:text-ink">← My events</Link>
       <div className="mt-3 flex flex-wrap items-start gap-4 sm:items-center sm:gap-5">
-        <div className="relative size-14 shrink-0 overflow-hidden rounded-md sm:size-20">
-          <CoverImage src={event.coverImage} sizes="80px" className="object-cover" />
+        <div className="relative size-14 shrink-0 overflow-hidden rounded-md bg-night sm:size-20">
+          <CoverImage src={event.coverImage} fit={event.coverFit} position={event.coverPosition} sizes="80px" />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">

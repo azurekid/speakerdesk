@@ -3,14 +3,31 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { ShareMenu } from "@/components/share";
 import { InviteSpeakerForm } from "@/components/speakers/invite-speaker-form";
+import { appUrl } from "@/lib/app-url";
 import { ButtonLink, ExternalLink, FormatBadge, Skeleton } from "@/components/ui";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/dal";
 import { LEVEL_LABELS } from "@/lib/domain";
 import { PUBLIC_PROFILE_SELECT } from "@/lib/speaker-directory";
 
-export const metadata: Metadata = { title: "Speaker" };
+/** Link previews for a public speaker page: name, tagline and headshot. */
+export async function generateMetadata({ params }: PageProps<"/speakers/[slug]">): Promise<Metadata> {
+  const { slug } = await params;
+  const p = await prisma.speakerProfile.findFirst({ where: { slug, publicProfile: true }, select: { fullName: true, tagline: true, bioShort: true, headshotSquareUrl: true } });
+  if (!p) return { title: "Speaker" };
+  const url = `${appUrl()}/speakers/${slug}`;
+  const description = (p.tagline || p.bioShort || `${p.fullName} on SpeakerDesk`).slice(0, 200);
+  const images = p.headshotSquareUrl ? [{ url: p.headshotSquareUrl, alt: p.fullName }] : undefined;
+  return {
+    title: p.fullName,
+    description,
+    alternates: { canonical: url },
+    openGraph: { type: "profile", url, title: `${p.fullName} — speaker`, description, siteName: "SpeakerDesk", images },
+    twitter: { card: "summary", title: p.fullName, description, images: images?.map((i) => i.url) },
+  };
+}
 
 type Props = PageProps<"/speakers/[slug]">;
 
@@ -47,7 +64,10 @@ async function Speaker({ params }: { params: Props["params"] }) {
             <span className="grid size-32 place-items-center rounded-full bg-neutral-100 text-4xl font-semibold">{p.fullName[0]}</span>
           )}
           <div className="min-w-0">
-            <h1 className="text-4xl font-semibold tracking-tight">{p.fullName}</h1>
+            <div className="flex flex-wrap items-center gap-x-3">
+              <h1 className="text-4xl font-semibold tracking-tight">{p.fullName}</h1>
+              <ShareMenu label="Share profile" url={`${appUrl()}/speakers/${slug}`} text={`${p.fullName}${p.tagline ? ` — ${p.tagline}` : ""}`} subject={`${p.fullName} on SpeakerDesk`} />
+            </div>
             {p.pronouns && <p className="text-sm text-ink-soft">{p.pronouns}</p>}
             <p className="mt-1 text-lg text-ink-soft">{p.tagline}</p>
             <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-ink-soft">
@@ -80,7 +100,7 @@ async function Speaker({ params }: { params: Props["params"] }) {
           ) : (
             <ul className="mt-4 space-y-4">
               {talks.map((t) => (
-                <li key={t.id} id={`talk-${t.id}`} className="rounded-2xl border border-line bg-surface p-6">
+                <li key={t.id} id={`talk-${t.id}`} className="scroll-mt-6 rounded-2xl border border-line bg-surface p-5 sm:p-6">
                   <div className="flex flex-wrap items-center gap-2 text-xs text-ink-soft">
                     <FormatBadge format={t.format} />
                     <span className="inline-flex items-center gap-1"><Clock className="size-3.5" />{t.durationMinutes} min</span>
@@ -97,6 +117,7 @@ async function Speaker({ params }: { params: Props["params"] }) {
                     {t.tags.length > 0 && <span>{t.tags.map((x) => `#${x}`).join(" ")}</span>}
                     {t.submissions.length > 0 && <span>Given at {[...new Set(t.submissions.map((s) => s.eventName))].slice(0, 3).join(", ")}</span>}
                     {t.videoUrl && <a href={t.videoUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-ink hover:text-brand-700"><PlayCircle className="size-3.5" />Watch a recording</a>}
+                    <span className="ml-auto"><ShareMenu url={`${appUrl()}/speakers/${slug}#talk-${t.id}`} text={`“${t.title}” — a talk by ${p.fullName}`} subject={`${t.title} — ${p.fullName}`} /></span>
                   </div>
                 </li>
               ))}
