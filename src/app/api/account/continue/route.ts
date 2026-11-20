@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { appUrl } from "@/lib/app-url";
 import { getCurrentUser, getPrimaryRole } from "@/lib/dal";
 
 const HOME = { SPEAKER: "/dashboard", ORGANIZER: "/organize", SPONSOR: "/sponsor" } as const;
@@ -17,20 +18,21 @@ function roleFor(path: string) {
  * Without one: new accounts pick what they came for on /welcome, returning users go home.
  */
 export async function GET(request: Request) {
-  const url = new URL(request.url);
+  const url = new URL(request.url); // query string only; redirects use the public origin
+  const origin = appUrl();
   const user = await getCurrentUser();
-  if (!user) return NextResponse.redirect(new URL("/sign-in", url));
+  if (!user) return NextResponse.redirect(new URL("/sign-in", origin));
 
   const raw = url.searchParams.get("next") ?? "";
   const next = raw.startsWith("/") && !raw.startsWith("//") ? raw : null;
   if (next) {
     const role = roleFor(next);
     if (role) await prisma.user.update({ where: { id: user.id }, data: { primaryRole: role } });
-    return NextResponse.redirect(new URL(next, url));
+    return NextResponse.redirect(new URL(next, origin));
   }
   const status = await prisma.user.findUnique({ where: { id: user.id }, select: { onboardedAt: true, termsAcceptedAt: true } });
   if (url.searchParams.get("new") === "1" || (!status?.onboardedAt && !status?.termsAcceptedAt)) {
-    return NextResponse.redirect(new URL("/onboarding", url));
+    return NextResponse.redirect(new URL("/onboarding", origin));
   }
-  return NextResponse.redirect(new URL(HOME[await getPrimaryRole(user.id)], url));
+  return NextResponse.redirect(new URL(HOME[await getPrimaryRole(user.id)], origin));
 }

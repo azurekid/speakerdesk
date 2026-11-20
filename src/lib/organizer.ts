@@ -35,6 +35,4 @@ export function slugify(name: string) {
   return `${base}-${Math.random().toString(36).slice(2, 6)}`;
 }
 
-export function appUrl() {
-  return (process.env.BETTER_AUTH_URL ?? "http://localhost:3000").replace(/\/+$/, "");
-}
+export { appUrl } from "@/lib/app-url";

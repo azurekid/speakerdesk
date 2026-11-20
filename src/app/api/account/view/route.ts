@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { appUrl } from "@/lib/app-url";
 import { getCurrentUser } from "@/lib/dal";
 
 /**
@@ -10,7 +11,8 @@ import { getCurrentUser } from "@/lib/dal";
 const HOME = { SPEAKER: "/dashboard", ORGANIZER: "/organize", SPONSOR: "/sponsor" } as const;
 
 export async function GET(request: Request) {
-  const url = new URL(request.url);
+  const url = new URL(request.url); // query string only; redirects use the public origin
+  const origin = appUrl();
   const param = url.searchParams.get("role");
   const role = param === "organizer" ? "ORGANIZER" : param === "sponsor" ? "SPONSOR" : "SPEAKER";
   const rawNext = url.searchParams.get("next") ?? "";
@@ -18,10 +20,10 @@ export async function GET(request: Request) {
 
   const user = await getCurrentUser();
   if (!user) {
-    const signIn = new URL("/sign-in", url);
+    const signIn = new URL("/sign-in", origin);
     signIn.searchParams.set("next", next);
     return NextResponse.redirect(signIn);
   }
   await prisma.user.update({ where: { id: user.id }, data: { primaryRole: role } });
-  return NextResponse.redirect(new URL(next, url));
+  return NextResponse.redirect(new URL(next, origin));
 }
