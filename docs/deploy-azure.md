@@ -8,7 +8,7 @@ Everything in this guide comes from three files in the repo:
 | --- | --- |
 | [`infra/main.bicep`](../infra/main.bicep) | Every Azure resource SpeakerDesk needs, in one resource group |
 | [`infra/main.bicepparam`](../infra/main.bicepparam) | Parameters. Secrets are read from environment variables, so they never land in git |
-| [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) | CI/CD on every push to `main`: check → build image → migrate database → roll out → smoke test |
+| [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) | CI/CD on every push to `main`: check → provision infrastructure → build image → migrate database → roll out → smoke test |
 
 ---
 
@@ -147,8 +147,6 @@ npm run db:deploy        # prisma migrate deploy — applies everything in prism
 az postgres flexible-server firewall-rule delete -g "$RG" -n "$PG_SERVER" --rule-name my-laptop --yes -o none
 ```
 
-Keep `DATABASE_URL` handy: CI needs it as a secret (section 5).
-
 ### 3.5 Phase 2: deploy the app
 
 ```bash
@@ -209,14 +207,19 @@ Sign up on the site with an address listed in `SPEAKERDESK_ADMIN_EMAILS`. That a
 On every push to `main` the workflow does the following:
 
 1. Typechecks and lints.
-2. Builds the image in ACR, tagged with the commit SHA.
-3. Opens the database firewall for the runner's IP only, runs `prisma migrate deploy`, and closes the firewall again.
-4. Rolls out the new image with `az containerapp update`.
-5. Polls `/api/health?deep=1` until the new revision is healthy.
+2. Creates the resource group (if missing) and deploys `infra/main.bicep` without the container app (phase 1). This is idempotent: it creates missing resources and updates changed ones.
+3. Builds the image in ACR, tagged with the commit SHA.
+4. Opens the database firewall for the runner's IP only, runs `prisma migrate deploy`, and closes the firewall again.
+5. Deploys `infra/main.bicep` again with the new image (phase 2), which rolls out the app.
+6. Polls `/api/health?deep=1` until the new revision is healthy.
+
+So **a brand-new subscription needs no manual first deployment**: set up the identity and settings below, push, and the pipeline provisions everything. Sections 3.1 to 3.5 are only needed if you'd rather bootstrap by hand.
 
 It signs in to Azure with **OpenID Connect**, so no Azure password or key is stored in GitHub.
 
 ### 5.1 Create the deployment identity
+
+Because the pipeline creates the resource group and the Bicep template assigns the `AcrPull` role, the identity needs rights on the **subscription**: **Contributor** plus **User Access Administrator** (or **Owner**).
 
 ```bash
 export GH_REPO=your-org/speakerdesk           # owner/name on GitHub
@@ -231,10 +234,13 @@ az ad app federated-credential create --id "$APP_ID" --parameters "{
   \"audiences\": [\"api://AzureADTokenExchange\"]
 }"
 
-# Contributor on the resource group covers ACR builds, firewall rules and Container App updates.
-az role assignment create --assignee "$APP_ID" --role Contributor \
-  --scope "$(az group show -n "$RG" --query id -o tsv)"
+SUB_ID=$(az account show --query id -o tsv)
+for role in Contributor "User Access Administrator"; do
+  az role assignment create --assignee "$APP_ID" --role "$role" --scope "/subscriptions/$SUB_ID"
+done
 ```
+
+Register the resource providers once (section 2) as well. The pipeline doesn't do that.
 
 ### 5.2 Add secrets and variables to GitHub
 
@@ -243,16 +249,23 @@ Create a **`production`** environment in the repository settings (*Settings → 
 ```bash
 gh secret set AZURE_CLIENT_ID       --env production --body "$APP_ID"
 gh secret set AZURE_TENANT_ID       --env production --body "$(az account show --query tenantId -o tsv)"
-gh secret set AZURE_SUBSCRIPTION_ID --env production --body "$(az account show --query id -o tsv)"
-gh secret set DATABASE_URL          --env production --body "$DATABASE_URL"
+gh secret set AZURE_SUBSCRIPTION_ID --env production --body "$SUB_ID"
 
-gh variable set AZURE_RESOURCE_GROUP --body "$RG"
-gh variable set ACR_NAME             --body "$ACR_NAME"
-gh variable set CONTAINER_APP_NAME   --body speakerdesk
-gh variable set POSTGRES_SERVER_NAME --body "$PG_SERVER"
+# Read by infra/main.bicepparam. Generate once and keep them: rotating the auth secret signs everyone out.
+gh secret set SPEAKERDESK_PG_PASSWORD  --env production --body "$(openssl rand -base64 24 | tr -d '/+=')Aa1"
+gh secret set SPEAKERDESK_AUTH_SECRET  --env production --body "$(openssl rand -base64 32)"
+
+gh variable set AZURE_RESOURCE_GROUP --env production --body speakerdesk-prod
+gh variable set AZURE_LOCATION       --env production --body westeurope
+gh variable set ADMIN_EMAILS         --env production --body "you@example.com"
+gh variable set PUBLIC_URL           --env production --body ""   # custom domain, e.g. https://speakerdesk.example.com (section 4)
 ```
 
-Push to `main` (or run the workflow manually from the *Actions* tab) to deploy.
+Optional sign-in providers (section 6): set `OAUTH_<PROVIDER>_CLIENT_ID` and `OAUTH_<PROVIDER>_CLIENT_SECRET` as environment secrets, for `GITHUB`, `GOOGLE`, `LINKEDIN` and `MICROSOFT`.
+
+Push to `main` (or run the workflow manually from the *Actions* tab) to deploy. Resource names (registry, database server) are derived from the resource group, so the workflow reads them from the Bicep outputs. You don't configure them.
+
+> **Keep `PUBLIC_URL` set once you use a custom domain.** Every pipeline run redeploys the template, and an empty value falls back to the default `*.azurecontainerapps.io` URL, which breaks sign-in.
 
 > **Migrations must be backward compatible.** They run *before* the new image rolls out, so the old revision briefly runs against the new schema. Add columns as nullable or with defaults. To rename or drop a column, release in two steps: first stop using it, then remove it.
 
@@ -272,7 +285,7 @@ Passcode sign-in (a 6-digit code by email) always works. Email + password is on 
 Export the credentials and redeploy:
 
 ```bash
-export GITHUB_CLIENT_ID=… GITHUB_CLIENT_SECRET=…   # likewise GOOGLE_*, LINKEDIN_*, MICROSOFT_*
+export SPEAKERDESK_GITHUB_CLIENT_ID=… SPEAKERDESK_GITHUB_CLIENT_SECRET=…   # likewise SPEAKERDESK_GOOGLE_*, _LINKEDIN_*, _MICROSOFT_*
 SPEAKERDESK_IMAGE="$ACR_SERVER/speakerdesk:$TAG" SPEAKERDESK_PUBLIC_URL="https://$DOMAIN" \
 az deployment group create -g "$RG" -f infra/main.bicep -p infra/main.bicepparam -n providers
 ```
@@ -321,8 +334,8 @@ The Bicep template sets all of these. Use this table when you change something b
 
 | Where | What goes there | How |
 | --- | --- | --- |
-| **Your shell** (`export …`) | Inputs to `infra/main.bicepparam`: `SPEAKERDESK_PG_PASSWORD`, `SPEAKERDESK_AUTH_SECRET`, `SPEAKERDESK_ADMIN_EMAILS`, `SPEAKERDESK_PUBLIC_URL`, `SPEAKERDESK_IMAGE`, `GITHUB_CLIENT_ID`… | `export NAME=value`, then run `az deployment group create`. The param file reads them with `readEnvironmentVariable()`; Bicep turns them into the container app's environment variables and secrets |
-| **GitHub** (*Settings → Environments → production*) | CI credentials and `DATABASE_URL` (used only for migrations) | `gh secret set NAME --env production`, `gh variable set NAME` (section 5.2) |
+| **Your shell** (`export …`) | Inputs to `infra/main.bicepparam`: `SPEAKERDESK_PG_PASSWORD`, `SPEAKERDESK_AUTH_SECRET`, `SPEAKERDESK_ADMIN_EMAILS`, `SPEAKERDESK_PUBLIC_URL`, `SPEAKERDESK_IMAGE`, `SPEAKERDESK_GITHUB_CLIENT_ID`… | `export NAME=value`, then run `az deployment group create`. The param file reads them with `readEnvironmentVariable()`; Bicep turns them into the container app's environment variables and secrets |
+| **GitHub** (*Settings → Environments → production*) | CI credentials plus the same inputs as the row above (`SPEAKERDESK_PG_PASSWORD`, `SPEAKERDESK_AUTH_SECRET`, `ADMIN_EMAILS`, `PUBLIC_URL`, `OAUTH_*`) | `gh secret set NAME --env production`, `gh variable set NAME` (section 5.2) |
 | **The running container app** | Any variable from the table below, changed in place | `az containerapp update --set-env-vars` (plain values) or `az containerapp secret set` + `--set-env-vars NAME=secretref:secret-name` (secrets) |
 | **Local development** | Everything, with dev defaults | Copy `.env.example` to `.env` |
 

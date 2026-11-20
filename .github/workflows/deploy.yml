@@ -1,4 +1,4 @@
-# Build, migrate and deploy SpeakerDesk to Azure Container Apps.
+# Provision (Bicep), build, migrate and deploy SpeakerDesk to Azure Container Apps.
 # Setup (one time): see docs/deploy-azure.md → "Continuous deployment".
 
 name: Deploy to Azure
@@ -56,10 +56,60 @@ jobs:
       - name: Allow az CLI extensions (containerapp) to install without prompting
         run: az config set extension.use_dynamic_install=yes_without_prompt
 
+      # Inputs for infra/main.bicepparam. Exported after `npm ci` so install scripts never see the secrets.
+      - name: Prepare Bicep parameters
+        run: |
+          for v in SPEAKERDESK_PG_PASSWORD SPEAKERDESK_AUTH_SECRET SPEAKERDESK_ADMIN_EMAILS SPEAKERDESK_PUBLIC_URL \
+                   SPEAKERDESK_GITHUB_CLIENT_ID SPEAKERDESK_GITHUB_CLIENT_SECRET SPEAKERDESK_GOOGLE_CLIENT_ID SPEAKERDESK_GOOGLE_CLIENT_SECRET \
+                   SPEAKERDESK_LINKEDIN_CLIENT_ID SPEAKERDESK_LINKEDIN_CLIENT_SECRET SPEAKERDESK_MICROSOFT_CLIENT_ID SPEAKERDESK_MICROSOFT_CLIENT_SECRET; do
+            echo "$v=${!v}" >> "$GITHUB_ENV"
+          done
+        env:
+          SPEAKERDESK_PG_PASSWORD: ${{ secrets.SPEAKERDESK_PG_PASSWORD }}
+          SPEAKERDESK_AUTH_SECRET: ${{ secrets.SPEAKERDESK_AUTH_SECRET }}
+          SPEAKERDESK_ADMIN_EMAILS: ${{ vars.ADMIN_EMAILS }}
+          SPEAKERDESK_PUBLIC_URL: ${{ vars.PUBLIC_URL }}
+          SPEAKERDESK_GITHUB_CLIENT_ID: ${{ secrets.OAUTH_GITHUB_CLIENT_ID }}
+          SPEAKERDESK_GITHUB_CLIENT_SECRET: ${{ secrets.OAUTH_GITHUB_CLIENT_SECRET }}
+          SPEAKERDESK_GOOGLE_CLIENT_ID: ${{ secrets.OAUTH_GOOGLE_CLIENT_ID }}
+          SPEAKERDESK_GOOGLE_CLIENT_SECRET: ${{ secrets.OAUTH_GOOGLE_CLIENT_SECRET }}
+          SPEAKERDESK_LINKEDIN_CLIENT_ID: ${{ secrets.OAUTH_LINKEDIN_CLIENT_ID }}
+          SPEAKERDESK_LINKEDIN_CLIENT_SECRET: ${{ secrets.OAUTH_LINKEDIN_CLIENT_SECRET }}
+          SPEAKERDESK_MICROSOFT_CLIENT_ID: ${{ secrets.OAUTH_MICROSOFT_CLIENT_ID }}
+          SPEAKERDESK_MICROSOFT_CLIENT_SECRET: ${{ secrets.OAUTH_MICROSOFT_CLIENT_SECRET }}
+
+      - name: Create resource group
+        run: |
+          az group create \
+            --name "${{ vars.AZURE_RESOURCE_GROUP }}" \
+            --location "${{ vars.AZURE_LOCATION }}" \
+            --output none
+
+      # Phase 1 — everything except the container app (it needs an image and a schema first).
+      # Incremental mode leaves an already-running app untouched.
+      - name: Deploy infrastructure (Bicep)
+        id: infra
+        env:
+          SPEAKERDESK_DEPLOY_APP: "false"
+        run: |
+          az deployment group create \
+            --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
+            --template-file infra/main.bicep \
+            --parameters infra/main.bicepparam \
+            --name "infra-${{ github.run_number }}" \
+            --output none
+          out() { az deployment group show -g "${{ vars.AZURE_RESOURCE_GROUP }}" -n "infra-${{ github.run_number }}" --query "properties.outputs.$1.value" -o tsv; }
+          {
+            echo "acr_name=$(out registryName)"
+            echo "acr_server=$(out registryLoginServer)"
+            echo "pg_server=$(out postgresServerName)"
+            echo "pg_host=$(out postgresHost)"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Build image in Azure Container Registry
         run: |
           az acr build \
-            --registry "${{ vars.ACR_NAME }}" \
+            --registry "${{ steps.infra.outputs.acr_name }}" \
             --image "$IMAGE_NAME:${{ github.sha }}" \
             --image "$IMAGE_NAME:latest" \
             .
@@ -71,34 +121,43 @@ jobs:
           RULE="gha-${{ github.run_id }}"
           az postgres flexible-server firewall-rule create \
             --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
-            --name "${{ vars.POSTGRES_SERVER_NAME }}" \
+            --name "${{ steps.infra.outputs.pg_server }}" \
             --rule-name "$RULE" --start-ip-address "$IP" --end-ip-address "$IP" --output none
           echo "rule=$RULE" >> "$GITHUB_OUTPUT"
 
       - name: Run database migrations
-        run: npm run db:deploy
+        run: |
+          ENCODED=$(node -p 'encodeURIComponent(process.env.SPEAKERDESK_PG_PASSWORD)')
+          echo "::add-mask::$ENCODED"
+          export DATABASE_URL="postgresql://speakerdesk:${ENCODED}@${{ steps.infra.outputs.pg_host }}:5432/speakerdesk?sslmode=require"
+          npm run db:deploy
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SPEAKERDESK_PG_PASSWORD: ${{ secrets.SPEAKERDESK_PG_PASSWORD }}
 
       - name: Close database firewall
         if: always() && steps.firewall.outputs.rule != ''
         run: |
           az postgres flexible-server firewall-rule delete \
             --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
-            --name "${{ vars.POSTGRES_SERVER_NAME }}" \
+            --name "${{ steps.infra.outputs.pg_server }}" \
             --rule-name "${{ steps.firewall.outputs.rule }}" --yes --output none
 
-      - name: Roll out the new image
+      # Phase 2 — deploy the container app with the new image.
+      - name: Deploy app (Bicep)
+        env:
+          SPEAKERDESK_DEPLOY_APP: "true"
+          SPEAKERDESK_IMAGE: ${{ steps.infra.outputs.acr_server }}/speakerdesk:${{ github.sha }}
         run: |
-          az containerapp update \
+          az deployment group create \
             --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
-            --name "${{ vars.CONTAINER_APP_NAME }}" \
-            --image "${{ vars.ACR_NAME }}.azurecr.io/$IMAGE_NAME:${{ github.sha }}" \
+            --template-file infra/main.bicep \
+            --parameters infra/main.bicepparam \
+            --name "app-${{ github.run_number }}" \
             --output none
 
       - name: Smoke test
         run: |
-          URL=$(az containerapp show -g "${{ vars.AZURE_RESOURCE_GROUP }}" -n "${{ vars.CONTAINER_APP_NAME }}" --query properties.configuration.ingress.fqdn -o tsv)
+          URL=$(az containerapp show -g "${{ vars.AZURE_RESOURCE_GROUP }}" -n "speakerdesk" --query properties.configuration.ingress.fqdn -o tsv)
           for i in $(seq 1 30); do
             if curl -fsS "https://$URL/api/health?deep=1"; then echo; echo "Healthy: https://$URL"; exit 0; fi
             sleep 10
