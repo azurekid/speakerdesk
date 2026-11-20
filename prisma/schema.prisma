@@ -1,0 +1,658 @@
+// SpeakerDesk data model.
+//
+// Naming note: a speaker's talk is modelled as `Talk` (shown as "Session" in the UI)
+// because `Session` is the Better Auth login-session table.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Better Auth tables ──────────────────────────────────────────────────────
+
+enum AccountRole {
+  SPEAKER
+  ORGANIZER
+  SPONSOR
+}
+
+model User {
+  id            String    @id
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  /// Which side of SpeakerDesk the person mainly uses; decides their home page and nav order.
+  primaryRole   AccountRole @default(SPEAKER)
+
+  // Better Auth admin plugin: platform role ("user" | "admin") and bans
+  role       String?   @default("user")
+  banned     Boolean?  @default(false)
+  banReason  String?
+  banExpires DateTime?
+
+  // Onboarding
+  termsAcceptedAt DateTime?
+  onboardedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sessions    Session[]
+  accounts    Account[]
+  profile     SpeakerProfile?
+  talks       Talk[]
+  submissions Submission[]
+
+  eventMemberships EventMember[]
+  speakerInvites   SpeakerInvitation[] @relation("InvitedSpeaker")
+  speakerInvitesSent SpeakerInvitation[] @relation("SpeakerInviter")
+  proposals        Proposal[]
+  reviews          Review[]
+  sponsorOrg       SponsorOrg?
+  adminActions     AdminAuditLog[] @relation("AdminActor")
+  invitesSent      EventInvite[] @relation("InvitedBy")
+  tasksAssigned    RunbookTask[] @relation("TaskAssignee")
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  impersonatedBy String? // admin user id when an admin is acting as this user
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+// ─── Speaker profile ─────────────────────────────────────────────────────────
+
+model SpeakerProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  fullName String  @default("")
+  tagline  String  @default("") // e.g. "Staff Engineer @ Contoso"
+  company  String  @default("")
+  jobTitle String  @default("")
+  pronouns String  @default("")
+  phone    String  @default("")
+
+  bioShort  String @default("") // ~300 chars
+  bioMedium String @default("") // ~1000 chars
+  bioLong   String @default("") // unlimited
+
+  country  String @default("")
+  city     String @default("")
+  timezone String @default("")
+
+  headshotSquareUrl String @default("")
+  headshotWideUrl   String @default("")
+
+  websiteUrl   String @default("")
+  linkedinUrl  String @default("")
+  githubUrl    String @default("")
+  xUrl         String @default("")
+  blueskyUrl   String @default("")
+  mastodonUrl  String @default("")
+  youtubeUrl   String @default("")
+  sessionizeUrl String @default("")
+
+  // Travel / logistics (often requested after acceptance)
+  homeAirport         String @default("") // IATA code
+  tshirtSize          String @default("")
+  dietaryRestrictions String @default("")
+  accessibilityNeeds  String @default("")
+  travelNotes         String @default("")
+
+  // Public speaker page (opt-in)
+  publicProfile    Boolean  @default(false)
+  slug             String?  @unique
+  openToInvites    Boolean  @default(true)
+  availabilityNote String   @default("") // e.g. "Happy to travel within Europe"
+  topics           String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("speaker_profile")
+}
+
+// ─── Talks ("Sessions" in the UI) ────────────────────────────────────────────
+
+enum TalkFormat {
+  SESSION
+  WORKSHOP
+  LIGHTNING_TALK
+  PANEL
+  KEYNOTE
+  OTHER
+}
+
+enum TalkLevel {
+  BEGINNER     // 100
+  INTERMEDIATE // 200
+  ADVANCED     // 300
+  EXPERT       // 400
+}
+
+model Talk {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title    String
+  subtitle String @default("")
+
+  abstractShort String @default("") // short pitch, ~500 chars
+  abstractLong  String @default("") // master abstract
+  outline       String @default("") // internal prep / attendee outline
+  takeaways     String[]             // 3–5 key takeaways
+
+  format          TalkFormat @default(SESSION)
+  durationMinutes Int        @default(45)
+  level           TalkLevel  @default(INTERMEDIATE)
+  primaryTrack    String     @default("")
+  tags            String[]
+  language        String     @default("en")
+
+  equipmentNeeds String @default("")
+  organizerNotes String @default("")
+  slidesUrl      String @default("")
+  videoUrl       String @default("") // best recording, social proof
+  coSpeakers     String @default("")
+
+  archived  Boolean @default(false)
+  published Boolean @default(false) // shown on the speaker's public page
+
+  // Fields that came from an import and don't map to the canonical schema.
+  customFields Json?
+  importSource String? // "sessionize" | "pretalx" | "csv" | "json"
+  importRef    String? // external id at the source
+
+  submissions Submission[]
+  proposals   Proposal[]
+  invitations SpeakerInvitation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, archived])
+  @@index([userId, importSource, importRef])
+  @@map("talk")
+}
+
+// ─── Submission tracker ──────────────────────────────────────────────────────
+
+enum SubmissionStatus {
+  DRAFT
+  SUBMITTED
+  ACCEPTED
+  WAITLISTED
+  REJECTED
+  WITHDRAWN
+}
+
+enum Platform {
+  SESSIONIZE
+  RUN_EVENTS
+  PRETALX
+  PAPERCALL
+  SPEAKERDESK
+  OTHER
+}
+
+model Submission {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  talkId String?
+  talk   Talk?   @relation(fields: [talkId], references: [id], onDelete: SetNull)
+
+  eventName     String
+  eventUrl      String           @default("")
+  cfpUrl        String           @default("")
+  platform      Platform         @default(OTHER)
+  location      String           @default("")
+  status        SubmissionStatus @default(DRAFT)
+  cfpDeadline   DateTime?
+  eventStart    DateTime?
+  eventEnd      DateTime?
+  submittedAt   DateTime?
+  decisionAt    DateTime?
+  recordingUrl  String           @default("")
+  notes         String           @default("")
+
+  platformData Json?   // raw data from imports / platform-specific answers
+  externalId   String?
+
+  // Set when this tracker entry mirrors a proposal sent through a SpeakerDesk CfP.
+  proposal Proposal?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, status])
+  @@index([talkId])
+  @@map("submission")
+}
+
+// ─── Organizer side: events, CfPs, proposals, reviews ───────────────────────
+
+enum EventRole {
+  OWNER     // everything, including the team and deleting the event
+  ORGANIZER // co-organizer: run the event (CfP, decisions, sponsors, runbook) but not the team
+  REVIEWER  // read and score proposals, see the runbook, update own tasks
+  VOLUNTEER // runbook only: see tasks, update own tasks
+}
+
+model Event {
+  id   String @id @default(cuid())
+  slug String @unique
+
+  name        String
+  tagline     String    @default("")
+  description String    @default("")
+  location    String    @default("") // "Amsterdam, NL" or "Online"
+  venue       String    @default("")
+  address     String    @default("")
+  latitude    Float?
+  longitude   Float?
+  website     String    @default("")
+  coverImage  String    @default("/images/events/main-stage.jpg")
+  startDate   DateTime?
+  endDate     DateTime?
+
+  // Call for papers
+  cfpPublished           Boolean      @default(false)
+  cfpOpensAt             DateTime?
+  cfpClosesAt            DateTime?
+  cfpGuidelines          String       @default("")
+  tracks                 String[]
+  formats                TalkFormat[]
+  titleLimit             Int?
+  abstractLimit          Int?
+  maxProposalsPerSpeaker Int          @default(3)
+  blindReview            Boolean      @default(false) // hide speaker identity from reviewers
+  programPublished       Boolean      @default(false) // show accepted sessions on the public page
+
+  // Sponsorship & budget (amounts in whole currency units)
+  currency        String  @default("EUR")
+  budgetTarget    Int?
+  otherIncome     Int     @default(0) // e.g. expected ticket revenue, grants
+  sponsorshipOpen Boolean @default(false) // prospectus visible to sponsors
+  prospectusIntro String  @default("")
+
+  members      EventMember[]
+  invites      EventInvite[]
+  proposals    Proposal[]
+  packages     SponsorPackage[]
+  sponsorships Sponsorship[]
+  tasks        RunbookTask[]
+  speakerInvitations SpeakerInvitation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([cfpPublished, cfpClosesAt])
+  @@map("event")
+}
+
+model EventMember {
+  id      String    @id @default(cuid())
+  eventId String
+  event   Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId  String
+  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role    EventRole @default(REVIEWER)
+  title   String    @default("") // e.g. "Sponsorship lead", "Head of AV"
+
+  createdAt DateTime @default(now())
+
+  @@unique([eventId, userId])
+  @@index([userId])
+  @@map("event_member")
+}
+
+enum Decision {
+  UNDECIDED
+  ACCEPTED
+  WAITLISTED
+  REJECTED
+}
+
+/// A session sent to an event's CfP. Content is a snapshot taken at submission
+/// time (and tailored by the speaker), so later edits to the library talk don't
+/// change what reviewers see.
+model Proposal {
+  id        String  @id @default(cuid())
+  eventId   String
+  event     Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  speakerId String
+  speaker   User    @relation(fields: [speakerId], references: [id], onDelete: Cascade)
+  talkId    String?
+  talk      Talk?   @relation(fields: [talkId], references: [id], onDelete: SetNull)
+
+  // Speaker-side tracker entry kept in sync with this proposal.
+  submissionId String?     @unique
+  submission   Submission? @relation(fields: [submissionId], references: [id], onDelete: SetNull)
+
+  title           String
+  abstract        String
+  takeaways       String[]
+  format          TalkFormat
+  durationMinutes Int
+  level           TalkLevel
+  track           String     @default("")
+  notes           String     @default("") // note to the organizers
+  requirements     String[]  // ids from PRESENTATION_REQUIREMENTS (src/lib/requirements.ts)
+  requirementsNote String    @default("")
+
+  invited           Boolean   @default(false) // came from an organizer's invitation
+  withdrawn         Boolean   @default(false)
+  decision          Decision  @default(UNDECIDED)
+  decisionPublished Boolean   @default(false) // speaker sees the decision only once published
+  decidedAt         DateTime?
+
+  reviews Review[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([eventId, decision])
+  @@index([speakerId])
+  @@map("proposal")
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  proposalId String
+  proposal   Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  reviewerId String
+  reviewer   User     @relation(fields: [reviewerId], references: [id], onDelete: Cascade)
+  score      Int      // 1–5
+  comment    String   @default("")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([proposalId, reviewerId])
+  @@map("review")
+}
+
+// ─── Sponsorship ─────────────────────────────────────────────────────────────
+
+enum PackageKind {
+  TIER  // headline packages: Platinum, Gold, Community…
+  ADDON // à-la-carte extras: coffee bar, lanyards, after-party…
+}
+
+model SponsorPackage {
+  id           String      @id @default(cuid())
+  eventId      String
+  event        Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  kind         PackageKind @default(TIER)
+  name         String
+  tagline      String      @default("")
+  price        Int
+  quantity     Int?        // null = unlimited
+  benefits     String[]    // what the sponsor gets
+  deliverables String[]    // what the sponsor must provide (logo, booth staff…)
+  featured     Boolean     @default(false)
+  published    Boolean     @default(true)
+  sortOrder    Int         @default(0)
+
+  items SponsorshipItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([eventId, kind])
+  @@map("sponsor_package")
+}
+
+/// A company profile owned by a sponsor account.
+model SponsorOrg {
+  id           String @id @default(cuid())
+  ownerId      String @unique
+  owner        User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name         String
+  website      String @default("")
+  logoUrl      String @default("")
+  description  String @default("")
+  contactName  String @default("")
+  contactEmail String @default("")
+
+  sponsorships Sponsorship[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("sponsor_org")
+}
+
+enum SponsorshipStatus {
+  APPLIED   // sponsor sent a request
+  APPROVED  // organizer confirmed — counts as committed budget
+  INVOICED
+  PAID
+  DECLINED
+  CANCELLED
+}
+
+model Sponsorship {
+  id           String            @id @default(cuid())
+  eventId      String
+  event        Event             @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  sponsorOrgId String
+  sponsorOrg   SponsorOrg        @relation(fields: [sponsorOrgId], references: [id], onDelete: Cascade)
+  status       SponsorshipStatus @default(APPLIED)
+
+  requirements          String[] // ids from SPONSOR_REQUIREMENTS
+  requirementsNote      String   @default("")
+  message               String   @default("")
+  organizerNote         String   @default("")
+  completedDeliverables String[]
+
+  items SponsorshipItem[]
+
+  decidedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([eventId, status])
+  @@index([sponsorOrgId])
+  @@map("sponsorship")
+}
+
+/// Line item with a price snapshot, so later price edits don't change agreed deals.
+model SponsorshipItem {
+  id            String          @id @default(cuid())
+  sponsorshipId String
+  sponsorship   Sponsorship     @relation(fields: [sponsorshipId], references: [id], onDelete: Cascade)
+  packageId     String?
+  package       SponsorPackage? @relation(fields: [packageId], references: [id], onDelete: SetNull)
+  kind          PackageKind
+  name          String
+  price         Int
+  deliverables  String[]
+
+  @@index([packageId])
+  @@map("sponsorship_item")
+}
+
+/// Invitation for someone to join an event team. Claimed automatically when a
+/// user with this email signs up, or via the invite link while signed in.
+model EventInvite {
+  id          String    @id @default(cuid())
+  eventId     String
+  event       Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  email       String
+  role        EventRole @default(REVIEWER)
+  title       String    @default("")
+  token       String    @unique
+  invitedById String?
+  invitedBy   User?     @relation("InvitedBy", fields: [invitedById], references: [id], onDelete: SetNull)
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@unique([eventId, email])
+  @@index([email])
+  @@map("event_invite")
+}
+
+// ─── Runbook ─────────────────────────────────────────────────────────────────
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  BLOCKED
+  DONE
+}
+
+enum TaskPriority {
+  LOW
+  NORMAL
+  HIGH
+}
+
+model RunbookTask {
+  id          String       @id @default(cuid())
+  eventId     String
+  event       Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  title       String
+  description String       @default("")
+  category    String       @default("General")
+  dueDate     DateTime?
+  status      TaskStatus   @default(TODO)
+  priority    TaskPriority @default(NORMAL)
+  assigneeId  String?
+  assignee    User?        @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  /// When set, status is derived from platform state (e.g. "cfp_published").
+  autoCheck   String?
+  completedAt DateTime?
+  sortOrder   Int          @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([eventId, status])
+  @@index([assigneeId])
+  @@map("runbook_task")
+}
+
+// ─── Speaker invitations (organizer → speaker) ───────────────────────────────
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  WITHDRAWN
+}
+
+model SpeakerInvitation {
+  id           String           @id @default(cuid())
+  eventId      String
+  event        Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  speakerId    String
+  speaker      User             @relation("InvitedSpeaker", fields: [speakerId], references: [id], onDelete: Cascade)
+  talkId       String?
+  talk         Talk?            @relation(fields: [talkId], references: [id], onDelete: SetNull)
+  invitedById  String?
+  invitedBy    User?            @relation("SpeakerInviter", fields: [invitedById], references: [id], onDelete: SetNull)
+  message      String           @default("")
+  status       InvitationStatus @default(PENDING)
+  responseNote String           @default("")
+  proposalId   String?
+  respondedAt  DateTime?
+  createdAt    DateTime         @default(now())
+
+  @@index([speakerId, status])
+  @@index([eventId])
+  @@map("speaker_invitation")
+}
+
+// ─── Platform operations ─────────────────────────────────────────────────────
+
+enum EmailStatus {
+  LOGGED // no mail service configured: only recorded here
+  SENT
+  FAILED
+}
+
+/// Every email the platform sends (passcodes, resets, notifications).
+/// Without a mail service configured, this outbox is how admins/devs see them.
+model OutboundEmail {
+  id        String      @id @default(cuid())
+  to        String
+  subject   String
+  text      String
+  kind      String      // "sign-in-code", "verify-email", "password-reset", "change-email", "notice"
+  status    EmailStatus @default(LOGGED)
+  error     String?
+  createdAt DateTime    @default(now())
+
+  @@index([to, createdAt])
+  @@index([createdAt])
+  @@map("outbound_email")
+}
+
+model AdminAuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actor      User?    @relation("AdminActor", fields: [actorId], references: [id], onDelete: SetNull)
+  action     String   // e.g. "user.ban", "user.set-password", "event.delete"
+  targetType String   // "user" | "event" | "sponsor"
+  targetId   String
+  summary    String   @default("")
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([targetType, targetId])
+  @@map("admin_audit_log")
+}

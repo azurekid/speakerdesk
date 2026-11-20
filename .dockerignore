@@ -1,0 +1,10 @@
+.git
+.next
+node_modules
+src/generated
+public/uploads
+.env*
+!.env.example
+npm-debug.log*
+Dockerfile
+.dockerignore

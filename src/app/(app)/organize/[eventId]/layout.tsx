@@ -1,0 +1,53 @@
+import { ExternalLink as ExternalIcon } from "lucide-react";
+import Link from "next/link";
+import { Suspense } from "react";
+import { EventTabs } from "@/components/organizer/controls";
+import { CfpBadge, CoverImage, formatDateRange } from "@/components/ui";
+import { cfpState } from "@/lib/domain";
+import { requireEventAccess } from "@/lib/organizer";
+import { ROLE_LABELS } from "@/lib/permissions";
+
+export default function EventWorkspaceLayout({ children, params }: LayoutProps<"/organize/[eventId]">) {
+  return (
+    <>
+      <Suspense fallback={<div className="mb-6 h-28 animate-pulse rounded-lg bg-neutral-200/60" />}>
+        <Header params={params} />
+      </Suspense>
+      {children}
+    </>
+  );
+}
+
+async function Header({ params }: { params: LayoutProps<"/organize/[eventId]">["params"] }) {
+  const { eventId } = await params;
+  const { event, role } = await requireEventAccess(eventId, "VOLUNTEER");
+  const state = cfpState(event);
+  return (
+    <header className="mb-8">
+      <Link href="/organize" className="text-xs text-ink-soft hover:text-ink">← My events</Link>
+      <div className="mt-3 flex flex-wrap items-center gap-5">
+        <div className="relative size-20 shrink-0 overflow-hidden rounded-md">
+          <CoverImage src={event.coverImage} sizes="80px" className="object-cover" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <CfpBadge state={state} />
+            <span className="text-xs text-ink-soft">You&apos;re {ROLE_LABELS[role].toLowerCase()}</span>
+          </div>
+          <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight">{event.name}</h1>
+          <p className="text-sm text-ink-soft">{formatDateRange(event.startDate, event.endDate)}{event.location && ` · ${event.location}`}</p>
+        </div>
+        {(event.cfpPublished || event.programPublished) && (
+          <Link href={`/events/${event.slug}`} target="_blank" className="inline-flex items-center gap-1 text-sm text-ink-soft hover:text-ink">
+            Public page <ExternalIcon className="size-3.5" />
+          </Link>
+        )}
+      </div>
+      <div className="mt-6">
+        <Suspense fallback={<div className="h-8 border-b border-line" />}>
+          <EventTabs eventId={eventId} role={role} />
+        </Suspense>
+      </div>
+    </header>
+  );
+}
