@@ -3,8 +3,8 @@ import { Suspense } from "react";
 import { getCurrentUser } from "@/lib/dal";
 
 const STYLES = {
-  dark: "rounded-lg bg-ink px-3.5 py-2 font-medium text-paper", // on the light public header
-  light: "rounded-lg bg-white px-3.5 py-2 font-medium text-night hover:bg-white/90", // on the photo hero
+  dark: "inline-flex min-h-10 items-center whitespace-nowrap rounded-lg bg-ink px-3.5 font-medium text-paper", // on the light public header
+  light: "inline-flex min-h-10 items-center whitespace-nowrap rounded-lg bg-white px-3.5 font-medium text-night hover:bg-white/90", // on the photo hero
 } as const;
 
 type Variant = keyof typeof STYLES;

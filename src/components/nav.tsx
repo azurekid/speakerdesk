@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  Building2, CalendarCheck, Download, Handshake, LayoutDashboard, type LucideIcon, Megaphone, Presentation, Store, Ticket, Upload, UserRound, Users, Mail, Search,
+  Building2, CalendarCheck, Download, Handshake, LayoutDashboard, LogOut, type LucideIcon, Megaphone, Presentation, Store, Ticket, Upload, UserRound, Users, Mail, Search,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -58,10 +58,10 @@ export function NavLinks({ role }: { role: NavRole }) {
 /** Plain list without an active state — the Suspense fallback for NavLinks. */
 export function NavList({ pathname = "", role = "SPEAKER" }: { pathname?: string; role?: NavRole }) {
   return (
-    <nav className="flex gap-1 overflow-x-auto md:flex-col md:gap-6">
+    <nav className="flex flex-col gap-6">
       {sectionsFor(role).map((section) => (
-        <div key={section.title} className="flex gap-1 md:flex-col md:gap-0.5">
-          <p className="mb-1 hidden px-3 text-xs font-medium text-neutral-400 md:block">{section.title}</p>
+        <div key={section.title} className="flex flex-col gap-0.5">
+          <p className="mb-1 px-3 text-xs font-medium text-neutral-400">{section.title}</p>
           {section.links.map(({ href, label, icon: Icon }) => {
             const active = href === "/organize" ? pathname === href || /^\/organize\/(?!people)/.test(pathname) : href === "/sponsor" ? pathname === href || /^\/sponsor\/(?!deals|company)/.test(pathname) : pathname === href || pathname.startsWith(`${href}/`);
             return (
@@ -69,7 +69,7 @@ export function NavList({ pathname = "", role = "SPEAKER" }: { pathname?: string
                 key={href}
                 href={href}
                 className={cx(
-                  "relative flex items-center gap-2.5 whitespace-nowrap rounded-lg px-3 py-2 text-sm transition-colors",
+                  "relative flex items-center gap-2.5 whitespace-nowrap rounded-lg px-3 py-2.5 text-[15px] transition-colors md:py-2 md:text-sm",
                   active ? "bg-neutral-100 font-medium text-ink" : "text-ink-soft hover:bg-neutral-100/70 hover:text-ink",
                 )}
               >
@@ -84,18 +84,19 @@ export function NavList({ pathname = "", role = "SPEAKER" }: { pathname?: string
   );
 }
 
-export function SignOutButton() {
+export function SignOutButton({ className }: { className?: string }) {
   const router = useRouter();
   return (
     <button
       type="button"
-      className="text-xs text-ink-soft underline-offset-2 hover:text-ink hover:underline"
+      className={className ?? "text-xs text-ink-soft underline-offset-2 hover:text-ink hover:underline"}
       onClick={async () => {
         await authClient.signOut();
         router.replace("/");
         router.refresh();
       }}
     >
+      <LogOut className="size-4 md:size-3.5" />
       Sign out
     </button>
   );

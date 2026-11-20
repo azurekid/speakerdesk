@@ -78,17 +78,17 @@ export function CoverImage({ src, className, sizes, priority, alt = "" }: { src:
 
 export function Card({ title, description, actions, children, className }: { title?: ReactNode; description?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <section className={cx("rounded-2xl border border-line bg-surface", className)}>
+    <section className={cx("min-w-0 rounded-2xl border border-line bg-surface", className)}>
       {(title || actions) && (
-        <header className="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
-          <div>
+        <header className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2 border-b border-line px-4 py-4 sm:px-5">
+          <div className="min-w-0">
             {title && <h2 className="font-display tracking-tight text-lg font-semibold text-ink">{title}</h2>}
             {description && <p className="mt-0.5 text-xs text-ink-soft">{description}</p>}
           </div>
           {actions}
         </header>
       )}
-      <div className="px-5 py-4">{children}</div>
+      <div className="px-4 py-4 sm:px-5">{children}</div>
     </section>
   );
 }

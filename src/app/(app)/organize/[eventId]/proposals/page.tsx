@@ -74,7 +74,7 @@ async function ProposalTable({ params, searchParams }: { params: Props["params"]
         </EmptyState>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-line bg-surface">
-          <table className="min-w-full text-sm">
+          <table className="stack-table min-w-full text-sm">
             <thead className="border-b border-line text-left text-xs text-ink-soft">
               <tr>
                 <th className="px-4 py-3 font-medium">Proposal</th>
@@ -98,11 +98,11 @@ async function ProposalTable({ params, searchParams }: { params: Props["params"]
                       {p.invited && <Badge className="bg-brand-50 text-brand-700 ring-brand-200">Invited</Badge>}
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-ink-soft">{p.track || "—"}</td>
-                  <td className="px-4 py-3 text-right"><Score value={p.avgScore} /></td>
-                  <td className="px-4 py-3 text-right tabular-nums text-ink-soft">{p.reviewCount}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">{p.myScore ?? <span className="text-neutral-400">—</span>}</td>
-                  <td className="px-4 py-3">
+                  <td data-label="Track" className="px-4 py-3 text-ink-soft"><span>{p.track || "—"}</span></td>
+                  <td data-label="Average" className="px-4 py-3 text-right"><Score value={p.avgScore} /></td>
+                  <td data-label="Reviews" className="px-4 py-3 text-right tabular-nums text-ink-soft"><span>{p.reviewCount}</span></td>
+                  <td data-label="Your score" className="px-4 py-3 text-right tabular-nums"><span>{p.myScore ?? <span className="text-neutral-400">—</span>}</span></td>
+                  <td data-label="Decision" className="px-4 py-3">
                     {canManage(role) ? (
                       <div className="flex items-center gap-2">
                         <DecisionSelect key={`${p.id}-${p.decision}`} proposalId={p.id} decision={p.decision} />

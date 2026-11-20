@@ -58,7 +58,7 @@ async function SubmissionTable({ searchParams }: { searchParams: PageProps<"/sub
         </EmptyState>
       ) : (
         <div className="overflow-x-auto rounded-lg bg-surface  ring-1 ring-line">
-          <table className="min-w-full divide-y divide-line text-sm">
+          <table className="stack-table min-w-full divide-y divide-line text-sm">
             <thead className="bg-neutral-50 text-left text-[11px] font-semibold text-ink-soft">
               <tr>
                 <th className="px-4 py-3">Event</th>
@@ -79,12 +79,12 @@ async function SubmissionTable({ searchParams }: { searchParams: PageProps<"/sub
                       {s.cfpUrl && <> · <ExternalLink href={s.cfpUrl}>CfP</ExternalLink></>}
                     </p>
                   </td>
-                  <td className="px-4 py-3">
+                  <td data-label="Session" className="px-4 py-3">
                     {s.talk ? <Link href={`/sessions/${s.talk.id}`} className="text-ink hover:underline">{s.talk.title}</Link> : <span className="text-neutral-400">—</span>}
                   </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-ink-soft">{formatDate(s.cfpDeadline)}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-ink-soft">{formatDate(s.eventStart)}</td>
-                  <td className="px-4 py-3"><StatusSelect key={`${s.id}-${s.status}`} id={s.id} status={s.status} /></td>
+                  <td data-label="CfP deadline" className="whitespace-nowrap px-4 py-3 text-ink-soft">{formatDate(s.cfpDeadline)}</td>
+                  <td data-label="Event date" className="whitespace-nowrap px-4 py-3 text-ink-soft">{formatDate(s.eventStart)}</td>
+                  <td data-label="Status" className="px-4 py-3"><StatusSelect key={`${s.id}-${s.status}`} id={s.id} status={s.status} /></td>
                 </tr>
               ))}
             </tbody>

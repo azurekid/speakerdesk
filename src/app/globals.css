@@ -98,7 +98,8 @@ body {
 
 /* Shared form control styling */
 @utility control {
-  @apply block w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink
+  /* 16px on phones: iOS Safari zooms into any focused field with smaller text. */
+  @apply block w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-base text-ink sm:py-2 sm:text-sm
     placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none focus:ring-4 focus:ring-ink/10
     disabled:bg-neutral-100 aria-invalid:border-rose-500;
 }
@@ -106,4 +107,50 @@ body {
 /* Darkens the lower part of a photo so text on it stays readable. */
 @utility photo-scrim {
   background-image: linear-gradient(to top, rgb(20 18 15 / 0.88) 0%, rgb(20 18 15 / 0.45) 55%, rgb(20 18 15 / 0.15) 100%);
+}
+
+/*
+ * Tables on phones: add class="stack-table" to a <table> and data-label="Column" to its cells.
+ * Below the md breakpoint every row becomes a card, and each labelled cell shows its column
+ * name on the left. Cells without data-label (e.g. the title) span the full width.
+ * Unlayered, so it wins over the table's Tailwind padding/alignment utilities.
+ */
+@media (width < 48rem) {
+  .stack-table,
+  .stack-table tbody {
+    display: block;
+  }
+  .stack-table thead {
+    display: none;
+  }
+  .stack-table tr {
+    display: block;
+    padding: 0.75rem 1rem;
+  }
+  .stack-table td {
+    display: block;
+    max-width: none;
+    padding: 0.2rem 0;
+    text-align: left;
+  }
+  .stack-table td:empty {
+    display: none;
+  }
+  .stack-table td[data-label] {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 2rem;
+  }
+  .stack-table td[data-label]::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    color: var(--color-ink-soft);
+  }
+  .stack-table td[data-label] > * {
+    min-width: 0;
+    text-align: right;
+  }
 }

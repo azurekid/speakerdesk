@@ -25,8 +25,8 @@ async function Header({ params }: { params: LayoutProps<"/organize/[eventId]">["
   return (
     <header className="mb-8">
       <Link href="/organize" className="text-xs text-ink-soft hover:text-ink">← My events</Link>
-      <div className="mt-3 flex flex-wrap items-center gap-5">
-        <div className="relative size-20 shrink-0 overflow-hidden rounded-md">
+      <div className="mt-3 flex flex-wrap items-start gap-4 sm:items-center sm:gap-5">
+        <div className="relative size-14 shrink-0 overflow-hidden rounded-md sm:size-20">
           <CoverImage src={event.coverImage} sizes="80px" className="object-cover" />
         </div>
         <div className="min-w-0 flex-1">
@@ -34,11 +34,11 @@ async function Header({ params }: { params: LayoutProps<"/organize/[eventId]">["
             <CfpBadge state={state} />
             <span className="text-xs text-ink-soft">You&apos;re {ROLE_LABELS[role].toLowerCase()}</span>
           </div>
-          <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight">{event.name}</h1>
+          <h1 className="mt-1 break-words font-display text-2xl font-semibold tracking-tight sm:text-3xl">{event.name}</h1>
           <p className="text-sm text-ink-soft">{formatDateRange(event.startDate, event.endDate)}{eventWhere(event) && ` · ${eventWhere(event)}`}</p>
         </div>
         {(event.cfpPublished || event.programPublished) && (
-          <Link href={`/events/${event.slug}`} target="_blank" className="inline-flex items-center gap-1 text-sm text-ink-soft hover:text-ink">
+          <Link href={`/events/${event.slug}`} target="_blank" className="inline-flex min-h-10 items-center gap-1 text-sm text-ink-soft hover:text-ink max-sm:w-full">
             Public page <ExternalIcon className="size-3.5" />
           </Link>
         )}

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { AccountButton } from "@/components/account-button";
+import { PublicMenu } from "@/components/public-menu";
 import { EventCard } from "@/components/events/event-card";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ButtonLink, Eyebrow, Logo } from "@/components/ui";
@@ -29,13 +30,14 @@ export default function Home() {
       <section className="relative isolate min-h-[640px] overflow-hidden bg-night text-white">
         <Image src="/images/events/main-stage.jpg" alt="A speaker on a large conference stage in front of a full audience" fill priority sizes="100vw" className="-z-10 object-cover" />
         <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black/80 via-black/55 to-black/10" />
-        <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
+        <header className="relative mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:px-6 sm:py-6">
           <Logo light />
-          <nav className="flex items-center gap-6 text-sm">
+          <nav className="flex items-center gap-2 text-sm sm:gap-6">
             <Link href="/events" className="hidden text-white/80 hover:text-white sm:inline">Open calls</Link>
             <Link href="/speakers" className="hidden text-white/80 hover:text-white sm:inline">Speakers</Link>
-            <ThemeToggle className="text-white/80 hover:bg-white/10 hover:text-white" />
+            <span className="hidden sm:inline-flex"><ThemeToggle className="text-white/80 hover:bg-white/10 hover:text-white" /></span>
             <AccountButton variant="light" />
+            <PublicMenu light />
           </nav>
         </header>
         <div className="mx-auto max-w-6xl px-6 pb-24 pt-20 sm:pt-28">

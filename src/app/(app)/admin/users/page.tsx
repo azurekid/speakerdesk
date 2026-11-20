@@ -58,7 +58,7 @@ async function Users({ searchParams }: { searchParams: Props["searchParams"] }) 
         <span className="ml-auto text-sm text-ink-soft">{total} user{total === 1 ? "" : "s"}</span>
       </div>
       <div className="overflow-x-auto rounded-2xl border border-line bg-surface">
-        <table className="min-w-full text-sm">
+        <table className="stack-table min-w-full text-sm">
           <thead className="border-b border-line text-left text-xs text-ink-soft">
             <tr>
               <th className="px-5 py-3 font-medium">User</th>
@@ -75,7 +75,7 @@ async function Users({ searchParams }: { searchParams: Props["searchParams"] }) 
                   <Link href={`/admin/users/${u.id}`} className="font-medium hover:text-brand-700">{u.name}</Link>
                   <p className="text-xs text-ink-soft">{u.email}</p>
                 </td>
-                <td className="px-5 py-3">
+                <td data-label="Status" className="px-5 py-3">
                   <div className="flex flex-wrap gap-1">
                     {u.role === "admin" && <Badge className="bg-ink text-paper ring-ink">Admin</Badge>}
                     {u.banned && <Badge className="bg-rose-50 text-rose-800 ring-rose-200">Banned</Badge>}
@@ -83,12 +83,12 @@ async function Users({ searchParams }: { searchParams: Props["searchParams"] }) 
                     {!u.onboardedAt && <Badge>Onboarding</Badge>}
                   </div>
                 </td>
-                <td className="px-5 py-3 text-ink-soft">{{ SPEAKER: "Speaker", ORGANIZER: "Organizer", SPONSOR: "Sponsor" }[u.primaryRole]}</td>
-                <td className="px-5 py-3 text-xs text-ink-soft">
+                <td data-label="Main role" className="px-5 py-3 text-ink-soft">{{ SPEAKER: "Speaker", ORGANIZER: "Organizer", SPONSOR: "Sponsor" }[u.primaryRole]}</td>
+                <td data-label="Activity" className="px-5 py-3 text-xs text-ink-soft">
                   {u._count.talks} talks · {u._count.eventMemberships} events<br />
                   {u.sessions[0] ? `Seen ${formatDate(u.sessions[0].updatedAt)}` : "Never signed in"}
                 </td>
-                <td className="px-5 py-3 text-xs text-ink-soft">{formatDate(u.createdAt)}</td>
+                <td data-label="Joined" className="px-5 py-3 text-xs text-ink-soft">{formatDate(u.createdAt)}</td>
               </tr>
             ))}
           </tbody>

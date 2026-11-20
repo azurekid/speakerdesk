@@ -1,6 +1,7 @@
-import { ArrowLeftRight, ShieldCheck } from "lucide-react";
+import { ArrowLeftRight, ShieldCheck, UserCog } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
+import { MobileNav } from "@/components/mobile-nav";
 import { NavLinks, NavList, SignOutButton, StopImpersonating } from "@/components/nav";
 import { OnboardingBanner } from "@/components/onboarding-banner";
 import { acceptCurrentTerms } from "@/lib/actions/onboarding";
@@ -14,12 +15,10 @@ import { getOrCreateProfile, getPrimaryRole, requireUser } from "@/lib/dal";
 export default function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <div className="min-h-screen md:flex">
-      <aside className="border-b border-line bg-surface md:sticky md:top-0 md:flex md:h-screen md:w-60 md:flex-col md:border-b-0 md:border-r">
-        <Suspense fallback={<SidebarBody />}>
-          <RoleAwareSidebar />
-        </Suspense>
-      </aside>
-      <main className="min-w-0 flex-1 px-4 py-8 sm:px-10 sm:py-10">
+      <Suspense fallback={<SidebarBody />}>
+        <RoleAwareSidebar />
+      </Suspense>
+      <main className="min-w-0 flex-1 px-4 py-6 sm:px-10 sm:py-10">
         <div className="mx-auto max-w-5xl">
           <Suspense fallback={null}>
             <Notices />
@@ -31,16 +30,25 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
   );
 }
 
-/** Static fallback while the session streams in. */
+/**
+ * Navigation chrome: a top bar + drawer on phones, a sticky sidebar from md up.
+ * Without props it's the static fallback shown while the session streams in.
+ */
 function SidebarBody({ nav, footer, home = "/dashboard" }: { nav?: React.ReactNode; footer?: React.ReactNode; home?: string }) {
   return (
     <>
-      <div className="flex items-center justify-between px-5 py-5"><Link href={home}><Logo /></Link><ThemeToggle /></div>
-      <div className="px-3 pb-3 md:flex-1 md:overflow-y-auto">{nav ?? <NavList />}</div>
-      <div className="hidden border-t border-line p-4 md:block">{footer ?? <div className="h-10 animate-pulse rounded-lg bg-neutral-100" />}</div>
+      <MobileNav home={home} nav={nav ?? <NavList />} footer={footer} />
+      <aside className="hidden border-r border-line bg-surface md:sticky md:top-0 md:flex md:h-screen md:w-60 md:shrink-0 md:flex-col">
+        <div className="flex items-center justify-between px-5 py-5"><Link href={home}><Logo /></Link><ThemeToggle /></div>
+        <div className="flex-1 overflow-y-auto px-3 pb-3">{nav ?? <NavList />}</div>
+        <div className="border-t border-line p-4">{footer ?? <div className="h-10 animate-pulse rounded-lg bg-neutral-100" />}</div>
+      </aside>
     </>
   );
 }
+
+/** Big enough to tap in the phone drawer, compact in the desktop sidebar. */
+const FOOTER_ROW = "flex items-center gap-2.5 rounded-lg px-2 py-2.5 text-ink-soft hover:bg-neutral-100 hover:text-ink md:py-1.5";
 
 /** Impersonation warning and the onboarding nudge. */
 async function Notices() {
@@ -92,15 +100,7 @@ async function RoleAwareSidebar() {
       }
       footer={
         <div className="space-y-3">
-          <div className="space-y-0.5">
-            {others.map((r) => (
-              <a key={r} href={`/api/account/view?role=${r.toLowerCase()}&next=${HOME[r]}`} className="flex items-center gap-2 rounded-lg px-2 py-1 text-xs text-ink-soft hover:bg-neutral-100 hover:text-ink">
-                <ArrowLeftRight className="size-3.5" />
-                {r === "SPEAKER" ? "Speaker" : r === "ORGANIZER" ? "Organizer" : "Sponsor"} view
-              </a>
-            ))}
-          </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 px-2">
             {profile.headshotSquareUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- arbitrary CDN hosts
               <img src={profile.headshotSquareUrl} alt="" className="size-9 rounded-full object-cover" />
@@ -109,11 +109,19 @@ async function RoleAwareSidebar() {
             )}
             <div className="min-w-0">
               <p className="truncate text-sm font-medium text-ink">{name}</p>
-              <p className="text-xs text-ink-soft">
-                {{ SPEAKER: "Speaker", ORGANIZER: "Organizer", SPONSOR: "Sponsor" }[role]} · <Link href="/account" className="hover:text-ink hover:underline">Account</Link> · <SignOutButton />
-              </p>
-              {user.isAdmin && <Link href="/admin" className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-brand-700 hover:underline"><ShieldCheck className="size-3.5" />Admin</Link>}
+              <p className="text-xs text-ink-soft">{{ SPEAKER: "Speaker", ORGANIZER: "Organizer", SPONSOR: "Sponsor" }[role]} view</p>
             </div>
+          </div>
+          <div className="grid gap-0.5 text-sm md:text-xs">
+            <Link href="/account" className={FOOTER_ROW}><UserCog className="size-4 md:size-3.5" />Account</Link>
+            {user.isAdmin && <Link href="/admin" className={`${FOOTER_ROW} font-medium text-brand-700`}><ShieldCheck className="size-4 md:size-3.5" />Admin</Link>}
+            {others.map((r) => (
+              <a key={r} href={`/api/account/view?role=${r.toLowerCase()}&next=${HOME[r]}`} className={FOOTER_ROW}>
+                <ArrowLeftRight className="size-4 md:size-3.5" />
+                Switch to {r === "SPEAKER" ? "speaker" : r === "ORGANIZER" ? "organizer" : "sponsor"} view
+              </a>
+            ))}
+            <SignOutButton className={FOOTER_ROW} />
           </div>
         </div>
       }

@@ -44,7 +44,7 @@ async function People() {
   return (
     <div className="space-y-8">
       <div className="overflow-x-auto rounded-2xl border border-line bg-surface">
-        <table className="min-w-full text-sm">
+        <table className="stack-table min-w-full text-sm">
           <thead className="border-b border-line text-left text-xs text-ink-soft">
             <tr>
               <th className="px-5 py-3 font-medium">Person</th>
@@ -58,7 +58,7 @@ async function People() {
                   <p className="font-medium">{p.name}{id === user.id && <span className="font-normal text-ink-soft"> (you)</span>}</p>
                   <p className="text-xs text-ink-soft">{p.email}</p>
                 </td>
-                <td className="px-5 py-3">
+                <td data-label="Events" className="px-5 py-3">
                   <div className="flex flex-wrap gap-2">
                     {p.roles.map((m) => (
                       <Link key={m.id} href={`/organize/${m.event.id}/team`} className="inline-flex items-center gap-1.5 rounded-full border border-line py-0.5 pl-3 pr-1 text-xs hover:border-neutral-400">

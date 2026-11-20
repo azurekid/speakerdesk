@@ -74,7 +74,7 @@ async function Team({ params }: { params: Props["params"] }) {
       <section>
         <h2 className="mb-3 text-xl font-semibold tracking-tight">Members</h2>
         <div className="overflow-x-auto rounded-2xl border border-line bg-surface">
-          <table className="min-w-full text-sm">
+          <table className="stack-table min-w-full text-sm">
             <thead className="border-b border-line text-left text-xs text-ink-soft">
               <tr>
                 <th className="px-5 py-3 font-medium">Person</th>
@@ -105,18 +105,18 @@ async function Team({ params }: { params: Props["params"] }) {
                         </div>
                       </div>
                     </td>
-                    <td className="px-5 py-3">
+                    <td data-label="Role" className="px-5 py-3">
                       {canAdmin(role) && !lastOwner && !self ? (
                         <RoleSelect key={`${m.id}-${m.role}`} memberId={m.id} role={m.role} options={[...EVENT_ROLES]} />
                       ) : (
                         <Badge className={ROLE_STYLES[m.role]}>{ROLE_LABELS[m.role]}</Badge>
                       )}
                     </td>
-                    <td className="px-5 py-3 tabular-nums">
+                    <td data-label="Open tasks" className="px-5 py-3 tabular-nums">
                       {mine.length}{late > 0 && <span className="ml-2 text-xs font-medium text-rose-700">{late} overdue</span>}
                     </td>
-                    <td className="px-5 py-3 tabular-nums text-ink-soft">{atLeast(m.role, "REVIEWER") ? reviews : "—"}</td>
-                    <td className="px-5 py-3 text-xs text-ink-soft">{lastSeen(m.user.sessions[0]?.updatedAt)}</td>
+                    <td data-label="Reviews" className="px-5 py-3 tabular-nums text-ink-soft">{atLeast(m.role, "REVIEWER") ? reviews : "—"}</td>
+                    <td data-label="Last active" className="px-5 py-3 text-xs text-ink-soft">{lastSeen(m.user.sessions[0]?.updatedAt)}</td>
                     <td className="px-5 py-3 text-right">
                       {canRemove && (
                         <ActionButton action={removeMember.bind(null, m.id)} variant="ghost" confirmText={self ? "Leave this event team?" : `Remove ${m.user.name} from the team? Their tasks become unassigned.`}>
