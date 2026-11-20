@@ -60,7 +60,7 @@ export default function PrivacyPage() {
           <li><strong>Correction</strong>: edit your <Link href="/profile">profile</Link> and <Link href="/account">account</Link> at any time.</li>
           <li><strong>Erasure</strong>: <Link href="/account">Account → Delete account</Link> removes your account and data straight away.</li>
           <li><strong>Restriction and objection</strong>: email us and we&apos;ll respond within one month.</li>
-          <li><strong>Complaints</strong>: you can complain to {OPERATOR.supervisoryAuthority} or the data protection authority where you live.</li>
+          <li><strong>Complaints</strong>: you can complain to the Dutch data protection authority (<a href="https://autoriteitpersoonsgegevens.nl">Autoriteit Persoonsgegevens</a>) or the authority where you live.</li>
         </ul>
       </Section>
 

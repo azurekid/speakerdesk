@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { CfpBadge, CoverImage, formatDate, formatDateRange } from "@/components/ui";
-import { cfpState } from "@/lib/domain";
+import { cfpState, type EventFormat, eventWhere } from "@/lib/domain";
 
 export type EventCardData = {
   slug: string;
   name: string;
   tagline: string;
   location: string;
+  format: EventFormat;
+  onlinePlatform: string;
   coverImage: string;
   startDate: Date | null;
   endDate: Date | null;
@@ -25,7 +27,7 @@ export function EventCard({ event, href }: { event: EventCardData; href?: string
         <div className="absolute left-3 top-3"><CfpBadge state={state} /></div>
       </div>
       <div className="p-4">
-        <p className="text-xs text-ink-soft">{formatDateRange(event.startDate, event.endDate)}{event.location && ` · ${event.location}`}</p>
+        <p className="text-xs text-ink-soft">{formatDateRange(event.startDate, event.endDate)}{eventWhere(event) && ` · ${eventWhere(event)}`}</p>
         <h3 className="mt-1 font-display tracking-tight text-xl font-semibold leading-snug text-ink group-hover:text-brand-700">{event.name}</h3>
         {event.tagline && <p className="mt-1 line-clamp-2 text-sm text-ink-soft">{event.tagline}</p>}
         {state === "open" && event.cfpClosesAt && <p className="mt-3 text-xs font-medium text-brand-700">Submit by {formatDate(event.cfpClosesAt)}</p>}

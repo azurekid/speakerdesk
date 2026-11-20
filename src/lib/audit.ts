@@ -140,12 +140,9 @@ export function isAuditedMutation(model: string | undefined, operation: string):
 /** One entry per write: which record, which operation and which fields — never the values. */
 export async function auditDataChange(model: string, operation: string, args: Record<string, unknown>, result: unknown) {
   const fields = changedFields(operation, args);
-  // `upsert(..., update: {})` is the "make sure it exists" idiom used on page loads:
-  // only a change when it actually created the row.
-  if (operation === "upsert" && Object.keys((args.update as object) ?? {}).length === 0) {
-    const createdAt = (result as { createdAt?: Date } | null)?.createdAt;
-    if (!createdAt || Date.now() - new Date(createdAt).getTime() > 5_000) return;
-  }
+  // `upsert(..., update: {})` is the "make sure it exists" idiom (page loads, sign-up):
+  // not a user change, and the sign-up itself is already audited.
+  if (operation === "upsert" && Object.keys((args.update as object) ?? {}).length === 0) return;
   const many = operation.endsWith("Many") || operation.endsWith("ManyAndReturn");
   const count = many ? ((result as { count?: number })?.count ?? (Array.isArray(result) ? result.length : undefined)) : undefined;
   if (many && count === 0) return;

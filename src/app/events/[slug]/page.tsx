@@ -9,7 +9,7 @@ import { VenueMap } from "@/components/venue-map";
 import { withdrawProposal } from "@/lib/actions/proposals";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/dal";
-import { cfpState, FORMAT_LABELS, LEVEL_LABELS } from "@/lib/domain";
+import { cfpState, FORMAT_LABELS, LEVEL_LABELS, eventWhere } from "@/lib/domain";
 
 export const metadata: Metadata = { title: "Event" };
 
@@ -41,7 +41,7 @@ async function EventDetail({ params, searchParams }: { params: Params; searchPar
           {event.tagline && <p className="mt-3 max-w-2xl text-lg text-white/85">{event.tagline}</p>}
           <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/85">
             <span className="inline-flex items-center gap-1.5"><CalendarDays className="size-4" />{formatDateRange(event.startDate, event.endDate)}</span>
-            {(event.venue || event.location) && <span className="inline-flex items-center gap-1.5"><MapPin className="size-4" />{[event.venue, event.location].filter(Boolean).join(", ")}</span>}
+            {(event.venue || eventWhere(event)) && <span className="inline-flex items-center gap-1.5"><MapPin className="size-4" />{[event.format !== "ONLINE" && event.venue, eventWhere(event)].filter(Boolean).join(", ")}</span>}
             {event.website && <a href={event.website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 hover:text-white"><Globe className="size-4" />Website</a>}
           </div>
         </div>
@@ -67,7 +67,7 @@ async function EventDetail({ params, searchParams }: { params: Params; searchPar
               <p className="mt-3 whitespace-pre-wrap leading-relaxed text-ink-soft">{event.cfpGuidelines}</p>
             </section>
           )}
-          {event.latitude !== null && event.longitude !== null && (
+          {event.format !== "ONLINE" && event.latitude !== null && event.longitude !== null && (
             <section>
               <h2 className="text-2xl font-semibold tracking-tight">Venue</h2>
               <p className="mt-2 text-ink-soft">{[event.venue, event.address].filter(Boolean).join(" · ")}</p>

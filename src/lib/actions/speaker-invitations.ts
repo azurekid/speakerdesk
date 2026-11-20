@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/dal";
 import { appUrl, eventAccessOrNull } from "@/lib/organizer";
 import { type ActionState, fieldErrors, formToObject, speakerInviteSchema } from "@/lib/validation";
+import { eventWhere } from "@/lib/domain";
 
 /** Organizer invites a speaker (who opted in to invitations) to one of their events. */
 export async function inviteSpeaker(speakerId: string, _prev: ActionState, form: FormData): Promise<ActionState> {
@@ -64,7 +65,7 @@ export async function acceptSpeakerInvitation(invitationId: string, _prev: Actio
         eventName: event.name,
         eventUrl: `${appUrl()}/events/${event.slug}`,
         platform: "SPEAKERDESK",
-        location: event.location,
+        location: eventWhere(event),
         status: "ACCEPTED",
         eventStart: event.startDate,
         eventEnd: event.endDate,

@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { renderConfirmation } from "@/lib/confirmation-email";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/dal";
-import { cfpState } from "@/lib/domain";
+import { cfpState, eventWhere } from "@/lib/domain";
 import { sendMail } from "@/lib/mailer";
 import { appUrl } from "@/lib/organizer";
 import { type ActionState, fieldErrors, formToObject, proposalSchema } from "@/lib/validation";
@@ -43,7 +43,7 @@ export async function submitProposal(eventId: string, _prev: ActionState, form: 
         eventUrl: `${appUrl()}/events/${event.slug}`,
         cfpUrl: `${appUrl()}/events/${event.slug}`,
         platform: "SPEAKERDESK",
-        location: event.location,
+        location: eventWhere(event),
         status: "SUBMITTED",
         cfpDeadline: event.cfpClosesAt,
         eventStart: event.startDate,

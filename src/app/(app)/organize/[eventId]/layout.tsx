@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { EventTabs } from "@/components/organizer/controls";
 import { CfpBadge, CoverImage, formatDateRange } from "@/components/ui";
-import { cfpState } from "@/lib/domain";
+import { cfpState, eventWhere } from "@/lib/domain";
 import { requireEventAccess } from "@/lib/organizer";
 import { ROLE_LABELS } from "@/lib/permissions";
 
@@ -35,7 +35,7 @@ async function Header({ params }: { params: LayoutProps<"/organize/[eventId]">["
             <span className="text-xs text-ink-soft">You&apos;re {ROLE_LABELS[role].toLowerCase()}</span>
           </div>
           <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight">{event.name}</h1>
-          <p className="text-sm text-ink-soft">{formatDateRange(event.startDate, event.endDate)}{event.location && ` · ${event.location}`}</p>
+          <p className="text-sm text-ink-soft">{formatDateRange(event.startDate, event.endDate)}{eventWhere(event) && ` · ${eventWhere(event)}`}</p>
         </div>
         {(event.cfpPublished || event.programPublished) && (
           <Link href={`/events/${event.slug}`} target="_blank" className="inline-flex items-center gap-1 text-sm text-ink-soft hover:text-ink">

@@ -8,7 +8,7 @@ import { ButtonLink, formatDateRange, PhotoBanner, Skeleton } from "@/components
 import { requestSponsorship } from "@/lib/actions/sponsorship";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/dal";
-import { SLOT_HOLDING_STATUSES, SPONSORSHIP_LABELS } from "@/lib/domain";
+import { SLOT_HOLDING_STATUSES, SPONSORSHIP_LABELS, eventWhere } from "@/lib/domain";
 import { getPackages } from "@/lib/sponsor-queries";
 
 export const metadata: Metadata = { title: "Sponsor prospectus" };
@@ -42,7 +42,7 @@ async function Prospectus({ params }: { params: Props["params"] }) {
           {event.tagline && <p className="mt-2 max-w-2xl text-white/85">{event.tagline}</p>}
           <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/85">
             <span className="inline-flex items-center gap-1.5"><CalendarDays className="size-4" />{formatDateRange(event.startDate, event.endDate)}</span>
-            {(event.venue || event.location) && <span className="inline-flex items-center gap-1.5"><MapPin className="size-4" />{[event.venue, event.location].filter(Boolean).join(", ")}</span>}
+            {(event.venue || eventWhere(event)) && <span className="inline-flex items-center gap-1.5"><MapPin className="size-4" />{[event.format !== "ONLINE" && event.venue, eventWhere(event)].filter(Boolean).join(", ")}</span>}
           </div>
         </div>
       </PhotoBanner>

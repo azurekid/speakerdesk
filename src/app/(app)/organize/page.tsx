@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { Badge, ButtonLink, CfpBadge, CoverImage, EmptyState, formatDate, formatDateRange, PageHeader, Skeleton } from "@/components/ui";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/dal";
-import { cfpState } from "@/lib/domain";
+import { cfpState, eventWhere } from "@/lib/domain";
 import { ROLE_LABELS, ROLE_STYLES } from "@/lib/permissions";
 import { HEALTH_LABELS, HEALTH_STYLES, isOverdue, startOfToday } from "@/lib/runbook";
 import { getRunbook } from "@/lib/runbook-queries";
@@ -83,7 +83,7 @@ async function EventList() {
                 {role !== "OWNER" && <Badge className={ROLE_STYLES[role]}>{ROLE_LABELS[role]}</Badge>}
               </div>
               <h2 className="mt-2 font-display tracking-tight text-2xl font-semibold group-hover:text-brand-700">{event.name}</h2>
-              <p className="text-sm text-ink-soft">{formatDateRange(event.startDate, event.endDate)}{event.location && ` · ${event.location}`}</p>
+              <p className="text-sm text-ink-soft">{formatDateRange(event.startDate, event.endDate)}{eventWhere(event) && ` · ${eventWhere(event)}`}</p>
               <p className="mt-3 text-sm">
                 <span className="font-semibold">{event._count.proposals}</span> <span className="text-ink-soft">proposal{event._count.proposals === 1 ? "" : "s"}</span>
                 {event.cfpClosesAt && <span className="text-ink-soft"> · CfP closes {formatDate(event.cfpClosesAt)}</span>}

@@ -5,6 +5,7 @@ import { InvitationResponse } from "@/components/speakers/invitation-response";
 import { Badge, ButtonLink, CoverImage, EmptyState, formatDate, formatDateRange, PageHeader, Skeleton } from "@/components/ui";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/dal";
+import { eventWhere } from "@/lib/domain";
 
 export const metadata: Metadata = { title: "Invitations" };
 
@@ -66,7 +67,7 @@ async function Invitations({ searchParams }: { searchParams: Props["searchParams
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <Link href={`/events/${inv.event.slug}`} className="text-xl font-semibold tracking-tight hover:text-brand-700">{inv.event.name}</Link>
-                  <p className="text-sm text-ink-soft">{formatDateRange(inv.event.startDate, inv.event.endDate)}{inv.event.location && ` · ${inv.event.location}`}</p>
+                  <p className="text-sm text-ink-soft">{formatDateRange(inv.event.startDate, inv.event.endDate)}{eventWhere(inv.event) && ` · ${eventWhere(inv.event)}`}</p>
                 </div>
                 <Badge className={STATUS_STYLE[inv.status]}>{inv.status[0] + inv.status.slice(1).toLowerCase()}</Badge>
               </div>

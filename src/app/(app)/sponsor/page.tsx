@@ -6,7 +6,7 @@ import { Suspense } from "react";
 import { ButtonLink, CoverImage, EmptyState, formatDateRange, PhotoBanner, Skeleton } from "@/components/ui";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/dal";
-import { formatMoney } from "@/lib/domain";
+import { formatMoney, eventWhere } from "@/lib/domain";
 import { getPackages } from "@/lib/sponsor-queries";
 
 export const metadata: Metadata = { title: "Sponsorship opportunities" };
@@ -59,7 +59,7 @@ async function Opportunities() {
                   <CoverImage src={e.coverImage} sizes="(min-width: 768px) 50vw, 100vw" className="object-cover transition-transform duration-500 group-hover:scale-[1.02]" />
                 </div>
                 <div className="p-5">
-                  <p className="text-xs text-ink-soft">{formatDateRange(e.startDate, e.endDate)}{e.location && ` · ${e.location}`}</p>
+                  <p className="text-xs text-ink-soft">{formatDateRange(e.startDate, e.endDate)}{eventWhere(e) && ` · ${eventWhere(e)}`}</p>
                   <h2 className="mt-1 text-xl font-semibold tracking-tight">{e.name}</h2>
                   {e.tagline && <p className="mt-1 line-clamp-2 text-sm text-ink-soft">{e.tagline}</p>}
                   <div className="mt-4 flex items-center justify-between">
