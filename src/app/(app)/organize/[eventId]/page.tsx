@@ -12,6 +12,8 @@ import { redirect } from "next/navigation";
 import { appUrl, requireEventAccess } from "@/lib/organizer";
 import { canManage } from "@/lib/permissions";
 import { getEventProposals } from "@/lib/proposal-queries";
+import { getSetupGuide } from "@/lib/setup-guide";
+import { SetupGuide, ShowGuideLink } from "@/components/organizer/setup-guide";
 
 export const metadata: Metadata = { title: "Event overview" };
 
@@ -39,7 +41,11 @@ async function Overview({ params }: { params: Params }) {
   const { eventId } = await params;
   const { user, event, role } = await requireEventAccess(eventId, "VOLUNTEER");
   if (role === "VOLUNTEER") redirect(`/organize/${eventId}/runbook`);
-  const [proposals, runbook] = await Promise.all([getEventProposals(eventId, user.id), getRunbook(eventId)]);
+  const [proposals, runbook, guide] = await Promise.all([
+    getEventProposals(eventId, user.id),
+    getRunbook(eventId),
+    canManage(role) ? getSetupGuide(eventId, user.id) : null,
+  ]);
   const h = runbook.health;
   const nextUp = runbook.tasks.filter((t) => t.effectiveStatus !== "DONE").slice(0, 4);
   const active = proposals.filter((p) => !p.withdrawn);
@@ -53,7 +59,9 @@ async function Overview({ params }: { params: Params }) {
 
   return (
     <div className="space-y-8">
+      {guide && (guide.hidden ? <ShowGuideLink eventId={eventId} /> : <SetupGuide eventId={eventId} guide={guide} />)}
       {canManage(role) && (
+        <div id="cfp" className="scroll-mt-6">
         <Card title="Call for papers" description={state === "draft" ? "Only your team can see this event until you publish." : "Speakers can find this CfP on SpeakerDesk and at the link below."}>
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="text-sm">
@@ -81,6 +89,7 @@ async function Overview({ params }: { params: Params }) {
             />
           )}
         </Card>
+        </div>
       )}
 
       <Card

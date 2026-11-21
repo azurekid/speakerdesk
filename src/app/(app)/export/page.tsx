@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { buttonClass, Card, PageHeader } from "@/components/ui";
+import { buttonClass, Card, cx, PageHeader } from "@/components/ui";
 
 export const metadata: Metadata = { title: "Export" };
 
@@ -18,12 +18,13 @@ export default function ExportPage() {
       <div className="grid gap-4">
         {EXPORTS.map((e) => (
           <Card key={e.href}>
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div>
+            {/* Fixed button column: every Download button lines up, whatever the length of the text. */}
+            <div className="grid items-center gap-4 sm:grid-cols-[minmax(0,1fr)_9rem]">
+              <div className="min-w-0">
                 <h2 className="text-sm font-semibold text-ink">{e.title}</h2>
                 <p className="mt-0.5 text-sm text-ink-soft">{e.body}</p>
               </div>
-              <a href={e.href} className={buttonClass("secondary")} download>Download</a>
+              <a href={e.href} className={cx(buttonClass("secondary"), "w-full")} download>Download</a>
             </div>
           </Card>
         ))}

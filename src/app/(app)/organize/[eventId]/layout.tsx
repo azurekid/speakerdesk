@@ -2,6 +2,7 @@ import { ExternalLink as ExternalIcon } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { EventTabs } from "@/components/organizer/controls";
+import { WorkspaceTip } from "@/components/organizer/workspace-tips";
 import { CfpBadge, CoverImage, formatDateRange } from "@/components/ui";
 import { cfpState, eventWhere } from "@/lib/domain";
 import { requireEventAccess } from "@/lib/organizer";
@@ -46,6 +47,11 @@ async function Header({ params }: { params: LayoutProps<"/organize/[eventId]">["
       <div className="mt-6">
         <Suspense fallback={<div className="h-8 border-b border-line" />}>
           <EventTabs eventId={eventId} role={role} />
+        </Suspense>
+      </div>
+      <div className="mt-6 empty:hidden">
+        <Suspense fallback={null}>
+          <WorkspaceTip eventId={eventId} />
         </Suspense>
       </div>
     </header>

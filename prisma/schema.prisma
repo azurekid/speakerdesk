@@ -397,6 +397,7 @@ model EventMember {
   user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   role    EventRole @default(REVIEWER)
   title   String    @default("") // e.g. "Sponsorship lead", "Head of AV"
+  guideHidden Boolean @default(false) // this person closed the event setup guide
 
   createdAt DateTime @default(now())
 

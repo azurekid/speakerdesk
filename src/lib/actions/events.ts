@@ -192,3 +192,12 @@ export async function updateDecisionEmails(eventId: string, _prev: ActionState, 
   revalidatePath(`/organize/${eventId}`, "layout");
   return { ok: true, message: "Decision emails saved." };
 }
+
+/** Hides or shows the setup guide on the event overview, for the current team member only. */
+export async function setGuideHidden(eventId: string, hidden: boolean): Promise<void> {
+  const user = await requireUser();
+  const access = await eventAccessOrNull(user, eventId, "ORGANIZER");
+  if (!access) return;
+  await prisma.eventMember.updateMany({ where: { eventId, userId: user.id }, data: { guideHidden: hidden } });
+  revalidatePath(`/organize/${eventId}`);
+}
