@@ -354,6 +354,15 @@ model Event {
   confirmationEmailSubject String  @default("")
   confirmationEmailBody    String  @default("")
 
+  // Emails sent when decisions are published. Keys "accepted" | "waitlisted" | "rejected", each
+  // { subject, body }; a missing or empty template means the built-in one (src/lib/decision-email.ts).
+  decisionEmailsEnabled Boolean @default(true)
+  decisionEmails        Json    @default("{}")
+
+  // Schedule: slot times are wall-clock minutes in this IANA time zone.
+  timezone          String  @default("Europe/Amsterdam")
+  schedulePublished Boolean @default(false)
+
   // Sponsorship & budget (amounts in whole currency units)
   currency        String  @default("EUR")
   budgetTarget    Int?
@@ -370,6 +379,8 @@ model Event {
   speakerInvitations SpeakerInvitation[]
   badges       Badge[]
   badgeAwards  BadgeAward[]
+  rooms         ScheduleRoom[]
+  scheduleItems ScheduleItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -392,6 +403,13 @@ model EventMember {
   @@unique([eventId, userId])
   @@index([userId])
   @@map("event_member")
+}
+
+/// An accepted speaker's answer: will they actually give the session?
+enum SpeakerConfirmation {
+  PENDING
+  CONFIRMED
+  DECLINED
 }
 
 enum Decision {
@@ -434,6 +452,19 @@ model Proposal {
   decisionPublished Boolean   @default(false) // speaker sees the decision only once published
   decidedAt         DateTime?
 
+  // Set to PENDING when an acceptance is published; the speaker confirms or declines.
+  confirmation     SpeakerConfirmation?
+  confirmationNote String    @default("")
+  confirmedAt      DateTime?
+
+  // Place in the schedule: a day, a start time (minutes after midnight in the event's time
+  // zone) and a room. The session lasts durationMinutes.
+  slotDay      DateTime?     @db.Date
+  slotStart    Int?
+  roomId       String?
+  room         ScheduleRoom? @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  slotNotified String        @default("") // the slot last emailed to the speaker ("" = never)
+
   reviews Review[]
 
   createdAt DateTime @default(now())
@@ -441,7 +472,45 @@ model Proposal {
 
   @@index([eventId, decision])
   @@index([speakerId])
+  @@index([roomId])
   @@map("proposal")
+}
+
+/// A room (or stage, or online channel) sessions are scheduled in.
+model ScheduleRoom {
+  id       String @id @default(cuid())
+  eventId  String
+  event    Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name     String
+  capacity Int?
+  position Int    @default(0)
+
+  proposals Proposal[]
+  items     ScheduleItem[]
+
+  createdAt DateTime @default(now())
+
+  @@index([eventId])
+  @@map("schedule_room")
+}
+
+/// Something on the schedule that isn't a proposal: registration, breaks, lunch, a welcome.
+model ScheduleItem {
+  id          String        @id @default(cuid())
+  eventId     String
+  event       Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  day         DateTime      @db.Date
+  startMinute Int
+  endMinute   Int
+  title       String
+  roomId      String?       // null = across all rooms
+  room        ScheduleRoom? @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([eventId, day])
+  @@index([roomId])
+  @@map("schedule_item")
 }
 
 model Review {

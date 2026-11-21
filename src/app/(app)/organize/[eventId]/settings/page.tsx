@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ActionButton } from "@/components/form-controls";
+import { DecisionEmailsForm } from "@/components/organizer/decision-emails-form";
 import { EventForm } from "@/components/organizer/event-form";
-import { Card, Skeleton, toDateInput } from "@/components/ui";
+import { Card, formatDateRange, Skeleton, toDateInput } from "@/components/ui";
 import { deleteEvent, updateEvent } from "@/lib/actions/events";
+import { parseDecisionEmails } from "@/lib/decision-email";
 import { requireEventAccess } from "@/lib/organizer";
 import { canAdmin } from "@/lib/permissions";
 
@@ -39,6 +41,13 @@ async function Settings({ params }: { params: Props["params"] }) {
           maxProposalsPerSpeaker: event.maxProposalsPerSpeaker, blindReview: event.blindReview,
           confirmationEmailEnabled: event.confirmationEmailEnabled, confirmationEmailSubject: event.confirmationEmailSubject, confirmationEmailBody: event.confirmationEmailBody,
         }}
+      />
+      <DecisionEmailsForm
+        eventId={eventId}
+        eventName={event.name}
+        eventDates={formatDateRange(event.startDate, event.endDate)}
+        enabled={event.decisionEmailsEnabled}
+        templates={parseDecisionEmails(event.decisionEmails)}
       />
       {owner && (
         <Card title="Delete event">

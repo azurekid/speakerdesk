@@ -96,3 +96,50 @@ export async function withdrawProposal(proposalId: string): Promise<void> {
   revalidatePath(`/events/${proposal.event.slug}`);
   revalidatePath(`/organize/${proposal.eventId}`, "layout");
 }
+
+/**
+ * An accepted speaker confirms they'll give the session, or says they can't make it. Declining
+ * takes the session off the programme and schedule. The event's organizers are told either way.
+ */
+export async function respondToAcceptance(proposalId: string, confirm: boolean, _prev: ActionState, form: FormData): Promise<ActionState> {
+  const user = await requireUser();
+  if (user.impersonatedBy) return { ok: false, message: "Support sessions can't answer on the speaker's behalf." };
+  const proposal = await prisma.proposal.findFirst({
+    where: { id: proposalId, speakerId: user.id, decision: "ACCEPTED", decisionPublished: true, withdrawn: false },
+    include: { event: { select: { id: true, name: true, slug: true } } },
+  });
+  if (!proposal) return { ok: false, message: "This session isn't waiting for your answer." };
+  if (proposal.confirmation === "DECLINED") return { ok: false, message: "You already let the organizers know you can't make it." };
+  if (confirm && proposal.confirmation === "CONFIRMED") return { ok: true, message: "You've already confirmed this session." };
+  const note = String(form.get("note") ?? "").trim().slice(0, 1000);
+
+  await prisma.$transaction([
+    prisma.proposal.update({
+      where: { id: proposalId },
+      data: confirm
+        ? { confirmation: "CONFIRMED", confirmationNote: note, confirmedAt: new Date() }
+        : { confirmation: "DECLINED", confirmationNote: note, confirmedAt: new Date(), slotDay: null, slotStart: null, roomId: null },
+    }),
+    ...(!confirm && proposal.submissionId ? [prisma.submission.update({ where: { id: proposal.submissionId }, data: { status: "WITHDRAWN" } })] : []),
+  ]);
+
+  const organizers = await prisma.eventMember.findMany({
+    where: { eventId: proposal.eventId, role: { in: ["OWNER", "ORGANIZER"] } },
+    select: { user: { select: { email: true } } },
+  });
+  const profile = await prisma.speakerProfile.findUnique({ where: { userId: user.id }, select: { fullName: true } });
+  const speaker = profile?.fullName || user.name;
+  const link = `${appUrl()}/organize/${proposal.eventId}/program`;
+  sendMailInBackground(organizers.map((o) => ({
+    to: o.user.email,
+    kind: confirm ? "speaker-confirmed" : "speaker-declined",
+    subject: confirm ? `${speaker} confirmed “${proposal.title}”` : `${speaker} can't give “${proposal.title}”`,
+    text: `${confirm ? `${speaker} confirmed they'll give “${proposal.title}” at ${proposal.event.name}.` : `${speaker} let you know they can't give “${proposal.title}” at ${proposal.event.name} after all. The session has been taken off the programme and the schedule. Your waitlist is on the Programme tab.`}${note ? `\n\nTheir note: “${note}”` : ""}\n\n${link}\n\nSpeakerDesk`,
+  })));
+
+  revalidatePath("/submissions");
+  revalidatePath("/dashboard");
+  revalidatePath(`/events/${proposal.event.slug}`);
+  revalidatePath(`/organize/${proposal.eventId}`, "layout");
+  return { ok: true, message: confirm ? "Thanks! The organizers know you'll be there." : "Thanks for letting the organizers know. The session is off the programme." };
+}

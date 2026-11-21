@@ -12,6 +12,9 @@ export const metadata: Metadata = {
   openGraph: { title: "What's new on SpeakerDesk", url: "/whats-new" },
 };
 
+/** Anchor for a release; several releases can share a date. */
+const releaseId = (r: Release) => `${r.date}-${r.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
+
 const formatDate = (iso: string) =>
   new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
 
@@ -25,8 +28,8 @@ export default function WhatsNewPage() {
           <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight sm:text-5xl">What&apos;s new</h1>
           <p className="mt-3 max-w-2xl text-ink-soft">New features and improvements for speakers, organizers and sponsors, newest first.</p>
           <nav aria-label="Jump to" className="mt-6 flex flex-wrap gap-2 text-sm">
-            {AUDIENCES.map((a) => (
-              <a key={a} href={`#${RELEASES[0].date}-${a}`} className="inline-flex min-h-10 items-center rounded-full border border-line px-4 text-ink-soft hover:border-ink hover:text-ink">
+            {AUDIENCES.filter((a) => RELEASES[0].items.some((i) => i.audience === a)).map((a) => (
+              <a key={a} href={`#${releaseId(RELEASES[0])}-${a}`} className="inline-flex min-h-10 items-center rounded-full border border-line px-4 text-ink-soft hover:border-ink hover:text-ink">
                 {AUDIENCE_LABELS[a]}
               </a>
             ))}
@@ -40,7 +43,7 @@ export default function WhatsNewPage() {
 
 function ReleaseEntry({ release }: { release: Release }) {
   return (
-    <article id={release.date} className="grid gap-x-10 gap-y-4 border-b border-line py-12 last:border-b-0 md:grid-cols-[10rem_1fr]">
+    <article id={releaseId(release)} className="grid gap-x-10 gap-y-4 border-b border-line py-12 last:border-b-0 md:grid-cols-[10rem_1fr]">
       <div>
         <time dateTime={release.date} className="text-sm font-medium text-ink-soft md:sticky md:top-6">{formatDate(release.date)}</time>
       </div>
@@ -51,7 +54,7 @@ function ReleaseEntry({ release }: { release: Release }) {
           const items = release.items.filter((i) => i.audience === audience);
           if (!items.length) return null;
           return (
-            <section key={audience} id={`${release.date}-${audience}`} className="mt-10 scroll-mt-6">
+            <section key={audience} id={`${releaseId(release)}-${audience}`} className="mt-10 scroll-mt-6">
               <h3 className="flex items-center gap-3 text-xs font-semibold uppercase tracking-wider text-brand-700">
                 {AUDIENCE_LABELS[audience]}
                 <span className="h-px flex-1 bg-line" />

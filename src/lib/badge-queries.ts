@@ -11,7 +11,7 @@ export type Recipient = { id: string; name: string; group: "Speakers" | "Team"; 
 export async function eligibleRecipients(eventId: string, excludeUserId?: string): Promise<Recipient[]> {
   const [proposals, members] = await Promise.all([
     prisma.proposal.findMany({
-      where: { eventId, decision: "ACCEPTED", decisionPublished: true, withdrawn: false },
+      where: { eventId, decision: "ACCEPTED", decisionPublished: true, withdrawn: false, OR: [{ confirmation: null }, { confirmation: { not: "DECLINED" } }] },
       select: { speakerId: true, title: true, speaker: { select: { name: true, profile: { select: { fullName: true } } } } },
       orderBy: { title: "asc" },
     }),

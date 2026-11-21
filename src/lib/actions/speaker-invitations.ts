@@ -105,6 +105,9 @@ export async function acceptSpeakerInvitation(invitationId: string, _prev: Actio
         decision: "ACCEPTED",
         decisionPublished: true,
         decidedAt: new Date(),
+        // Accepting the invitation is the speaker's confirmation.
+        confirmation: "CONFIRMED",
+        confirmedAt: new Date(),
       },
     });
     await tx.speakerInvitation.update({ where: { id: inv.id }, data: { status: "ACCEPTED", responseNote: note, respondedAt: new Date(), proposalId: proposal.id, talkId: talk.id } });

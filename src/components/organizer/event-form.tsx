@@ -154,8 +154,8 @@ function ConfirmationEmail({ values, errors }: { values: EventFormValues; errors
           <div className="rounded-lg border border-line bg-neutral-50 p-4 text-sm">
             <p className="mb-3 border-b border-line pb-2 font-medium">{preview.subject}</p>
             <div className="whitespace-pre-wrap">
-              {preview.text.split(/(Open your speaker dashboard: #)/).map((part, i) =>
-                part === "Open your speaker dashboard: #" ? <span key={i} className="my-1 inline-block rounded-md bg-ink px-3 py-1.5 text-xs font-semibold text-paper">Open speaker dashboard</span> : part,
+              {preview.text.split(/(Open speaker dashboard: #)/).map((part, i) =>
+                part === "Open speaker dashboard: #" ? <span key={i} className="my-1 inline-block rounded-md bg-ink px-3 py-1.5 text-xs font-semibold text-paper">Open speaker dashboard</span> : part,
               )}
             </div>
           </div>

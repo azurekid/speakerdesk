@@ -31,7 +31,10 @@ async function Program({ params, searchParams }: { params: Props["params"]; sear
   const { user, event, role } = await requireEventAccess(eventId);
   const anonymous = hideSpeaker(event, role);
   const proposals = (await getEventProposals(eventId, user.id)).filter((p) => !p.withdrawn);
-  const accepted = proposals.filter((p) => p.decision === "ACCEPTED");
+  const acceptedAll = proposals.filter((p) => p.decision === "ACCEPTED");
+  const accepted = acceptedAll.filter((p) => p.confirmation !== "DECLINED");
+  const declined = acceptedAll.filter((p) => p.confirmation === "DECLINED");
+  const awaiting = accepted.filter((p) => p.confirmation === "PENDING").length;
   const waitlist = proposals.filter((p) => p.decision === "WAITLISTED").sort((a, b) => (b.avgScore ?? 0) - (a.avgScore ?? 0));
   const minutes = accepted.reduce((n, p) => n + p.durationMinutes, 0);
   const tracks = event.tracks.length ? event.tracks : [""];
@@ -43,6 +46,7 @@ async function Program({ params, searchParams }: { params: Props["params"]; sear
         <p className="text-sm">
           <span className="font-display tracking-tight text-2xl font-semibold">{accepted.length}</span> accepted sessions ·{" "}
           <span className="text-ink-soft">{Math.floor(minutes / 60)}h {minutes % 60}m of content</span>
+          {awaiting > 0 && <span className="text-ink-soft"> · {awaiting} awaiting speaker confirmation</span>}
         </p>
         {canManage(role) && (
           <ActionButton action={setProgramPublished.bind(null, event.id, !event.programPublished)} variant={event.programPublished ? "secondary" : "accent"}>
@@ -69,6 +73,7 @@ async function Program({ params, searchParams }: { params: Props["params"]; sear
                       <Link href={`/organize/${eventId}/proposals/${p.id}`} className="font-medium hover:text-brand-700">{p.title}</Link>
                       <p className="text-sm text-ink-soft">{anonymous ? "Anonymous speaker" : p.speakerName}{p.invited && <span className="ml-2 rounded-full bg-brand-50 px-2 py-0.5 text-[11px] text-brand-700">Invited</span>}</p>
                     </div>
+                    <ConfirmationBadge proposal={p} />
                     <FormatBadge format={p.format} />
                     <span className="w-16 text-right text-sm tabular-nums text-ink-soft">{p.durationMinutes} min</span>
                     {!p.decisionPublished && <span className="text-[11px] text-brand-700">unsent</span>}
@@ -83,6 +88,20 @@ async function Program({ params, searchParams }: { params: Props["params"]; sear
       <InvitedSpeakers eventId={eventId} eventName={event.name} manager={canManage(role)} userId={user.id} find={typeof find === "string" ? find : undefined} />
 
       {accepted.length > 0 && <ProductionChecklist sessions={accepted} />}
+
+      {declined.length > 0 && (
+        <Card title="Speakers who can't make it" description="Accepted, but the speaker declined. These sessions are off the programme and the schedule.">
+          <ul className="divide-y divide-line text-sm">
+            {declined.map((p) => (
+              <li key={p.id} className="py-2.5">
+                <Link href={`/organize/${eventId}/proposals/${p.id}`} className="font-medium hover:text-brand-700">{p.title}</Link>
+                <span className="text-ink-soft"> · {anonymous ? "Anonymous speaker" : p.speakerName}</span>
+                {p.confirmationNote && <p className="text-xs text-ink-soft">“{p.confirmationNote}”</p>}
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       {waitlist.length > 0 && (
         <Card title="Waitlist" description="Highest rated first. Your back-ups if someone drops out.">
@@ -254,5 +273,14 @@ async function InviteSearch({ eventId, eventName, userId, find }: { eventId: str
         )
       )}
     </div>
+  );
+}
+
+function ConfirmationBadge({ proposal: p }: { proposal: { decisionPublished: boolean; confirmation: "PENDING" | "CONFIRMED" | "DECLINED" | null; confirmationNote: string } }) {
+  if (!p.decisionPublished || !p.confirmation) return null;
+  return p.confirmation === "CONFIRMED" ? (
+    <Badge className="bg-emerald-50 text-emerald-800 ring-emerald-200"><span title={p.confirmationNote || undefined}>Confirmed</span></Badge>
+  ) : (
+    <Badge className="bg-amber-50 text-amber-800 ring-amber-200">Awaiting speaker</Badge>
   );
 }

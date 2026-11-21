@@ -33,6 +33,20 @@ export type Release = {
 export const RELEASES: Release[] = [
   {
     date: "2026-11-21",
+    title: "Schedules, calendar files and decision emails",
+    summary: "Build a timetable with rooms and time slots, tell every speaker the outcome by email, and put sessions straight into anyone's calendar.",
+    items: [
+      { audience: "organizers", title: "Schedule builder", body: "A new Schedule tab with a column per room and a tab per day. Drag accepted sessions onto the grid (or pick a day, time and room on your phone), add breaks and plenary items, and get a warning when a room or a speaker is double-booked." },
+      { audience: "organizers", title: "Publish the schedule", body: "Publishing puts the timetable on your event page and emails every scheduled speaker their time slot. Move a session later and you can send just the changed slots." },
+      { audience: "organizers", title: "Decision emails", body: "Publishing decisions now emails each speaker: accepted, waitlisted or not selected. Edit the three emails per event in Settings, with placeholders and a live preview, or switch them off." },
+      { audience: "organizers", title: "Speaker confirmation", body: "Accepted speakers confirm they'll be there, or tell you they can't make it. The Programme tab shows who has confirmed, and you get an email either way. Declined sessions leave the programme and schedule automatically." },
+      { audience: "speakers", title: "Confirm your accepted sessions", href: "/submissions", body: "When a talk is accepted you get an email and a reminder on your dashboard. Confirm with one click, or let the organizers know you can't make it, with an optional note." },
+      { audience: "speakers", title: "Your time slot, in your calendar", href: "/export", body: "Once the schedule is published you get your time and room by email, with a calendar file. Your export page also has a speaking calendar with every accepted talk." },
+      { audience: "everyone", title: "Add events and sessions to your calendar", href: "/events", body: "Every event page has an \"Add to your calendar\" button, and with a published schedule each session has its own calendar link. Works with Outlook, Google and Apple Calendar." },
+    ],
+  },
+  {
+    date: "2026-11-21",
     title: "SpeakerDesk is live",
     summary: "Everything that is in place today for speakers, organizers and sponsors. From here on, every update gets its own entry on this page.",
     items: [

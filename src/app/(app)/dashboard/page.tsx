@@ -62,6 +62,10 @@ async function Overview() {
     getOpenCalls(3),
   ]);
   const invitations = await prisma.speakerInvitation.findMany({ where: { speakerId: user.id, status: "PENDING" }, include: { event: { select: { name: true } } } });
+  const toConfirm = await prisma.proposal.findMany({
+    where: { speakerId: user.id, decision: "ACCEPTED", decisionPublished: true, withdrawn: false, confirmation: "PENDING" },
+    select: { id: true, title: true, submissionId: true, event: { select: { name: true } } },
+  });
 
   const count = (s: string) => statusCounts.find((c) => c.status === s)?._count ?? 0;
   const accepted = count("ACCEPTED");
@@ -101,6 +105,16 @@ async function Overview() {
           <span className="text-sm font-medium">Respond →</span>
         </Link>
       )}
+
+      {toConfirm.map((p) => (
+        <Link key={p.id} href={p.submissionId ? `/submissions/${p.submissionId}/edit#confirm` : "/submissions"} className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 hover:border-emerald-500">
+          <p className="text-sm">
+            <span className="font-semibold text-emerald-800">Accepted: “{p.title}”</span>{" "}
+            <span className="text-ink-soft">at {p.event.name}. Please confirm you&apos;ll be there.</span>
+          </p>
+          <span className="text-sm font-medium">Confirm →</span>
+        </Link>
+      ))}
 
       <div className="grid grid-cols-2 gap-6 lg:grid-cols-4">
         <Stat label="Active sessions" value={talkCount} href="/sessions" />

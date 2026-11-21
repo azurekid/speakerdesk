@@ -120,9 +120,9 @@ async function Overview({ params }: { params: Params }) {
         <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-brand-200 bg-brand-50 px-5 py-4">
           <div>
             <p className="font-medium text-brand-700">{unpublished} decision{unpublished === 1 ? "" : "s"} not yet sent to speakers</p>
-            <p className="text-sm text-ink-soft">Speakers see their result in their tracker once you publish. Undecided proposals stay pending.</p>
+            <p className="text-sm text-ink-soft">Speakers see their result in their tracker{event.decisionEmailsEnabled ? " and by email" : ""} once you publish. Undecided proposals stay pending. <Link href={`/organize/${event.id}/settings`} className="underline">Edit the emails</Link></p>
           </div>
-          <ActionButton action={publishDecisions.bind(null, event.id)} variant="accent" confirmText={`Send ${unpublished} decision(s) to speakers now?`}>
+          <ActionButton action={publishDecisions.bind(null, event.id)} variant="accent" confirmText={`Send ${unpublished} decision(s) to speakers now?${event.decisionEmailsEnabled ? " Each speaker also gets an email." : ""}`}>
             Publish decisions
           </ActionButton>
         </div>

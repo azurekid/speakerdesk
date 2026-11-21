@@ -17,6 +17,7 @@ export function EventTabs({ eventId, role }: { eventId: string; role: EventRole 
     { href: `${base}/runbook`, label: "Runbook", min: "VOLUNTEER" as EventRole },
     { href: `${base}/proposals`, label: "Proposals", min: "REVIEWER" as EventRole },
     { href: `${base}/program`, label: "Programme", min: "REVIEWER" as EventRole },
+    { href: `${base}/schedule`, label: "Schedule", min: "ORGANIZER" as EventRole },
     { href: `${base}/sponsors`, label: "Sponsors & budget", min: "ORGANIZER" as EventRole },
     { href: `${base}/team`, label: "Team", min: "VOLUNTEER" as EventRole },
     { href: `${base}/badges`, label: "Badges", min: "ORGANIZER" as EventRole },

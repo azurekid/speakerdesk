@@ -38,7 +38,7 @@ SpeakerDesk is a two-sided portal for conference speakers and event organizers.
 | **Badges** (`/badges`, event Badges tab) | Organizers award recognition to their event's accepted speakers and team: 10 built-in SpeakerDesk badges (Speaker, Keynote, Workshop host, First-time speaker, Volunteer, Organizing crew…) plus their own (name, description, icon, colour). Recipients get an email and a banner, accept or decline, and choose per badge whether it shows on their public speaker page. Every visible badge has a public, shareable credential page (`/credentials/{id}`) with link previews. Organizers can revoke; declined badges aren't offered again |
 | **Organizer workspace** (`/organize`) | Create an event with a cover photo, dates, tracks, formats and limits, then publish or unpublish the CfP. Add a review team (owners and reviewers), score proposals 1–5 with comments, and optionally review anonymously. Accept, waitlist or reject, then **publish decisions**, which updates every speaker's tracker. Build the programme by track with a ranked waitlist, and publish it to the public event page |
 
-Not built yet: the browser-extension autofill companion, AI rewrite/condense helpers, email notifications (decisions, team invites), and scheduling sessions into time slots. See [Roadmap](#roadmap).
+Not built yet: the browser-extension autofill companion, AI rewrite/condense helpers and team-invite emails. See [Roadmap](#roadmap).
 
 ## Stack
 
@@ -134,5 +134,5 @@ src/proxy.ts                Optimistic redirect to /sign-in (real checks live in
 4. **Abstract version history**, and per-event custom answers on submissions.
 5. **Infrastructure as code** (Bicep) and a GitHub Actions pipeline: build → migrate → deploy.
 6. **Sponsorship extras**: invoices and payment links (e.g. Stripe), logo upload to Blob Storage, sponsor team members, and expenses on the budget.
-7. **Email notifications** for team invites, speaker invitations and decisions. The mailer (`src/lib/mailer.ts`, Azure Communication Services) already delivers passcodes, verification and reset codes; these notifications still need to be hooked into it.
-8. **Organizer extras**: email notifications for decisions and team invites, custom CfP questions, a time-slot schedule builder, speaker confirmation after acceptance, and travel/logistics collection.
+7. **Email notifications** for team invites. Decisions, speaker confirmations, schedule slots, speaker invitations and badges already send email through `src/lib/mailer.ts`.
+8. **Organizer extras**: custom CfP questions, travel/logistics collection, and a subscribable (live) calendar feed. Done: schedule builder, decision emails, speaker confirmation, ICS downloads.
