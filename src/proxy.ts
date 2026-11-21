@@ -8,6 +8,7 @@ const PROTECTED = [
   /^\/(dashboard|profile|sessions|submissions|import|export|organize|sponsor|invitations|admin)(\/|$)/,
   /^\/events\/[^/]+\/submit$/,
   /^\/(welcome|onboarding|account|badges)$/,
+  /^\/scan(\/|$)/, // the door scanner: sign in on the door phone first
 ];
 
 const canonicalHost = new URL(SITE_URL).host;

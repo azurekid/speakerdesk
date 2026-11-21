@@ -60,6 +60,24 @@ param microsoftClientId string = ''
 @secure()
 param microsoftClientSecret string = ''
 
+@description('Optional Apple Wallet pass signing (Pass Type ID certificate). All of them, or the button stays hidden.')
+param appleWalletPassTypeId string = ''
+param appleWalletTeamId string = ''
+@secure()
+param appleWalletCert string = ''
+@secure()
+param appleWalletKey string = ''
+@secure()
+param appleWalletKeyPassphrase string = ''
+@secure()
+param appleWalletWwdrCert string = ''
+
+@description('Optional Google Wallet issuer and service account. All three, or the button stays hidden.')
+param googleWalletIssuerId string = ''
+param googleWalletServiceAccountEmail string = ''
+@secure()
+param googleWalletPrivateKey string = ''
+
 @description('Minimum replicas. Keep 1 so the first request after idle is not a cold start.')
 @minValue(0)
 param minReplicas int = 1
@@ -263,6 +281,21 @@ var oauth = [
 ]
 var enabledOauth = filter(oauth, p => !empty(p.clientId) && !empty(p.secret))
 
+// Wallet passes: only settings that are filled in are passed to the app.
+var walletSecrets = filter([
+  { name: 'apple-wallet-cert', env: 'APPLE_WALLET_CERT', value: appleWalletCert }
+  { name: 'apple-wallet-key', env: 'APPLE_WALLET_KEY', value: appleWalletKey }
+  { name: 'apple-wallet-key-passphrase', env: 'APPLE_WALLET_KEY_PASSPHRASE', value: appleWalletKeyPassphrase }
+  { name: 'apple-wallet-wwdr-cert', env: 'APPLE_WALLET_WWDR_CERT', value: appleWalletWwdrCert }
+  { name: 'google-wallet-private-key', env: 'GOOGLE_WALLET_PRIVATE_KEY', value: googleWalletPrivateKey }
+], w => !empty(w.value))
+var walletSettings = filter([
+  { env: 'APPLE_WALLET_PASS_TYPE_ID', value: appleWalletPassTypeId }
+  { env: 'APPLE_WALLET_TEAM_ID', value: appleWalletTeamId }
+  { env: 'GOOGLE_WALLET_ISSUER_ID', value: googleWalletIssuerId }
+  { env: 'GOOGLE_WALLET_SERVICE_ACCOUNT_EMAIL', value: googleWalletServiceAccountEmail }
+], w => !empty(w.value))
+
 resource app 'Microsoft.App/containerApps@2024-03-01' = if (deployApp) {
   name: names.app
   location: location
@@ -293,7 +326,7 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = if (deployApp) {
         { name: 'storage-connection', value: storageConnection }
         { name: 'maps-key', value: maps.listKeys().primaryKey }
         { name: 'acs-connection', value: communication.listKeys().primaryConnectionString }
-      ], map(enabledOauth, p => { name: '${p.id}-client-secret', value: p.secret }))
+      ], map(enabledOauth, p => { name: '${p.id}-client-secret', value: p.secret }), map(walletSecrets, w => { name: w.name, value: w.value }))
     }
     template: {
       containers: [
@@ -316,7 +349,7 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = if (deployApp) {
           ], flatten(map(enabledOauth, p => [
             { name: p.envId, value: p.clientId }
             { name: p.envSecret, secretRef: '${p.id}-client-secret' }
-          ])))
+          ])), map(walletSecrets, w => { name: w.env, secretRef: w.name }), map(walletSettings, w => { name: w.env, value: w.value }))
           probes: [
             { type: 'Liveness', httpGet: { path: '/api/health', port: 3000 }, periodSeconds: 30 }
             { type: 'Readiness', httpGet: { path: '/api/health?deep=1', port: 3000 }, periodSeconds: 15, failureThreshold: 3 }

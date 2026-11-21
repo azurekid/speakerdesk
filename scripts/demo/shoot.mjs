@@ -139,6 +139,18 @@ for (const shot of manifest.shots) {
       await evaluate(`document.querySelector(${JSON.stringify(shot.click)})?.click()`);
       await sleep(800);
     }
+    // steps: [{ "click": "css" } | { "clickText": "Button text" } | { "type": ["css", "text"] } | { "wait": ms }]
+    for (const step of shot.steps ?? []) {
+      if (step.click) await evaluate(`document.querySelector(${JSON.stringify(step.click)})?.click()`);
+      if (step.clickText) {
+        const found = await evaluate(`(() => { const b = [...document.querySelectorAll("button, a")].find((el) => el.textContent.trim() === ${JSON.stringify(step.clickText)}); b?.click(); return !!b; })()`);
+        if (!found) throw new Error(`no button "${step.clickText}"`);
+      }
+      if (step.type) {
+        await evaluate(`(() => { const i = document.querySelector(${JSON.stringify(step.type[0])}); const set = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set; set.call(i, ${JSON.stringify(step.type[1])}); i.dispatchEvent(new Event("input", { bubbles: true })); })()`);
+      }
+      await sleep(step.wait ?? 600);
+    }
     // Position the target, then read its box in page coordinates.
     const box = await evaluate(`(() => {
       const sel = ${JSON.stringify(shot.selector ?? null)};

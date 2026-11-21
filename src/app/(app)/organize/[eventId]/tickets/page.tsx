@@ -68,7 +68,8 @@ async function Tickets({ params, searchParams }: { params: Props["params"]; sear
           </p>
           <p className="text-ink-soft">
             {{ open: "Registration is open on your event page.", "not-open": "Registration is closed to the public.", closed: "Registration has closed.", full: "Registration is full.", ended: "The event has ended." }[state]}{" "}
-            <Link href={`/organize/${eventId}/settings/registration`} className="underline">Registration settings</Link>
+            <Link href={`/organize/${eventId}/settings/registration`} className="underline">Registration settings</Link>{" · "}
+            <a href={`${base}/email-preview`} target="_blank" className="underline">Preview the ticket email</a>
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -77,7 +78,7 @@ async function Tickets({ params, searchParams }: { params: Props["params"]; sear
               Email {unsent} ticket{unsent === 1 ? "" : "s"}
             </ActionButton>
           )}
-          <ButtonLink href={`${base}/check-in`} variant="accent"><QrCode className="size-4" /> Check in at the door</ButtonLink>
+          <ButtonLink href={`/scan/${eventId}`} variant="accent"><QrCode className="size-4" /> Door scanner</ButtonLink>
         </div>
       </div>
 

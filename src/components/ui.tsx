@@ -214,16 +214,9 @@ export function dateParts(d: Date) {
   };
 }
 
-const DATE_FMT = new Intl.DateTimeFormat("en", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
-/** Dates are stored as UTC midnight (date-only), so always format in UTC. */
-export function formatDate(d: Date | null | undefined) {
-  return d ? DATE_FMT.format(d) : "-";
-}
-export function formatDateRange(start: Date | null | undefined, end: Date | null | undefined) {
-  if (!start) return "Dates to be announced";
-  if (!end || end.getTime() === start.getTime()) return formatDate(start);
-  return `${new Intl.DateTimeFormat("en", { day: "numeric", month: "short", timeZone: "UTC" }).format(start)} – ${formatDate(end)}`;
-}
+// Date formatting lives in src/lib/dates.ts (also used by server code and emails).
+export { formatDate, formatDateRange } from "@/lib/dates";
+
 export function toDateInput(d: Date | null | undefined) {
   return d ? d.toISOString().slice(0, 10) : "";
 }

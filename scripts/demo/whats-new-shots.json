@@ -2,6 +2,46 @@
   "$comment": "One entry per screenshot on /whats-new. Each id matches a release item's `shot` in src/lib/whats-new.ts and becomes public/whats-new/<id>.jpg. role = demo account (seed.mjs); selector = element to crop to (omit for the top of the page); maxHeight caps the crop in CSS px; click/wait/hover run before the shot.",
   "shots": [
     {
+      "id": "door-scanner",
+      "role": "organizer",
+      "path": "/scan/seed_evt_cloud",
+      "width": 390,
+      "height": 780,
+      "maxHeight": 780,
+      "steps": [
+        {
+          "wait": 1500
+        },
+        {
+          "type": [
+            "input[aria-label=\"Search attendees\"]",
+            "Tom"
+          ]
+        },
+        {
+          "clickText": "Check in",
+          "wait": 1500
+        }
+      ]
+    },
+    {
+      "id": "wallet-buttons",
+      "role": "anonymous",
+      "path": "/tickets/seedTicketDemoCode0003",
+      "selector": "main",
+      "maxHeight": 900,
+      "width": 520,
+      "height": 900
+    },
+    {
+      "id": "ticket-email",
+      "role": "organizer",
+      "path": "/organize/seed_evt_cloud/tickets/email-preview",
+      "width": 700,
+      "height": 1400,
+      "maxHeight": 1400
+    },
+    {
       "id": "guided-event-setup",
       "role": "organizer",
       "path": "/organize/seed_evt_cloud/settings/cfp",
@@ -25,7 +65,7 @@
     {
       "id": "qr-ticket",
       "role": "anonymous",
-      "path": "/tickets/seedTicketDemoCode0002",
+      "path": "/tickets/seedTicketDemoCode0003",
       "selector": "main",
       "maxHeight": 900,
       "width": 520,

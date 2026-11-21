@@ -1,10 +1,12 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
-import { formatDateRange } from "@/components/ui";
+import { formatDateRange } from "@/lib/dates";
 import { appUrl } from "@/lib/app-url";
 import { prisma } from "@/lib/db";
 import { eventWhere } from "@/lib/domain";
-import { escapeHtml, mailLayout } from "@/lib/email-template";
+import { escapeHtml } from "@/lib/email-template";
+import { appleWalletConfigured } from "@/lib/wallet/apple";
+import { googleWalletConfigured } from "@/lib/wallet/google";
 import { sendMailInBackground } from "@/lib/mailer";
 
 /** 128 bits, URL-safe: the ticket link and QR code can't be guessed. */
@@ -44,15 +46,31 @@ export async function ticketAvailability(eventId: string) {
   };
 }
 
-type TicketMailEvent = { name: string; slug: string; startDate: Date | null; endDate: Date | null; venue: string; address: string; location: string; format: "IN_PERSON" | "ONLINE" | "HYBRID"; onlinePlatform: string };
+type TicketMailEvent = {
+  name: string; slug: string; startDate: Date | null; endDate: Date | null; venue: string; address: string; location: string;
+  format: "IN_PERSON" | "ONLINE" | "HYBRID"; onlinePlatform: string; coverImage: string;
+};
 type TicketMailRegistration = { code: string; name: string; email: string; ticketType: { name: string } | null };
 
-/** The ticket email: QR code, the essentials, and links to the ticket and the calendar file. */
+/** The banner as an absolute URL mail clients can load: bundled photos go through the image optimizer. */
+export function bannerUrl(coverImage: string) {
+  if (coverImage.startsWith("/")) return `${appUrl()}/_next/image?url=${encodeURIComponent(coverImage)}&w=1200&q=75`;
+  return coverImage.startsWith("https://") ? coverImage : null;
+}
+
+/** The ticket email: event banner, QR code, the essentials, wallet buttons and a cancel link. */
 export function renderTicketEmail(event: TicketMailEvent, r: TicketMailRegistration) {
   const when = formatDateRange(event.startDate, event.endDate);
   const where = (event.format === "ONLINE" ? `Online${event.onlinePlatform ? ` (${event.onlinePlatform})` : ""}` : [event.venue, event.address || eventWhere(event)].filter(Boolean).join(", ")) || "To be announced";
   const first = r.name.split(" ")[0];
+  const ticket = ticketUrl(r.code);
+  const cancel = `${ticket}/cancel`;
+  const calendar = `${appUrl()}/events/${event.slug}/calendar.ics`;
+  const apple = appleWalletConfigured() ? `${ticket}/wallet.pkpass` : null;
+  const google = googleWalletConfigured() ? `${ticket}/google-wallet` : null;
+  const banner = bannerUrl(event.coverImage);
   const subject = `Your ticket for ${event.name}`;
+
   const text = `Hi ${first},
 
 You're registered for ${event.name}.
@@ -62,27 +80,37 @@ Where: ${where}
 Ticket: ${r.ticketType?.name ?? "General admission"}
 
 Show the QR code on your ticket at the entrance (on your phone or printed):
-${ticketUrl(r.code)}
+${ticket}
+${apple ? `\nAdd to Apple Wallet: ${apple}` : ""}${google ? `\nSave to Google Wallet: ${google}` : ""}
+Add it to your calendar: ${calendar}
 
-Add it to your calendar: ${appUrl()}/events/${event.slug}/calendar.ics
-Can't come after all? Cancel from your ticket page, so someone else can have your place.
+Can't come after all? Cancel your ticket, so someone else can have your place:
+${cancel}
 
 See you there,
 ${event.name}`;
-  const html = mailLayout(`
-<p style="margin:0 0 16px">Hi ${escapeHtml(first)},</p>
-<p style="margin:0 0 16px">You're registered for <strong>${escapeHtml(event.name)}</strong>.</p>
-<p style="margin:0 0 16px;text-align:center"><img src="${escapeHtml(qrUrl(r.code))}" width="220" height="220" alt="Your ticket QR code" style="display:inline-block;border:8px solid #fff"></p>
+
+  const e = escapeHtml;
+  const button = (href: string, label: string, dark = true) =>
+    `<a href="${e(href)}" style="display:inline-block;margin:0 8px 8px 0;background:${dark ? "#111" : "#fff"};color:${dark ? "#fff" : "#111"};border:1px solid #111;text-decoration:none;padding:10px 16px;border-radius:8px;font-weight:600;font-size:14px">${e(label)}</a>`;
+  const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head><body style="margin:0;padding:24px 12px;background:#f6f6f4">
+<div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;font:15px/1.55 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#111">
+${banner ? `<img src="${e(banner)}" width="560" alt="${e(event.name)}" style="display:block;width:100%;max-width:560px;height:auto;border:0">` : ""}
+<div style="padding:28px">
+<p style="margin:0 0 16px">Hi ${e(first)},</p>
+<p style="margin:0 0 16px">You're registered for <strong>${e(event.name)}</strong>.</p>
+<p style="margin:0 0 16px;text-align:center"><img src="${e(qrUrl(r.code))}" width="220" height="220" alt="Your ticket QR code" style="display:inline-block;border:8px solid #fff"></p>
 <table style="margin:0 0 16px;border-collapse:collapse;font-size:14px">
-<tr><td style="padding:2px 12px 2px 0;color:#666">When</td><td>${escapeHtml(when)}</td></tr>
-<tr><td style="padding:2px 12px 2px 0;color:#666">Where</td><td>${escapeHtml(where)}</td></tr>
-<tr><td style="padding:2px 12px 2px 0;color:#666">Ticket</td><td>${escapeHtml(r.ticketType?.name ?? "General admission")}</td></tr>
-<tr><td style="padding:2px 12px 2px 0;color:#666">Name</td><td>${escapeHtml(r.name)}</td></tr>
+<tr><td style="padding:2px 12px 2px 0;color:#666">When</td><td>${e(when)}</td></tr>
+<tr><td style="padding:2px 12px 2px 0;color:#666">Where</td><td>${e(where)}</td></tr>
+<tr><td style="padding:2px 12px 2px 0;color:#666">Ticket</td><td>${e(r.ticketType?.name ?? "General admission")}</td></tr>
+<tr><td style="padding:2px 12px 2px 0;color:#666">Name</td><td>${e(r.name)}</td></tr>
 </table>
-<p style="margin:0 0 16px"><a href="${escapeHtml(ticketUrl(r.code))}" style="display:inline-block;background:#111;color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px;font-weight:600">Open your ticket</a></p>
-<p style="margin:0 0 16px;font-size:14px;color:#444">Show the QR code at the entrance, on your phone or printed. <a href="${escapeHtml(`${appUrl()}/events/${event.slug}/calendar.ics`)}">Add it to your calendar</a>.</p>
-<p style="margin:0 0 16px;font-size:14px;color:#444">Can't come after all? Cancel from your ticket page, so someone else can have your place.</p>
-<p style="margin:0">See you there,<br>${escapeHtml(event.name)}</p>`);
+<p style="margin:0 0 8px">${button(ticket, "Open your ticket")}${apple ? button(apple, "Add to Apple Wallet") : ""}${google ? button(google, "Save to Google Wallet") : ""}</p>
+<p style="margin:0 0 16px;font-size:14px;color:#444">Show the QR code at the entrance, on your phone or printed. <a href="${e(calendar)}">Add it to your calendar</a>.</p>
+<p style="margin:0 0 16px;padding:12px 14px;background:#f6f6f4;border-radius:8px;font-size:14px;color:#444">Can't come after all? <a href="${e(cancel)}" style="color:#111;font-weight:600">Cancel your ticket</a>, so someone else can have your place.</p>
+<p style="margin:0">See you there,<br>${e(event.name)}</p>
+</div></div></body></html>`;
   return { subject, text, html };
 }
 

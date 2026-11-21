@@ -7,6 +7,9 @@ import { ActionButton } from "@/components/form-controls";
 import { Badge, ButtonLink, buttonClass, CfpBadge, ExternalLink, formatDate, formatDateRange, PhotoBanner, Skeleton, StatusBadge } from "@/components/ui";
 import { VenueMap } from "@/components/venue-map";
 import { ShareButtons, ShareMenu } from "@/components/share";
+import { SpeakerSocialLinks } from "@/components/speaker-social-links";
+import { AgendaInteractive } from "@/components/events/agenda-interactive";
+import type { AgendaRow } from "@/components/events/agenda-interactive";
 import { withdrawProposal } from "@/lib/actions/proposals";
 import { appUrl } from "@/lib/app-url";
 import { jsonLd, SITE_URL } from "@/lib/site";
@@ -99,7 +102,7 @@ async function EventDetail({ params, searchParams }: { params: Params; searchPar
               <VenueMap latitude={event.latitude} longitude={event.longitude} title={event.venue || event.name} className="mt-4 h-72" />
             </section>
           )}
-          {event.schedulePublished && <Agenda eventId={event.id} slug={event.slug} />}
+          {event.schedulePublished && <Agenda eventId={event.id} eventName={event.name} slug={event.slug} />}
           {event.programPublished && <Program event={event} />}
           <Sponsors eventId={event.id} />
         </div>
@@ -215,6 +218,7 @@ async function Program({ event }: { event: { id: string; slug: string; name: str
                 <p className="text-xs text-brand-700">{[s.track, FORMAT_LABELS[s.format], `${s.durationMinutes} min`, LEVEL_LABELS[s.level]].filter(Boolean).join(" · ")}</p>
                 <h3 className="mt-1 font-display tracking-tight text-xl font-semibold">{s.title}</h3>
                 <p className="text-sm text-ink-soft">{p?.fullName || s.speaker.name}{p?.tagline && `, ${p.tagline}`}</p>
+                <SpeakerSocialLinks profile={p} className="mt-1" />
                 <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-ink-soft">{s.abstract}</p>
                 <div className="mt-1 flex flex-wrap items-center gap-x-4">
                   {p?.websiteUrl && <ExternalLink href={p.websiteUrl} className="text-xs">Speaker website</ExternalLink>}
@@ -264,54 +268,51 @@ async function Registration({ event }: { event: Parameters<typeof registrationSt
 }
 
 /** The published schedule: per day, in time order, with breaks and rooms. */
-async function Agenda({ eventId, slug }: { eventId: string; slug: string }) {
+async function Agenda({ eventId, eventName, slug }: { eventId: string; eventName: string; slug: string }) {
   const { event, days, rooms, sessions, items } = await getSchedule(eventId, { publicOnly: true });
   const roomName = new Map(rooms.map((r) => [r.id, r.name]));
-  type Row = { key: string; day: string; start: number; end: number; title: string; sub: string; room: string; sessionId?: string };
-  const rows: Row[] = [
-    ...sessions.filter((s) => s.day).map((s) => ({ key: s.id, day: s.day!, start: s.start!, end: s.end!, title: s.title, sub: [s.speakerName, s.track].filter(Boolean).join(" · "), room: (s.roomId && roomName.get(s.roomId)) || "", sessionId: s.id })),
-    ...items.map((i) => ({ key: i.id, day: i.day, start: i.start, end: i.end, title: i.title, sub: "", room: i.roomId ? roomName.get(i.roomId) ?? "" : "" })),
+
+  // Fetch full session data for modal
+  const fullSessions = await prisma.proposal.findMany({
+    where: { id: { in: sessions.filter((s) => s.id).map((s) => s.id) } },
+    include: { speaker: { include: { profile: true } }, room: { select: { name: true } } },
+  });
+  const sessionMap = new Map(fullSessions.map((s) => [s.id, s]));
+
+  const rows: AgendaRow[] = [
+    ...sessions.filter((s) => s.day).map((s) => ({
+      key: s.id,
+      day: s.day!,
+      start: s.start!,
+      end: s.end!,
+      title: s.title,
+      sub: [s.speakerName, s.track].filter(Boolean).join(" · "),
+      room: (s.roomId && roomName.get(s.roomId)) || "",
+      sessionId: s.id,
+      session: sessionMap.get(s.id),
+    })),
+    ...items.map((i) => ({
+      key: i.id,
+      day: i.day,
+      start: i.start,
+      end: i.end,
+      title: i.title,
+      sub: "",
+      room: i.roomId ? roomName.get(i.roomId) ?? "" : "",
+    })),
   ].sort((a, b) => a.start - b.start || a.room.localeCompare(b.room));
+
   if (!rows.length) return null;
+
   const position = new Map(rooms.map((r, i) => [r.name, i]));
+
   return (
     <section id="schedule" className="scroll-mt-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <h2 className="font-display text-2xl font-semibold tracking-tight">Schedule</h2>
         <p className="text-xs text-ink-soft">Times in {event.timezone.replace(/_/g, " ")}</p>
       </div>
-      {days.map((day) => {
-        const today = rows.filter((r) => r.day === day);
-        if (!today.length) return null;
-        const slots = [...new Set(today.map((r) => r.start))];
-        return (
-          <div key={day} className="mt-6">
-            <h3 className="mb-2 text-sm font-semibold">{formatDayLabel(day)}</h3>
-            <ol className="divide-y divide-line border-y border-line">
-              {slots.map((start) => (
-                <li key={start} className="grid gap-x-4 gap-y-2 py-3 sm:grid-cols-[7rem_1fr]">
-                  <p className="text-sm tabular-nums text-ink-soft">{formatRange(start, Math.max(...today.filter((r) => r.start === start).map((r) => r.end)))}</p>
-                  <ul className="grid gap-2 sm:grid-cols-[repeat(auto-fill,minmax(14rem,1fr))]">
-                    {today.filter((r) => r.start === start).sort((a, b) => (position.get(a.room) ?? 99) - (position.get(b.room) ?? 99)).map((r) => (
-                      <li key={r.key} className={r.sessionId ? "rounded-lg border border-line px-3 py-2" : "rounded-lg bg-neutral-100 px-3 py-2 text-ink-soft"}>
-                        {r.room && <p className="text-[11px] font-medium uppercase tracking-wide text-brand-700">{r.room}</p>}
-                        {r.sessionId ? (
-                          <a href={`#session-${r.sessionId}`} className="font-medium leading-snug hover:text-brand-700">{r.title}</a>
-                        ) : (
-                          <p className="font-medium">{r.title}</p>
-                        )}
-                        {r.sub && <p className="text-xs text-ink-soft">{r.sub}</p>}
-                        {r.end !== Math.max(...today.filter((x) => x.start === start).map((x) => x.end)) && <p className="text-[11px] tabular-nums text-ink-soft">until {formatRange(r.start, r.end).split("–")[1]}</p>}
-                        {r.sessionId && <a href={`/events/${slug}/calendar.ics?session=${r.sessionId}`} className="mt-1 inline-block text-[11px] text-ink-soft underline">Add to calendar</a>}
-                      </li>
-                    ))}
-                  </ul>
-                </li>
-              ))}
-            </ol>
-          </div>
-        );
-      })}
+      <AgendaInteractive days={days} rows={rows} roomPosition={position} eventSlug={slug} eventName={eventName} />
     </section>
   );
 }

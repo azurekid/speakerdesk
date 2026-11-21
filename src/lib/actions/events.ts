@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { formatDateRange } from "@/components/ui";
+import { formatDateRange } from "@/lib/dates";
 import { prisma } from "@/lib/db";
 import { DECISION_EMAIL_KINDS, DEFAULT_DECISION_EMAILS, type DecisionEmailKind, parseDecisionEmails, renderDecisionEmail, unknownDecisionPlaceholders } from "@/lib/decision-email";
 import { sendMailInBackground } from "@/lib/mailer";

@@ -25,3 +25,14 @@ param linkedinClientId = readEnvironmentVariable('SPEAKERDESK_LINKEDIN_CLIENT_ID
 param linkedinClientSecret = readEnvironmentVariable('SPEAKERDESK_LINKEDIN_CLIENT_SECRET', '')
 param microsoftClientId = readEnvironmentVariable('SPEAKERDESK_MICROSOFT_CLIENT_ID', '')
 param microsoftClientSecret = readEnvironmentVariable('SPEAKERDESK_MICROSOFT_CLIENT_SECRET', '')
+
+// Optional wallet passes (leave unset to hide the "Add to Apple/Google Wallet" buttons).
+param appleWalletPassTypeId = readEnvironmentVariable('SPEAKERDESK_APPLE_WALLET_PASS_TYPE_ID', '')
+param appleWalletTeamId = readEnvironmentVariable('SPEAKERDESK_APPLE_WALLET_TEAM_ID', '')
+param appleWalletCert = readEnvironmentVariable('SPEAKERDESK_APPLE_WALLET_CERT', '')
+param appleWalletKey = readEnvironmentVariable('SPEAKERDESK_APPLE_WALLET_KEY', '')
+param appleWalletKeyPassphrase = readEnvironmentVariable('SPEAKERDESK_APPLE_WALLET_KEY_PASSPHRASE', '')
+param appleWalletWwdrCert = readEnvironmentVariable('SPEAKERDESK_APPLE_WALLET_WWDR_CERT', '')
+param googleWalletIssuerId = readEnvironmentVariable('SPEAKERDESK_GOOGLE_WALLET_ISSUER_ID', '')
+param googleWalletServiceAccountEmail = readEnvironmentVariable('SPEAKERDESK_GOOGLE_WALLET_SERVICE_ACCOUNT_EMAIL', '')
+param googleWalletPrivateKey = readEnvironmentVariable('SPEAKERDESK_GOOGLE_WALLET_PRIVATE_KEY', '')

@@ -124,6 +124,7 @@ export async function cancelOwnTicket(code: string): Promise<void> {
   await prisma.registration.update({ where: { id: reg.id }, data: { status: "CANCELLED" } });
   revalidateTickets(reg.eventId, reg.event.slug);
   revalidatePath(`/tickets/${code}`);
+  revalidatePath(`/tickets/${code}/cancel`);
 }
 
 /** The attendee gives or withdraws consent for sponsor contact, from their ticket page. */

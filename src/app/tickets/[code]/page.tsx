@@ -1,4 +1,4 @@
-import { CalendarPlus, MapPin } from "lucide-react";
+import { CalendarPlus, MapPin, Wallet } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -7,7 +7,9 @@ import { ActionButton } from "@/components/form-controls";
 import { TicketCheckInButton } from "@/components/organizer/check-in";
 import { PublicHeader } from "@/components/public-header";
 import { formatDateRange, Skeleton } from "@/components/ui";
-import { cancelOwnTicket, setOwnSponsorConsent } from "@/lib/actions/tickets";
+import { setOwnSponsorConsent } from "@/lib/actions/tickets";
+import { appleWalletConfigured } from "@/lib/wallet/apple";
+import { googleWalletConfigured } from "@/lib/wallet/google";
 import { getCurrentUser } from "@/lib/dal";
 import { prisma } from "@/lib/db";
 import { eventWhere } from "@/lib/domain";
@@ -60,6 +62,12 @@ async function Ticket({ params }: { params: Props["params"] }) {
               {/* eslint-disable-next-line @next/next/no-img-element -- generated per ticket */}
               <img src={`/tickets/${code}/qr.png`} alt="Ticket QR code for the entrance" width={256} height={256} className="mx-auto rounded-xl bg-white p-3" />
               <p className="mt-4 text-lg font-medium">{reg.name}</p>
+              {(appleWalletConfigured() || googleWalletConfigured()) && (
+                <div className="mt-4 flex flex-wrap justify-center gap-2">
+                  {appleWalletConfigured() && <a href={`/tickets/${code}/wallet.pkpass`} className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-black px-4 text-sm font-medium text-white ring-1 ring-white/20"><Wallet className="size-4" />Add to Apple Wallet</a>}
+                  {googleWalletConfigured() && <a href={`/tickets/${code}/google-wallet`} className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-black px-4 text-sm font-medium text-white ring-1 ring-white/20"><Wallet className="size-4" />Save to Google Wallet</a>}
+                </div>
+              )}
               {reg.checkedInAt ? (
                 <p className="mt-1 text-sm text-emerald-800">Checked in {reg.checkedInAt.toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: event.timezone })}</p>
               ) : (
@@ -92,9 +100,7 @@ async function Ticket({ params }: { params: Props["params"] }) {
         <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
           {event.startDate && <a href={`/events/${event.slug}/calendar.ics`} className="inline-flex items-center gap-1.5 underline"><CalendarPlus className="size-4" />Add to calendar</a>}
           <Link href={`/events/${event.slug}`} className="underline">Event page</Link>
-          {!reg.checkedInAt && (
-            <ActionButton action={cancelOwnTicket.bind(null, code)} variant="ghost" confirmText="Cancel your ticket? Your place goes to someone else.">Cancel my ticket</ActionButton>
-          )}
+          {!reg.checkedInAt && <Link href={`/tickets/${code}/cancel`} className="text-ink-soft underline hover:text-rose-700">Cancel my ticket</Link>}
         </div>
       )}
     </div>
