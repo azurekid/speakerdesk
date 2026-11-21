@@ -1,4 +1,4 @@
-import { ArrowLeftRight, ShieldCheck, UserCog } from "lucide-react";
+import { ArrowLeftRight, Award, ShieldCheck, UserCog } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { MobileNav } from "@/components/mobile-nav";
@@ -53,10 +53,11 @@ const FOOTER_ROW = "flex items-center gap-2.5 rounded-lg px-2 py-2.5 text-ink-so
 /** Impersonation warning and the onboarding nudge. */
 async function Notices() {
   const user = await requireUser();
-  const [o, admin, terms] = await Promise.all([
+  const [o, admin, terms, pendingBadges] = await Promise.all([
     getOnboarding(user.id),
     user.impersonatedBy ? prisma.user.findUnique({ where: { id: user.impersonatedBy }, select: { name: true } }) : null,
     prisma.user.findUnique({ where: { id: user.id }, select: { termsAcceptedAt: true, termsVersion: true } }),
+    prisma.badgeAward.count({ where: { recipientId: user.id, status: "PENDING" } }),
   ]);
   const termsOutdated = Boolean(terms?.termsAcceptedAt) && terms?.termsVersion !== TERMS_VERSION;
   return (
@@ -77,6 +78,12 @@ async function Notices() {
           <button type="submit" className="rounded-lg bg-ink px-3.5 py-1.5 font-medium text-paper">I agree</button>
         </form>
       )}
+      {pendingBadges > 0 && !user.impersonatedBy && (
+        <Link href="/badges" className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-line bg-surface px-5 py-3 text-sm hover:border-neutral-400">
+          <span className="inline-flex items-center gap-2"><Award className="size-4 text-brand-600" /><span className="font-semibold">You&apos;ve been given {pendingBadges === 1 ? "a badge" : `${pendingBadges} badges`}.</span> Accept {pendingBadges === 1 ? "it" : "them"} to show {pendingBadges === 1 ? "it" : "them"} on your profile.</span>
+          <span className="font-medium">View →</span>
+        </Link>
+      )}
       {!o.onboardedAt && !o.requiredDone && <OnboardingBanner left={o.requiredLeft} total={o.steps.length} done={o.done} />}
     </>
   );
@@ -84,7 +91,11 @@ async function Notices() {
 
 async function RoleAwareSidebar() {
   const user = await requireUser();
-  const [profile, role] = await Promise.all([getOrCreateProfile(user), getPrimaryRole(user.id)]);
+  const [profile, role, pendingBadges] = await Promise.all([
+    getOrCreateProfile(user),
+    getPrimaryRole(user.id),
+    prisma.badgeAward.count({ where: { recipientId: user.id, status: "PENDING" } }),
+  ]);
   const name = profile.fullName || user.name;
   const initials = name.split(/\s+/).map((p) => p[0]).slice(0, 2).join("").toUpperCase();
   const others = (["SPEAKER", "ORGANIZER", "SPONSOR"] as const).filter((r) => r !== role);
@@ -114,6 +125,10 @@ async function RoleAwareSidebar() {
           </div>
           <div className="grid gap-0.5 text-sm md:text-xs">
             <Link href="/account" className={FOOTER_ROW}><UserCog className="size-4 md:size-3.5" />Account</Link>
+            <Link href="/badges" className={FOOTER_ROW}>
+              <Award className="size-4 md:size-3.5" />Badges
+              {pendingBadges > 0 && <span className="ml-auto rounded-full bg-brand-600 px-1.5 text-[11px] font-semibold text-white">{pendingBadges}</span>}
+            </Link>
             {user.isAdmin && <Link href="/admin" className={`${FOOTER_ROW} font-medium text-brand-700`}><ShieldCheck className="size-4 md:size-3.5" />Admin</Link>}
             {others.map((r) => (
               <a key={r} href={`/api/account/view?role=${r.toLowerCase()}&next=${HOME[r]}`} className={FOOTER_ROW}>

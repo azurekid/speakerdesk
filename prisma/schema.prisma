@@ -57,6 +57,9 @@ model User {
   auditEntries     AuditLog[] @relation("AuditActor")
   invitesSent      EventInvite[] @relation("InvitedBy")
   tasksAssigned    RunbookTask[] @relation("TaskAssignee")
+  badgesReceived   BadgeAward[] @relation("BadgeRecipient")
+  badgesGiven      BadgeAward[] @relation("BadgeGiver")
+  badgesCreated    Badge[]      @relation("BadgeCreator")
 
   @@map("user")
 }
@@ -357,6 +360,8 @@ model Event {
   sponsorships Sponsorship[]
   tasks        RunbookTask[]
   speakerInvitations SpeakerInvitation[]
+  badges       Badge[]
+  badgeAwards  BadgeAward[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -691,4 +696,60 @@ model AuditLog {
   @@index([actorId, createdAt])
   @@index([category, createdAt])
   @@map("admin_audit_log")
+}
+
+// ─── Badges ──────────────────────────────────────────────────────────────────
+
+enum BadgeStatus {
+  PENDING  // awarded, waiting for the recipient
+  ACCEPTED
+  DECLINED
+  REVOKED  // withdrawn by the organizers
+}
+
+/// A badge design. Platform badges (eventId = null, key set) are available to every event;
+/// event badges are created by that event's organizers.
+model Badge {
+  id          String   @id @default(cuid())
+  key         String?  @unique // stable id of a platform badge, e.g. "keynote"
+  eventId     String?
+  event       Event?   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name        String
+  description String   @default("")
+  icon        String   @default("award") // key in src/lib/badges.ts
+  color       String   @default("brand") // key in src/lib/badges.ts
+  createdById String?
+  createdBy   User?    @relation("BadgeCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  archived    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  awards BadgeAward[]
+
+  @@index([eventId])
+  @@map("badge")
+}
+
+/// A badge given to one person for one event. The recipient accepts it before it counts,
+/// and decides whether it shows on their public profile.
+model BadgeAward {
+  id            String      @id @default(cuid())
+  badgeId       String
+  badge         Badge       @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  eventId       String
+  event         Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  recipientId   String
+  recipient     User        @relation("BadgeRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  awardedById   String?
+  awardedBy     User?       @relation("BadgeGiver", fields: [awardedById], references: [id], onDelete: SetNull)
+  message       String      @default("")
+  status        BadgeStatus @default(PENDING)
+  showOnProfile Boolean     @default(true)
+  respondedAt   DateTime?
+  createdAt     DateTime    @default(now())
+
+  @@unique([badgeId, eventId, recipientId])
+  @@index([recipientId, status])
+  @@index([eventId])
+  @@map("badge_award")
 }

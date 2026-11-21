@@ -11,6 +11,8 @@ import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/dal";
 import { LEVEL_LABELS } from "@/lib/domain";
 import { PUBLIC_PROFILE_SELECT } from "@/lib/speaker-directory";
+import { publicBadgesFor } from "@/lib/badge-queries";
+import { BadgeMedal } from "@/components/badge-medal";
 
 /** Link previews for a public speaker page: name, tagline and headshot. */
 export async function generateMetadata({ params }: PageProps<"/speakers/[slug]">): Promise<Metadata> {
@@ -45,6 +47,7 @@ async function Speaker({ params }: { params: Props["params"] }) {
   const { slug } = await params;
   const p = await prisma.speakerProfile.findFirst({ where: { slug, publicProfile: true }, select: PUBLIC_PROFILE_SELECT });
   if (!p) notFound();
+  const badges = await publicBadgesFor(p.userId);
   const talks = await prisma.talk.findMany({
     where: { userId: p.userId, published: true, archived: false },
     orderBy: { updatedAt: "desc" },
@@ -90,6 +93,22 @@ async function Speaker({ params }: { params: Props["params"] }) {
             {links.length > 0 && (
               <p className="mt-3 flex flex-wrap gap-4 text-sm">{links.map(([label, url]) => <ExternalLink key={label} href={url}>{label}</ExternalLink>)}</p>
             )}
+          </section>
+        )}
+
+        {badges.length > 0 && (
+          <section>
+            <h2 className="text-xl font-semibold tracking-tight">Badges</h2>
+            <ul className="mt-4 flex flex-wrap gap-3">
+              {badges.map((b) => (
+                <li key={b.id}>
+                  <Link href={`/credentials/${b.id}`} className="flex items-center gap-3 rounded-full border border-line bg-surface py-1.5 pl-1.5 pr-4 hover:border-neutral-400" title={b.badge.description}>
+                    <BadgeMedal icon={b.badge.icon} color={b.badge.color} size="sm" />
+                    <span className="text-sm leading-tight"><span className="block font-medium">{b.badge.name}</span><span className="block text-xs text-ink-soft">{b.event.name}</span></span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </section>
         )}
 

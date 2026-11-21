@@ -19,6 +19,7 @@ export function EventTabs({ eventId, role }: { eventId: string; role: EventRole 
     { href: `${base}/program`, label: "Programme", min: "REVIEWER" as EventRole },
     { href: `${base}/sponsors`, label: "Sponsors & budget", min: "ORGANIZER" as EventRole },
     { href: `${base}/team`, label: "Team", min: "VOLUNTEER" as EventRole },
+    { href: `${base}/badges`, label: "Badges", min: "ORGANIZER" as EventRole },
     { href: `${base}/settings`, label: "Settings", min: "ORGANIZER" as EventRole },
   ].filter((t) => atLeast(role, t.min));
   return <TabBar tabs={tabs} isActive={(t) => (t.exact ? pathname === t.href : pathname.startsWith(t.href))} />;

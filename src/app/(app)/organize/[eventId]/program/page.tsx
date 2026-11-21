@@ -3,7 +3,9 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { ActionButton } from "@/components/form-controls";
 import { Badge, ButtonLink, Card, EmptyState, FormatBadge, Skeleton } from "@/components/ui";
+import { InviteSpeakerForm } from "@/components/speakers/invite-speaker-form";
 import { withdrawSpeakerInvitation } from "@/lib/actions/speaker-invitations";
+import { searchSpeakers } from "@/lib/speaker-directory";
 import { prisma } from "@/lib/db";
 import { setProgramPublished } from "@/lib/actions/events";
 import { requireEventAccess } from "@/lib/organizer";
@@ -18,13 +20,14 @@ type Props = PageProps<"/organize/[eventId]/program">;
 export default function ProgramPage(props: Props) {
   return (
     <Suspense fallback={<Skeleton rows={4} />}>
-      <Program params={props.params} />
+      <Program params={props.params} searchParams={props.searchParams} />
     </Suspense>
   );
 }
 
-async function Program({ params }: { params: Props["params"] }) {
+async function Program({ params, searchParams }: { params: Props["params"]; searchParams: Props["searchParams"] }) {
   const { eventId } = await params;
+  const { find } = await searchParams;
   const { user, event, role } = await requireEventAccess(eventId);
   const anonymous = hideSpeaker(event, role);
   const proposals = (await getEventProposals(eventId, user.id)).filter((p) => !p.withdrawn);
@@ -77,7 +80,7 @@ async function Program({ params }: { params: Props["params"] }) {
         ))
       )}
 
-      <InvitedSpeakers eventId={eventId} manager={canManage(role)} />
+      <InvitedSpeakers eventId={eventId} eventName={event.name} manager={canManage(role)} userId={user.id} find={typeof find === "string" ? find : undefined} />
 
       {accepted.length > 0 && <ProductionChecklist sessions={accepted} />}
 
@@ -143,7 +146,7 @@ function ProductionChecklist({ sessions }: { sessions: { id: string; title: stri
   );
 }
 
-async function InvitedSpeakers({ eventId, manager }: { eventId: string; manager: boolean }) {
+async function InvitedSpeakers({ eventId, eventName, manager, userId, find }: { eventId: string; eventName: string; manager: boolean; userId: string; find?: string }) {
   const invitations = await prisma.speakerInvitation.findMany({
     where: { eventId },
     include: { speaker: { select: { name: true, profile: { select: { fullName: true, slug: true } } } }, talk: { select: { title: true } } },
@@ -152,11 +155,12 @@ async function InvitedSpeakers({ eventId, manager }: { eventId: string; manager:
   return (
     <Card
       title="Invited speakers"
-      description="Speakers you invited from the directory. Accepted invitations land on the programme automatically."
-      actions={<ButtonLink href="/speakers" variant="secondary" size="sm">Find speakers</ButtonLink>}
+      description="Invite speakers from the SpeakerDesk directory. Accepted invitations land on the programme automatically."
+      actions={<ButtonLink href="/speakers" variant="ghost" size="sm">Browse directory</ButtonLink>}
     >
+      {manager && <InviteSearch eventId={eventId} eventName={eventName} userId={userId} find={find} />}
       {invitations.length === 0 ? (
-        <p className="text-sm text-ink-soft">No invitations yet. Browse the speaker directory and invite people you&apos;d love on stage.</p>
+        <p className="text-sm text-ink-soft">No invitations yet.</p>
       ) : (
         <ul className="divide-y divide-line">
           {invitations.map((i) => (
@@ -182,5 +186,73 @@ async function InvitedSpeakers({ eventId, manager }: { eventId: string; manager:
         </ul>
       )}
     </Card>
+  );
+}
+
+/**
+ * Find a speaker and invite them to this event, without leaving the workspace. Searches public
+ * profiles that accept invitations; people already invited or already proposing are left out.
+ */
+async function InviteSearch({ eventId, eventName, userId, find }: { eventId: string; eventName: string; userId: string; find?: string }) {
+  const q = (find ?? "").trim().slice(0, 80);
+  const results = q
+    ? (await searchSpeakers(q)).filter((p) => p.userId !== userId && p.openToInvites)
+    : [];
+  const busy = q && results.length
+    ? new Set([
+        ...(await prisma.speakerInvitation.findMany({ where: { eventId, status: "PENDING", speakerId: { in: results.map((r) => r.userId) } }, select: { speakerId: true } })).map((r) => r.speakerId),
+        ...(await prisma.proposal.findMany({ where: { eventId, withdrawn: false, speakerId: { in: results.map((r) => r.userId) } }, select: { speakerId: true } })).map((r) => r.speakerId),
+      ])
+    : new Set<string>();
+
+  return (
+    <div id="invite" className="mb-5 scroll-mt-6 rounded-xl border border-line p-4">
+      <form method="get" action="#invite" className="flex flex-wrap items-end gap-2">
+        <label className="min-w-0 flex-1">
+          <span className="mb-1 block text-sm font-medium">Invite a speaker</span>
+          <input name="find" defaultValue={q} placeholder="Name, topic or talk title" className="control" />
+        </label>
+        <button type="submit" className="inline-flex min-h-10 items-center rounded-lg bg-ink px-4 text-sm font-medium text-paper">Search</button>
+      </form>
+      {q && (
+        results.length === 0 ? (
+          <p className="mt-3 text-sm text-ink-soft">No public speakers taking invitations match “{q}”. Only speakers who published their profile and accept invitations can be found.</p>
+        ) : (
+          <ul className="mt-4 divide-y divide-line">
+            {results.slice(0, 12).map((p) => (
+              <li key={p.userId} className="py-3">
+                <details className="group">
+                  <summary className="flex cursor-pointer list-none items-center gap-3">
+                    {p.headshotSquareUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- speaker-provided image host
+                      <img src={p.headshotSquareUrl} alt="" className="size-10 shrink-0 rounded-full object-cover" />
+                    ) : (
+                      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-neutral-100 text-sm font-semibold">{p.fullName[0]}</span>
+                    )}
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-medium">{p.fullName}</span>
+                      <span className="block truncate text-xs text-ink-soft">{[p.tagline, `${p.user.talks.length} published talk${p.user.talks.length === 1 ? "" : "s"}`].filter(Boolean).join(" · ")}</span>
+                    </span>
+                    {busy.has(p.userId) ? (
+                      <span className="text-xs text-ink-soft">Already invited or proposing</span>
+                    ) : (
+                      <span className="inline-flex min-h-9 items-center rounded-lg border border-line px-3 text-sm group-open:hidden">Invite…</span>
+                    )}
+                  </summary>
+                  {!busy.has(p.userId) && (
+                    <div className="mt-3 rounded-lg bg-neutral-50 p-4">
+                      <p className="mb-3 text-xs text-ink-soft">
+                        To {eventName}. <Link href={`/speakers/${p.slug}`} className="underline" target="_blank">View {p.fullName.split(" ")[0]}&apos;s profile</Link>
+                      </p>
+                      <InviteSpeakerForm speakerId={p.userId} speakerName={p.fullName} events={[{ id: eventId, name: eventName }]} talks={p.user.talks} />
+                    </div>
+                  )}
+                </details>
+              </li>
+            ))}
+          </ul>
+        )
+      )}
+    </div>
   );
 }

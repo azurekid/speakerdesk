@@ -67,6 +67,10 @@ async function Overview({ params }: { params: Params }) {
               {event.cfpPublished ? "Unpublish CfP" : "Publish CfP"}
             </ActionButton>
           </div>
+          <p className="mt-4 text-sm">
+            <Link href={`/organize/${event.id}/program#invite`} className="font-medium underline">Invite a speaker directly</Link>
+            <span className="text-ink-soft"> — find someone in the speaker directory and invite them to {event.name}.</span>
+          </p>
           {(state === "open" || state === "upcoming") && (
             <ShareButtons
               title="Promote your call for papers"

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/dal";
+import { sendMail } from "@/lib/mailer";
 import { appUrl, eventAccessOrNull } from "@/lib/organizer";
 import { type ActionState, fieldErrors, formToObject, speakerInviteSchema } from "@/lib/validation";
 import { eventWhere } from "@/lib/domain";
@@ -27,7 +28,17 @@ export async function inviteSpeaker(speakerId: string, _prev: ActionState, form:
   const onProgramme = await prisma.proposal.count({ where: { eventId, speakerId, withdrawn: false } });
   if (onProgramme) return { ok: false, message: "This speaker already has a proposal for that event." };
 
-  await prisma.speakerInvitation.create({ data: { eventId, speakerId, talkId: talkId || null, invitedById: user.id, message } });
+  const invitation = await prisma.speakerInvitation.create({
+    data: { eventId, speakerId, talkId: talkId || null, invitedById: user.id, message },
+    include: { event: true, speaker: { select: { email: true, name: true } }, talk: { select: { title: true } } },
+  });
+  // Tell the speaker by email too; the invitation itself lives in their SpeakerDesk inbox.
+  await sendMail({
+    to: invitation.speaker.email,
+    kind: "speaker-invitation",
+    subject: `You're invited to speak at ${invitation.event.name}`,
+    text: `Hi ${invitation.speaker.name.split(" ")[0]},\n\n${user.name} invited you to speak at ${invitation.event.name}${invitation.talk ? ` with “${invitation.talk.title}”` : ""}.${message ? `\n\n“${message}”` : ""}\n\nAccept or decline here:\n${appUrl()}/invitations\n\n— SpeakerDesk`,
+  }).catch((e) => console.error("invitation email failed", e));
   revalidatePath(`/organize/${eventId}`, "layout");
   revalidatePath("/invitations");
   revalidatePath("/dashboard");
