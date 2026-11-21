@@ -57,7 +57,14 @@ export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET || (process.env.NEXT_PHASE === "phase-production-build" ? "build-time-placeholder-never-used-at-runtime" : undefined),
   // The raw client: auth events are audited through the hooks below, not per table write.
   database: prismaAdapter(prismaBase, { provider: "postgresql" }),
-  emailAndPassword: { enabled: emailPasswordEnabled(), minPasswordLength: 10 },
+  // New email + password accounts must confirm their address with a 6-digit code before they
+  // get a session. (Passcode and social sign-ins already prove the address.)
+  emailAndPassword: { enabled: emailPasswordEnabled(), minPasswordLength: 10, requireEmailVerification: true },
+  emailVerification: {
+    sendOnSignUp: true,
+    sendOnSignIn: true, // an unverified account trying to sign in gets a fresh code
+    autoSignInAfterVerification: true, // entering the code signs you in
+  },
   socialProviders: social(),
   // Per-IP limits, stored in Postgres so all replicas share one count.
   // The emailOTP plugin adds 3/min on its send and verify endpoints.
@@ -162,6 +169,8 @@ export const auth = betterAuth({
       // Codes only sign in existing accounts. For unknown emails the send endpoint still answers
       // "success" without sending anything, so it can't be used to discover who has an account.
       disableSignUp: true,
+      // Verification emails are codes, not links (emailVerification above uses this).
+      overrideDefaultEmailVerification: true,
       otpLength: 6,
       expiresIn: 10 * 60,
       allowedAttempts: 5,

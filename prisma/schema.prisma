@@ -277,6 +277,14 @@ model Submission {
   recordingUrl  String           @default("")
   notes         String           @default("")
 
+  // Delivery details for MVP (and similar) reporting, filled in after the event.
+  mvpTechnologyArea  String @default("")
+  targetAudience     String @default("")
+  microsoftEvent     Boolean @default(false) // Microsoft-run event (different MVP activity type)
+  inPersonAttendees  Int?
+  liveStreamViews    Int?
+  onDemandViews      Int?
+
   platformData Json?   // raw data from imports / platform-specific answers
   externalId   String?
 

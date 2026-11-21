@@ -9,6 +9,7 @@ const LINKS = [
   { href: "/events", label: "Open calls" },
   { href: "/speakers", label: "Speakers" },
   { href: "/sign-in?next=/organize/new", label: "Run a call for papers" },
+  { href: "/whats-new", label: "What's new" },
 ];
 
 /** The public header's links on phones: a menu button with a dropdown panel. */

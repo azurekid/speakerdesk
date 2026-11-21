@@ -6,7 +6,7 @@ import { buttonClass, cx } from "@/components/ui";
 import { authClient } from "@/lib/auth-client";
 
 type Provider = "github" | "google" | "linkedin" | "microsoft";
-type View = "password" | "sign-up" | "code-email" | "code-verify" | "reset-email" | "reset-verify";
+type View = "password" | "sign-up" | "code-email" | "code-verify" | "reset-email" | "reset-verify" | "confirm-email";
 
 const PROVIDER_LABELS: Record<Provider, string> = { github: "GitHub", google: "Google", linkedin: "LinkedIn", microsoft: "Microsoft" };
 
@@ -31,6 +31,8 @@ export function SignInForm({ providers, emailPassword, devMailHint }: { provider
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  // Set when the account was created in this visit, so onboarding starts after confirming.
+  const [isNew, setIsNew] = useState(false);
 
   const go = (v: View) => {
     setError(null);
@@ -49,20 +51,45 @@ export function SignInForm({ providers, emailPassword, devMailHint }: { provider
     }
   }
 
+  /** The account exists but its email isn't confirmed: Better Auth has just emailed a code. */
+  function askForEmailCode(address: string, fresh: boolean, message: string) {
+    setEmail(address);
+    setIsNew(fresh);
+    go("confirm-email");
+    setInfo(message);
+  }
+
+  /** Password sign-in that sends unconfirmed accounts to the code step instead of failing. */
+  async function signInWithPassword(address: string, password: string) {
+    const r = await authClient.signIn.email({ email: address, password });
+    if (r.error?.code === "EMAIL_NOT_VERIFIED") {
+      askForEmailCode(address, false, `Confirm your email first. We've sent a 6-digit code to ${address}.`);
+      return undefined;
+    }
+    if (!r.error) window.location.assign(continueUrl(next, false));
+    return r;
+  }
+
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
     const field = (k: string) => String(f.get(k) ?? "");
     await run(async () => {
       switch (view) {
-        case "password": {
-          const r = await authClient.signIn.email({ email: field("email"), password: field("password") });
-          if (!r.error) window.location.assign(continueUrl(next, false));
+        case "password":
+          return signInWithPassword(field("email"), field("password"));
+        case "sign-up": {
+          const address = field("email");
+          const r = await authClient.signUp.email({ email: address, password: field("password"), name: field("name") || address.split("@")[0] });
+          if (r.error) return r;
+          // With email confirmation required there's no session yet: ask for the code.
+          if (r.data?.token) window.location.assign(continueUrl(next, true));
+          else askForEmailCode(address, true, `We've emailed a 6-digit code to ${address}. Enter it to confirm your email and finish creating your account.`);
           return r;
         }
-        case "sign-up": {
-          const r = await authClient.signUp.email({ email: field("email"), password: field("password"), name: field("name") || field("email").split("@")[0] });
-          if (!r.error) window.location.assign(continueUrl(next, true));
+        case "confirm-email": {
+          const r = await authClient.emailOtp.verifyEmail({ email, otp: field("otp") });
+          if (!r.error) window.location.assign(continueUrl(next, isNew));
           return r;
         }
         case "code-email": {
@@ -92,9 +119,7 @@ export function SignInForm({ providers, emailPassword, devMailHint }: { provider
           const password = field("password");
           const r = await authClient.emailOtp.resetPassword({ email, otp: field("otp"), password });
           if (r.error) return r;
-          const s = await authClient.signIn.email({ email, password });
-          if (!s.error) window.location.assign(continueUrl(next, false));
-          return s;
+          return signInWithPassword(email, password);
         }
       }
     });
@@ -120,6 +145,7 @@ export function SignInForm({ providers, emailPassword, devMailHint }: { provider
     "code-verify": "Sign in",
     "reset-email": "Send reset code",
     "reset-verify": "Set new password",
+    "confirm-email": "Confirm email",
   };
   const link = "font-medium text-ink underline underline-offset-2 hover:text-brand-700";
 
@@ -161,7 +187,7 @@ export function SignInForm({ providers, emailPassword, devMailHint }: { provider
             required
           />
         )}
-        {(view === "code-verify" || view === "reset-verify") && codeInput}
+        {(view === "code-verify" || view === "reset-verify" || view === "confirm-email") && codeInput}
         {view === "reset-verify" && (
           <input name="password" type="password" placeholder="New password (min. 10 characters)" autoComplete="new-password" minLength={10} className="control" required />
         )}
@@ -196,7 +222,25 @@ export function SignInForm({ providers, emailPassword, devMailHint }: { provider
           </p>
         )}
         {view === "reset-email" && <p><button type="button" className={link} onClick={() => go("password")}>Back to sign in</button></p>}
-        {devMailHint && (view === "code-verify" || view === "reset-verify") && (
+        {view === "confirm-email" && (
+          <p>
+            Didn&apos;t get it?{" "}
+            <button
+              type="button"
+              className={link}
+              onClick={() =>
+                run(async () => {
+                  const r = await authClient.emailOtp.sendVerificationOtp({ email, type: "email-verification" });
+                  if (!r.error) setInfo(`A new code is on its way to ${email}.`);
+                  return r;
+                })
+              }
+            >
+              Send a new code
+            </button>
+          </p>
+        )}
+        {devMailHint && (view === "code-verify" || view === "reset-verify" || view === "confirm-email") && (
           <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">Development: no mail service is configured, so codes appear in the server log and in Admin → Email outbox.</p>
         )}
       </div>

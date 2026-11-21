@@ -116,6 +116,7 @@ export default function Home() {
       <footer className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-8 text-xs text-ink-soft">
         <Logo className="text-base" />
         <nav className="flex gap-4">
+          <Link href="/whats-new" className="hover:text-ink">What&apos;s new</Link>
           <Link href="/terms" className="hover:text-ink">Terms of use</Link>
           <Link href="/privacy" className="hover:text-ink">Privacy</Link>
         </nav>

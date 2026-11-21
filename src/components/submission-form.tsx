@@ -24,6 +24,12 @@ export type SubmissionFormValues = {
   submittedAt: string;
   recordingUrl: string;
   notes: string;
+  mvpTechnologyArea: string;
+  targetAudience: string;
+  microsoftEvent: boolean;
+  inPersonAttendees: string;
+  liveStreamViews: string;
+  onDemandViews: string;
 };
 
 export function SubmissionForm({
@@ -36,7 +42,7 @@ export function SubmissionForm({
 }) {
   const [state, onSubmit, pending] = useFormAction(action, undefined);
   const e = state?.errors;
-  const input = (name: keyof SubmissionFormValues, label: string, opts: { type?: string; placeholder?: string; className?: string; hint?: string } = {}) => (
+  const input = (name: Exclude<keyof SubmissionFormValues, "microsoftEvent">, label: string, opts: { type?: string; placeholder?: string; className?: string; hint?: string } = {}) => (
     <Field label={label} htmlFor={name} error={e?.[name]} className={opts.className} hint={opts.hint}>
       <input id={name} name={name} type={opts.type ?? "text"} defaultValue={values[name]} placeholder={opts.placeholder} aria-invalid={e?.[name] ? true : undefined} className="control" />
     </Field>
@@ -76,6 +82,19 @@ export function SubmissionForm({
           {input("cfpDeadline", "CfP deadline", { type: "date" })}
           {input("submittedAt", "Submitted on", { type: "date" })}
           {input("recordingUrl", "Recording URL", { type: "url", placeholder: "https://youtube.com/…", hint: "After the event. Builds your delivery history." })}
+          <Card title="Delivery details" description="For reporting this talk to the MVP portal or similar. Fill in after the event: the numbers are usually known then." className="sm:col-span-2">
+            <div className="grid gap-4 sm:grid-cols-2">
+              {input("mvpTechnologyArea", "Technology area", { placeholder: "e.g. Azure, Microsoft 365, Security", hint: "Use the name the portal shows for this area." })}
+              {input("targetAudience", "Target audience", { placeholder: "e.g. Developers, IT pros, Students", hint: "Who the talk was for." })}
+              {input("inPersonAttendees", "In-person attendees", { type: "number", placeholder: "0" })}
+              {input("liveStreamViews", "Live stream views", { type: "number", placeholder: "0" })}
+              {input("onDemandViews", "On-demand views", { type: "number", placeholder: "0", hint: "Recording views, if any." })}
+              <label className="flex items-start gap-3 self-end text-sm sm:col-span-2">
+                <input type="checkbox" name="microsoftEvent" defaultChecked={values.microsoftEvent} className="mt-0.5 accent-ink" />
+                <span>This was a Microsoft-run event (not a third-party event)</span>
+              </label>
+            </div>
+          </Card>
           <Field label="Notes" htmlFor="notes" error={e?.notes} className="sm:col-span-2">
             <textarea id="notes" name="notes" rows={4} defaultValue={values.notes} className="control" placeholder="Custom CfP answers, organizer contacts, travel arrangements…" />
           </Field>

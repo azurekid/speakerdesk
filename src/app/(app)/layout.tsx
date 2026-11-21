@@ -1,4 +1,4 @@
-import { ArrowLeftRight, Award, ShieldCheck, UserCog } from "lucide-react";
+import { Sparkles, ArrowLeftRight, Award, ShieldCheck, UserCog } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { MobileNav } from "@/components/mobile-nav";
@@ -133,6 +133,7 @@ async function RoleAwareSidebar() {
               <Award className="size-4 md:size-3.5" />Badges
               {pendingBadges > 0 && <span className="ml-auto rounded-full bg-brand-600 px-1.5 text-[11px] font-semibold text-white">{pendingBadges}</span>}
             </Link>
+            <Link href="/whats-new" className={FOOTER_ROW}><Sparkles className="size-4 md:size-3.5" />What&apos;s new</Link>
             {user.isAdmin && <Link href="/admin" className={`${FOOTER_ROW} font-medium text-brand-700`}><ShieldCheck className="size-4 md:size-3.5" />Admin</Link>}
             {others.map((r) => (
               <a key={r} href={`/api/account/view?role=${r.toLowerCase()}&next=${HOME[r]}`} className={FOOTER_ROW}>

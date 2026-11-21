@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { SignInForm } from "@/components/sign-in-form";
 import { Logo, Skeleton } from "@/components/ui";
+import { safeNextPath } from "@/lib/app-url";
 import { emailPasswordEnabled, enabledSocialProviders } from "@/lib/auth-providers";
+import { getCurrentUser } from "@/lib/dal";
 import { mailConfigured } from "@/lib/mailer";
 
 export const metadata: Metadata = {
@@ -14,7 +17,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/sign-in" },
 };
 
-export default function SignInPage() {
+export default function SignInPage({ searchParams }: PageProps<"/sign-in">) {
   return (
     <main className="grid min-h-screen lg:grid-cols-[1.1fr_1fr]">
       <section className="relative isolate hidden flex-col justify-between overflow-hidden p-12 text-white lg:flex">
@@ -32,7 +35,7 @@ export default function SignInPage() {
           <h1 className="text-3xl font-semibold tracking-tight">Sign in</h1>
           <p className="mb-8 mt-2 text-sm text-ink-soft">Welcome back, or create your account in seconds.</p>
           <Suspense fallback={<Skeleton rows={2} />}>
-            <Methods />
+            <Methods searchParams={searchParams} />
           </Suspense>
           <p className="mt-8 text-center text-xs text-ink-soft">
             New accounts are asked to accept the <Link href="/terms" className="underline">terms of use</Link> and{" "}
@@ -44,9 +47,15 @@ export default function SignInPage() {
   );
 }
 
-async function Methods() {
+async function Methods({ searchParams }: { searchParams: PageProps<"/sign-in">["searchParams"] }) {
   // Provider config comes from runtime env (App Service settings), not build-time.
   await connection();
+  // Already signed in (e.g. "Publish your CfP" from the home page): skip the form and go on.
+  if (await getCurrentUser()) {
+    const raw = (await searchParams).next;
+    const next = safeNextPath(typeof raw === "string" ? raw : null);
+    redirect(next ? `/api/account/continue?next=${encodeURIComponent(next)}` : "/api/account/continue");
+  }
   return (
     <SignInForm
       providers={enabledSocialProviders()}

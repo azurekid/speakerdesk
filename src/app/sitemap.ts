@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { connection } from "next/server";
 import { prisma } from "@/lib/db";
 import { SITE_URL } from "@/lib/site";
+import { RELEASES } from "@/lib/whats-new";
 
 /**
  * Every public page: the fixed pages, each published event, each opted-in speaker page and
@@ -21,6 +22,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     page("/", 1, "weekly"),
     page("/events", 0.9, "daily"),
     page("/speakers", 0.8, "daily"),
+    page("/whats-new", 0.6, "weekly", new Date(`${RELEASES[0].date}T12:00:00Z`)),
     page("/sign-in", 0.5, "yearly"),
     page("/terms", 0.2, "yearly"),
     page("/privacy", 0.2, "yearly"),

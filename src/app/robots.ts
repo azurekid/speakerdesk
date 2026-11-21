@@ -9,7 +9,7 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: [
         "/api/", "/admin", "/dashboard", "/organize", "/profile", "/sessions", "/submissions", "/import", "/export",
-        "/sponsor", "/invitations", "/welcome", "/onboarding", "/account", "/badges", "/goodbye", "/invite/", "/events/*/submit",
+        "/sponsor", "/invitations", "/welcome", "/onboarding", "/account", "/badges", "/goodbye", "/verify-email", "/invite/", "/events/*/submit",
       ],
     },
     sitemap: `${SITE_URL}/sitemap.xml`,

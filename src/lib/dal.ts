@@ -31,6 +31,10 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
 export async function requireUser(): Promise<CurrentUser> {
   const user = await getCurrentUser();
   if (!user) redirect("/sign-in");
+  // Every account confirms its email before using the platform. Older accounts created before
+  // this rule, and any that slipped through, are sent to confirm it now. Admin support sessions
+  // ("View as") are exempt so support can still help.
+  if (!user.emailVerified && !user.impersonatedBy) redirect("/verify-email");
   return user;
 }
 

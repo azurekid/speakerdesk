@@ -32,6 +32,7 @@ async function NewSubmission({ searchParams }: { searchParams: PageProps<"/submi
       values={{
         talkId: preselected, eventName: "", eventUrl: "", cfpUrl: "", platform: "SESSIONIZE", location: "", status: "DRAFT",
         cfpDeadline: "", eventStart: "", eventEnd: "", submittedAt: "", recordingUrl: "", notes: "",
+        mvpTechnologyArea: "", targetAudience: "", microsoftEvent: false, inPersonAttendees: "", liveStreamViews: "", onDemandViews: "",
       }}
     />
   );

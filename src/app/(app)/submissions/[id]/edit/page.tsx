@@ -54,6 +54,8 @@ async function EditSubmission({ params }: { params: PageProps<"/submissions/[id]
           talkId: s.talkId ?? "", eventName: s.eventName, eventUrl: s.eventUrl, cfpUrl: s.cfpUrl, platform: s.platform,
           location: s.location, status: s.status, cfpDeadline: toDateInput(s.cfpDeadline), eventStart: toDateInput(s.eventStart),
           eventEnd: toDateInput(s.eventEnd), submittedAt: toDateInput(s.submittedAt), recordingUrl: s.recordingUrl, notes: s.notes,
+          mvpTechnologyArea: s.mvpTechnologyArea, targetAudience: s.targetAudience, microsoftEvent: s.microsoftEvent,
+          inPersonAttendees: s.inPersonAttendees?.toString() ?? "", liveStreamViews: s.liveStreamViews?.toString() ?? "", onDemandViews: s.onDemandViews?.toString() ?? "",
         }}
       />
     </>

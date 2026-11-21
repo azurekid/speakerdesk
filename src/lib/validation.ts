@@ -85,6 +85,22 @@ export const talkSchema = z.object({
 });
 export type TalkInput = z.infer<typeof talkSchema>;
 
+/** Optional whole number; empty means "not known yet". Defined before use (module order). */
+const countField = (max = 10_000_000) =>
+  z
+    .string()
+    .trim()
+    .default("")
+    .transform((v, ctx) => {
+      if (!v) return null;
+      const n = Number(v);
+      if (!Number.isInteger(n) || n < 0 || n > max) {
+        ctx.addIssue({ code: "custom", message: `Use a whole number from 0 to ${max.toLocaleString("en")}` });
+        return z.NEVER;
+      }
+      return n;
+    });
+
 export const submissionSchema = z
   .object({
     talkId: z.string().trim().default(""),
@@ -100,6 +116,12 @@ export const submissionSchema = z
     submittedAt: optionalDate,
     recordingUrl: url,
     notes: text(10000),
+    mvpTechnologyArea: text(120),
+    targetAudience: text(200),
+    microsoftEvent: z.string().optional().transform((v) => v === "on"),
+    inPersonAttendees: countField(),
+    liveStreamViews: countField(),
+    onDemandViews: countField(),
   })
   .refine((s) => !s.eventStart || !s.eventEnd || s.eventEnd >= s.eventStart, {
     message: "End date must be after start date",
