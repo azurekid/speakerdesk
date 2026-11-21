@@ -10,7 +10,7 @@ import { BADGE_COLORS, BADGE_ICONS, type BadgeColor, type BadgeIcon } from "@/li
 type BadgeOption = { id: string; name: string; description: string; icon: string; color: string; platform: boolean };
 type RecipientOption = { id: string; name: string; group: string; detail: string };
 
-export function AwardBadgeForm({ eventId, badges, recipients }: { eventId: string; badges: BadgeOption[]; recipients: RecipientOption[] }) {
+export function AwardBadgeForm({ eventId, badges, recipients, topText }: { eventId: string; badges: BadgeOption[]; recipients: RecipientOption[]; topText: string }) {
   const [state, onSubmit, pending] = useFormAction(awardBadge.bind(null, eventId), undefined);
   const [badgeId, setBadgeId] = useState(badges[0]?.id ?? "");
   const [picked, setPicked] = useState<Set<string>>(new Set());
@@ -26,8 +26,8 @@ export function AwardBadgeForm({ eventId, badges, recipients }: { eventId: strin
   return (
     <form onSubmit={onSubmit} className="space-y-5">
       <Field label="Badge" htmlFor="badgeId" error={e?.badgeId}>
-        <div className="flex items-center gap-3">
-          {badge && <BadgeMedal icon={badge.icon} color={badge.color} size="sm" />}
+        <div className="flex flex-col items-center gap-4 sm:flex-row">
+          {badge && <BadgeMedal icon={badge.icon} color={badge.color} size="lg" label={badge.name} topText={topText} />}
           <select id="badgeId" name="badgeId" value={badgeId} onChange={(ev) => setBadgeId(ev.target.value)} className="control">
             <optgroup label="SpeakerDesk badges">
               {badges.filter((b) => b.platform).map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
@@ -81,7 +81,7 @@ export function AwardBadgeForm({ eventId, badges, recipients }: { eventId: strin
   );
 }
 
-export function CreateBadgeForm({ eventId }: { eventId: string }) {
+export function CreateBadgeForm({ eventId, topText }: { eventId: string; topText: string }) {
   const [state, onSubmit, pending] = useFormAction(createEventBadge.bind(null, eventId), undefined);
   const [icon, setIcon] = useState<BadgeIcon>("award");
   const [color, setColor] = useState<BadgeColor>("brand");
@@ -89,12 +89,9 @@ export function CreateBadgeForm({ eventId }: { eventId: string }) {
   const e = state?.errors;
   return (
     <form onSubmit={onSubmit} className="space-y-4" key={state?.ok ? state.message : "form"}>
-      <div className="flex items-center gap-4">
-        <BadgeMedal icon={icon} color={color} size="md" />
-        <div className="min-w-0 text-sm">
-          <p className="font-medium">{name || "Your badge"}</p>
-          <p className="text-xs text-ink-soft">Preview</p>
-        </div>
+      <div className="flex flex-col items-center gap-1">
+        <BadgeMedal icon={icon} color={color} size="lg" label={name || "Your badge"} topText={topText} className="size-44" />
+        <p className="text-xs text-ink-soft">Preview</p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Name" htmlFor="badge-name" error={e?.name}>
@@ -116,19 +113,14 @@ export function CreateBadgeForm({ eventId }: { eventId: string }) {
         </div>
       </fieldset>
       <fieldset>
-        <legend className="mb-2 text-sm font-medium text-ink">Colour</legend>
+        <legend className="mb-2 text-sm font-medium text-ink">Theme</legend>
         <input type="hidden" name="color" value={color} />
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-3">
           {(Object.keys(BADGE_COLORS) as BadgeColor[]).map((c) => (
-            <button
-              key={c}
-              type="button"
-              onClick={() => setColor(c)}
-              aria-pressed={color === c}
-              aria-label={BADGE_COLORS[c].label}
-              className={cx("size-9 rounded-full ring-offset-2", color === c && "ring-2 ring-ink")}
-              style={{ background: BADGE_COLORS[c].ring }}
-            />
+            <button key={c} type="button" onClick={() => setColor(c)} aria-pressed={color === c} className="flex flex-col items-center gap-1 text-[11px] text-ink-soft">
+              <span className={cx("rounded-full ring-offset-2", color === c && "ring-2 ring-ink")}><BadgeMedal icon={icon} color={c} size="md" /></span>
+              {BADGE_COLORS[c].label}
+            </button>
           ))}
         </div>
       </fieldset>

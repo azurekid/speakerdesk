@@ -1,4 +1,4 @@
-import { BadgeCheck } from "lucide-react";
+import { BadgeCheck, Download } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -7,6 +7,7 @@ import { BadgeMedal } from "@/components/badge-medal";
 import { ShareButtons } from "@/components/share";
 import { formatDate, Skeleton } from "@/components/ui";
 import { appUrl } from "@/lib/app-url";
+import { badgeTopText } from "@/lib/badges";
 import { prisma } from "@/lib/db";
 
 type Props = PageProps<"/credentials/[awardId]">;
@@ -60,7 +61,7 @@ async function Credential({ params }: { params: Props["params"] }) {
 
   return (
     <article className="rounded-2xl border border-line bg-surface p-6 text-center sm:p-10">
-      <BadgeMedal icon={a.badge.icon} color={a.badge.color} size="lg" className="mx-auto" />
+      <BadgeMedal icon={a.badge.icon} color={a.badge.color} size="xl" label={a.badge.name} topText={badgeTopText(a.event.name, a.event.startDate)} className="mx-auto" />
       <h1 className="mt-6 text-3xl font-semibold tracking-tight">{a.badge.name}</h1>
       {a.badge.description && <p className="mx-auto mt-2 max-w-md text-ink-soft">{a.badge.description}</p>}
       <p className="mt-6 text-lg">
@@ -73,6 +74,11 @@ async function Credential({ params }: { params: Props["params"] }) {
       {a.message && <blockquote className="mx-auto mt-6 max-w-md border-l-2 border-line pl-4 text-left italic text-ink-soft">“{a.message}”</blockquote>}
       <p className="mt-8 inline-flex items-center gap-1.5 text-xs text-ink-soft">
         <BadgeCheck className="size-4 text-emerald-600" />Issued on SpeakerDesk by the organizers of {a.event.name} and accepted by {who.split(" ")[0]}.
+      </p>
+      <p className="mt-4">
+        <a href={`/credentials/${a.id}/badge.svg`} download={`${a.badge.name.replace(/[^\w-]+/g, "-").toLowerCase()}-badge.svg`} className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-line px-3 text-sm hover:border-neutral-400">
+          <Download className="size-4" />Download badge (SVG)
+        </a>
       </p>
       <ShareButtons
         className="mt-6 border-t border-line pt-6 text-left"

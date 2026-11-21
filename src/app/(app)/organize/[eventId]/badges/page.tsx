@@ -7,6 +7,7 @@ import { AwardBadgeForm, CreateBadgeForm } from "@/components/organizer/badge-co
 import { Badge, Card, formatDate, Skeleton } from "@/components/ui";
 import { archiveEventBadge, revokeBadgeAward } from "@/lib/actions/badges";
 import { availableBadges, eligibleRecipients } from "@/lib/badge-queries";
+import { badgeTopText } from "@/lib/badges";
 import { prisma } from "@/lib/db";
 import { requireEventAccess } from "@/lib/organizer";
 
@@ -31,7 +32,7 @@ export default function BadgesPage(props: Props) {
 
 async function Badges({ params }: { params: Props["params"] }) {
   const { eventId } = await params;
-  const { user } = await requireEventAccess(eventId, "ORGANIZER");
+  const { user, event } = await requireEventAccess(eventId, "ORGANIZER");
   const [badges, recipients, awards] = await Promise.all([
     availableBadges(eventId),
     eligibleRecipients(eventId, user.id),
@@ -48,6 +49,7 @@ async function Badges({ params }: { params: Props["params"] }) {
       <Card title="Award a badge" description="Recognise speakers and your team. They accept it first, then choose whether it shows on their public profile.">
         <AwardBadgeForm
           eventId={eventId}
+          topText={badgeTopText(event.name, event.startDate)}
           badges={badges.map((b) => ({ id: b.id, name: b.name, description: b.description, icon: b.icon, color: b.color, platform: !b.eventId }))}
           recipients={recipients}
         />
@@ -83,7 +85,7 @@ async function Badges({ params }: { params: Props["params"] }) {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card title="Create a badge" description="Your own badge for this event — e.g. “Best demo” or “Hackathon winner”.">
-          <CreateBadgeForm eventId={eventId} />
+          <CreateBadgeForm eventId={eventId} topText={badgeTopText(event.name, event.startDate)} />
         </Card>
         <Card title="Your event's badges">
           {own.length === 0 ? (
@@ -92,7 +94,7 @@ async function Badges({ params }: { params: Props["params"] }) {
             <ul className="divide-y divide-line">
               {own.map((b) => (
                 <li key={b.id} className="flex items-center gap-3 py-2.5">
-                  <BadgeMedal icon={b.icon} color={b.color} size="sm" />
+                  <BadgeMedal icon={b.icon} color={b.color} size="md" />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium">{b.name}</p>
                     {b.description && <p className="truncate text-xs text-ink-soft">{b.description}</p>}
