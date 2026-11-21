@@ -33,7 +33,7 @@ export default function TermsPage() {
       </Section>
 
       <Section title="4. Your content">
-        <p>You keep all rights to what you put on SpeakerDesk — your bio, photos, session abstracts, event descriptions and so on. You give us a non-exclusive, worldwide, royalty-free licence to store, copy, display and transmit that content only as needed to run the service the way you direct it, for example:</p>
+        <p>You keep all rights to what you put on SpeakerDesk, such as your bio, photos, session abstracts, event descriptions and so on. You give us a non-exclusive, worldwide, royalty-free licence to store, copy, display and transmit that content only as needed to run the service the way you direct it, for example:</p>
         <ul>
           <li>showing your public speaker page and published talks, if you choose to publish them;</li>
           <li>sending a proposal, as a snapshot, to the organizers of the event you submit it to;</li>

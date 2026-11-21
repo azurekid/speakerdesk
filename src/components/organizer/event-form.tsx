@@ -197,7 +197,7 @@ function CoverPicker({ values, error }: { values: EventFormValues; error?: strin
   const warnings = !isCustom || !size
     ? []
     : [
-        ...(size.w < R.minWidth || size.h < R.minHeight ? [`It's ${size.w} × ${size.h} px — smaller than ${R.minWidth} × ${R.minHeight}, so it will look blurry on large screens.`] : []),
+        ...(size.w < R.minWidth || size.h < R.minHeight ? [`It's ${size.w} × ${size.h} px, smaller than ${R.minWidth} × ${R.minHeight}, so it will look blurry on large screens.`] : []),
         ...(ratio && (ratio < 1.3 || ratio > 2.2) && fit === "cover" ? [`It isn't close to 16:9 (it's ${ratio.toFixed(2)}:1), so a lot will be cropped. Consider “Show the whole image”.`] : []),
       ];
 
@@ -247,7 +247,7 @@ function CoverPicker({ values, error }: { values: EventFormValues; error?: strin
         />
       </Field>
       {isCustom && broken && <p className="mt-2 text-sm text-rose-700">That image couldn&apos;t be loaded. Check that the URL is public and points straight at an image.</p>}
-      {isCustom && size && !broken && warnings.length === 0 && <p className="mt-2 text-sm text-emerald-700">{size.w} × {size.h} px — looks good.</p>}
+      {isCustom && size && !broken && warnings.length === 0 && <p className="mt-2 text-sm text-emerald-700">{size.w} × {size.h} px, looks good.</p>}
       {warnings.map((w) => <p key={w} className="mt-2 text-sm text-amber-700">{w}</p>)}
 
       <div className="mt-5 grid gap-5 lg:grid-cols-[1fr_1.4fr]">

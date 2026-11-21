@@ -116,7 +116,7 @@ export function CopyPanel({ source }: { source: CopySource }) {
                 <p className={cx("line-clamp-2 text-xs [overflow-wrap:anywhere]", value ? "text-ink-soft" : "italic text-neutral-400")}>{value || "Empty"}</p>
               </div>
               <div className="mt-1"><CharCount value={value} limit={limit} /></div>
-              {over && <p className="mt-1 text-xs text-rose-700">Too long for {preset.name}&apos;s typical limit — trim it or use the other abstract.</p>}
+              {over && <p className="mt-1 text-xs text-rose-700">Too long for {preset.name}&apos;s typical limit. Trim it or use the other abstract.</p>}
             </li>
           );
         })}

@@ -83,7 +83,7 @@ async function Badges({ params }: { params: Props["params"] }) {
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card title="Create a badge" description="Your own badge for this event — e.g. “Best demo” or “Hackathon winner”.">
+        <Card title="Create a badge" description="Your own badge for this event, e.g. “Best demo” or “Hackathon winner”.">
           <CreateBadgeForm eventId={eventId} eventName={event.name} date={event.startDate?.toISOString() ?? null} />
         </Card>
         <Card title="Your event's badges">

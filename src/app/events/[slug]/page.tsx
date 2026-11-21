@@ -100,7 +100,7 @@ async function EventDetail({ params, searchParams }: { params: Params; searchPar
           <ShareButtons
             title="Share this event"
             url={`${appUrl()}/events/${event.slug}`}
-            text={state === "open" ? `Call for papers open: ${event.name}${event.cfpClosesAt ? ` (closes ${formatDate(event.cfpClosesAt)})` : ""}` : `${event.name} — ${[formatDateRange(event.startDate, event.endDate), eventWhere(event)].filter(Boolean).join(" · ")}`}
+            text={state === "open" ? `Call for papers open: ${event.name}${event.cfpClosesAt ? ` (closes ${formatDate(event.cfpClosesAt)})` : ""}` : `${event.name}, ${[formatDateRange(event.startDate, event.endDate), eventWhere(event)].filter(Boolean).join(" · ")}`}
             subject={event.name}
             className="rounded-xl border border-line bg-surface p-5"
           />
@@ -198,7 +198,7 @@ async function Program({ event }: { event: { id: string; slug: string; name: str
                   <ShareMenu
                     url={`${appUrl()}/events/${event.slug}#session-${s.id}`}
                     text={`“${s.title}” by ${p?.fullName || s.speaker.name} at ${event.name}`}
-                    subject={`${s.title} — ${event.name}`}
+                    subject={`${s.title} at ${event.name}`}
                   />
                 </div>
               </div>

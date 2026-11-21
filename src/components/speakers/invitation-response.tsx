@@ -41,7 +41,7 @@ export function InvitationResponse({ invitationId, talks, defaultTalkId }: { inv
   return (
     <form onSubmit={onDecline} className="space-y-3">
       <Field label="Let them know why (optional)" htmlFor={`decline-${invitationId}`}>
-        <textarea id={`decline-${invitationId}`} name="note" rows={2} className="control" placeholder="e.g. Already booked that week — maybe next year!" />
+        <textarea id={`decline-${invitationId}`} name="note" rows={2} className="control" placeholder="e.g. Already booked that week, maybe next year!" />
       </Field>
       <div className="flex items-center gap-2">
         <SubmitButton pending={declining} variant="secondary" pendingLabel="Declining…">Decline invitation</SubmitButton>

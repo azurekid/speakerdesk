@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: PageProps<"/speakers/[slug]">
     title: p.fullName,
     description,
     alternates: { canonical: url },
-    openGraph: { type: "profile", url, title: `${p.fullName} — speaker`, description, siteName: "SpeakerDesk", images },
+    openGraph: { type: "profile", url, title: `${p.fullName}, speaker`, description, siteName: "SpeakerDesk", images },
     twitter: { card: "summary", title: p.fullName, description, images: images?.map((i) => i.url) },
   };
 }
@@ -69,7 +69,7 @@ async function Speaker({ params }: { params: Props["params"] }) {
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-x-3">
               <h1 className="text-4xl font-semibold tracking-tight">{p.fullName}</h1>
-              <ShareMenu label="Share profile" url={`${appUrl()}/speakers/${slug}`} text={`${p.fullName}${p.tagline ? ` — ${p.tagline}` : ""}`} subject={`${p.fullName} on SpeakerDesk`} />
+              <ShareMenu label="Share profile" url={`${appUrl()}/speakers/${slug}`} text={`${p.fullName}${p.tagline ? `, ${p.tagline}` : ""}`} subject={`${p.fullName} on SpeakerDesk`} />
             </div>
             {p.pronouns && <p className="text-sm text-ink-soft">{p.pronouns}</p>}
             <p className="mt-1 text-lg text-ink-soft">{p.tagline}</p>
@@ -136,7 +136,7 @@ async function Speaker({ params }: { params: Props["params"] }) {
                     {t.tags.length > 0 && <span>{t.tags.map((x) => `#${x}`).join(" ")}</span>}
                     {t.submissions.length > 0 && <span>Given at {[...new Set(t.submissions.map((s) => s.eventName))].slice(0, 3).join(", ")}</span>}
                     {t.videoUrl && <a href={t.videoUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-ink hover:text-brand-700"><PlayCircle className="size-3.5" />Watch a recording</a>}
-                    <span className="ml-auto"><ShareMenu url={`${appUrl()}/speakers/${slug}#talk-${t.id}`} text={`“${t.title}” — a talk by ${p.fullName}`} subject={`${t.title} — ${p.fullName}`} /></span>
+                    <span className="ml-auto"><ShareMenu url={`${appUrl()}/speakers/${slug}#talk-${t.id}`} text={`“${t.title}”, a talk by ${p.fullName}`} subject={`${t.title} by ${p.fullName}`} /></span>
                   </div>
                 </li>
               ))}

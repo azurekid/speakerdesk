@@ -59,7 +59,7 @@ export async function inviteMembers(eventId: string, _prev: InviteState, form: F
   revalidatePath("/organize/people");
   const parts = [
     added.length && `${added.length} added as ${ROLE_LABELS[role].toLowerCase()}`,
-    links.length && `${links.length} invited — share the link${links.length === 1 ? "" : "s"} below`,
+    links.length && `${links.length} invited, share the link${links.length === 1 ? "" : "s"} below`,
   ].filter(Boolean);
   return { ok: true, message: parts.join(" · ") || "Nothing to do.", added, links, skipped };
 }

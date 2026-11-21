@@ -28,7 +28,7 @@ export default function PrivacyPage() {
             <tr><td>Profile: pronouns, country, city, timezone, company, job title, bios, headshots, links, T-shirt size, travel notes</td><td>What you choose to keep and share with organizers or publish</td><td>Contract; all optional fields are up to you</td></tr>
             <tr><td>Sessions, submissions, proposals, reviews, events, team roles, runbook tasks, sponsor company and deals</td><td>The features you use</td><td>Contract</td></tr>
             <tr><td>Sign-in sessions: IP address, browser and device</td><td>Keeping you signed in, showing &ldquo;where you&apos;re signed in&rdquo;, spotting misuse</td><td>Legitimate interest (security)</td></tr>
-            <tr><td>Audit log: who did what and when (sign-ins and failed attempts, account changes, which records and fields were changed — never the values — and admin actions), with IP address and browser</td><td>Security, investigating abuse, accountability for admin access</td><td>Legitimate interest (security); legal obligations</td></tr>
+            <tr><td>Audit log: who did what and when (sign-ins and failed attempts, account changes, which records and fields were changed, never the values, and admin actions), with IP address and browser</td><td>Security, investigating abuse, accountability for admin access</td><td>Legitimate interest (security); legal obligations</td></tr>
             <tr><td>Emails we send you (sign-in codes are removed from our copy once delivered)</td><td>Delivering sign-in codes and notices, troubleshooting delivery</td><td>Contract; legitimate interest</td></tr>
           </tbody>
         </table>
@@ -38,10 +38,10 @@ export default function PrivacyPage() {
 
       <Section title="Who can see it">
         <ul>
-          <li><strong>Everyone</strong>: only what you publish — your public speaker page and published talks (if you opt in), and published calls for papers, programmes and sponsor lists.</li>
+          <li><strong>Everyone</strong>: only what you publish, such as your public speaker page and published talks (if you opt in), and published calls for papers, programmes and sponsor lists.</li>
           <li><strong>Event organizers and their team</strong>: proposals you submit to their event (a snapshot), your profile details shown with them, sponsorship requests to their event, and team membership. Reviewers can be prevented from seeing speaker names (anonymous review).</li>
           <li><strong>SpeakerDesk administrators</strong>: account data and the audit log, for support and security. Support access to your account (&ldquo;View as&rdquo;) is shown to you with a banner and is logged.</li>
-          <li><strong>Our processors</strong>, under data processing agreements: Microsoft (Azure hosting, database, file storage, email delivery and map search, in the EU — region North Europe). If you sign in with GitHub, Google, LinkedIn or Microsoft, that provider confirms your identity to us.</li>
+          <li><strong>Our processors</strong>, under data processing agreements: Microsoft (Azure hosting, database, file storage, email delivery and map search, in the EU, region North Europe). If you sign in with GitHub, Google, LinkedIn or Microsoft, that provider confirms your identity to us.</li>
         </ul>
       </Section>
 

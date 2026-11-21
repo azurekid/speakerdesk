@@ -18,7 +18,7 @@ const SPEAKER_POINTS = [
 ];
 const ORGANIZER_POINTS = [
   "Publish a call for papers with tracks, formats and character limits",
-  "Proposals arrive complete — no chasing bios or headshots",
+  "Proposals arrive complete, no chasing bios or headshots",
   "Score with your review team, blind if you like",
   "Accept, waitlist or reject, then publish decisions and your programme",
 ];
@@ -46,7 +46,7 @@ export default function Home() {
             Every talk you give starts with a call for papers.
           </h1>
           <p className="mt-6 max-w-xl text-lg text-white/80">
-            SpeakerDesk keeps your sessions ready to submit — and gives organizers one place to collect, review and select them.
+            SpeakerDesk keeps your sessions ready to submit, and gives organizers one place to collect, review and select them.
           </p>
           <div className="mt-10 flex flex-wrap gap-3">
             <ButtonLink href="/sign-in" variant="accent" size="lg">Start as a speaker</ButtonLink>
@@ -69,7 +69,7 @@ export default function Home() {
           <div className="p-10">
             <Eyebrow className="text-brand-200">For sponsors</Eyebrow>
             <h2 className="mt-2 text-3xl font-semibold tracking-tight">Back the events your customers go to.</h2>
-            <p className="mt-3 text-white/75">Compare packages across events, add the coffee bar or the after-party, request booth power and lead scanning in one go — and track every deliverable until the doors open.</p>
+            <p className="mt-3 text-white/75">Compare packages across events, add the coffee bar or the after-party, request booth power and lead scanning in one go, and track every deliverable until the doors open.</p>
             <ButtonLink href="/sign-in?next=/sponsor" variant="accent" className="mt-6">Find events to sponsor</ButtonLink>
           </div>
         </div>
@@ -135,7 +135,7 @@ async function OpenCalls() {
   await connection();
   const events = await getOpenCalls(3);
   if (!events.length) {
-    return <p className="rounded-lg border border-dashed border-line px-6 py-10 text-center text-ink-soft">No open calls right now — organizers, <Link href="/sign-in?next=/organize/new" className="font-medium text-ink underline">publish yours</Link>.</p>;
+    return <p className="rounded-lg border border-dashed border-line px-6 py-10 text-center text-ink-soft">No open calls right now. Organizers, <Link href="/sign-in?next=/organize/new" className="font-medium text-ink underline">publish yours</Link>.</p>;
   }
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

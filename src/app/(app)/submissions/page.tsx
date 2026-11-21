@@ -80,7 +80,7 @@ async function SubmissionTable({ searchParams }: { searchParams: PageProps<"/sub
                     </p>
                   </td>
                   <td data-label="Session" className="px-4 py-3">
-                    {s.talk ? <Link href={`/sessions/${s.talk.id}`} className="text-ink hover:underline">{s.talk.title}</Link> : <span className="text-neutral-400">—</span>}
+                    {s.talk ? <Link href={`/sessions/${s.talk.id}`} className="text-ink hover:underline">{s.talk.title}</Link> : <span className="text-neutral-400">-</span>}
                   </td>
                   <td data-label="CfP deadline" className="whitespace-nowrap px-4 py-3 text-ink-soft">{formatDate(s.cfpDeadline)}</td>
                   <td data-label="Event date" className="whitespace-nowrap px-4 py-3 text-ink-soft">{formatDate(s.eventStart)}</td>

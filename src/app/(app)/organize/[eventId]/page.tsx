@@ -57,8 +57,8 @@ async function Overview({ params }: { params: Params }) {
         <Card title="Call for papers" description={state === "draft" ? "Only your team can see this event until you publish." : "Speakers can find this CfP on SpeakerDesk and at the link below."}>
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="text-sm">
-              {state === "draft" && <p>Draft — {event.cfpClosesAt ? `set to close ${formatDate(event.cfpClosesAt)}` : "no closing date set"}.</p>}
-              {state === "upcoming" && <p>Published — opens {formatDate(event.cfpOpensAt)}.</p>}
+              {state === "draft" && <p>Draft: {event.cfpClosesAt ? `set to close ${formatDate(event.cfpClosesAt)}` : "no closing date set"}.</p>}
+              {state === "upcoming" && <p>Published: opens {formatDate(event.cfpOpensAt)}.</p>}
               {state === "open" && <p>Accepting proposals{event.cfpClosesAt ? ` until ${formatDate(event.cfpClosesAt)}` : ""}.</p>}
               {state === "closed" && <p>Closed on {formatDate(event.cfpClosesAt)}.</p>}
               {state !== "draft" && <code className="mt-2 inline-block break-all rounded bg-neutral-100 px-2 py-1 text-xs">{publicUrl}</code>}
@@ -69,14 +69,14 @@ async function Overview({ params }: { params: Params }) {
           </div>
           <p className="mt-4 text-sm">
             <Link href={`/organize/${event.id}/program#invite`} className="font-medium underline">Invite a speaker directly</Link>
-            <span className="text-ink-soft"> — find someone in the speaker directory and invite them to {event.name}.</span>
+            <span className="text-ink-soft">: find someone in the speaker directory and invite them to {event.name}.</span>
           </p>
           {(state === "open" || state === "upcoming") && (
             <ShareButtons
               title="Promote your call for papers"
               className="mt-5 border-t border-line pt-4"
               url={publicUrl}
-              text={`Call for papers ${state === "open" ? "open" : `opens ${formatDate(event.cfpOpensAt)}`}: ${event.name}${event.cfpClosesAt ? ` — submit by ${formatDate(event.cfpClosesAt)}` : ""}`}
+              text={`Call for papers ${state === "open" ? "open" : `opens ${formatDate(event.cfpOpensAt)}`}: ${event.name}${event.cfpClosesAt ? `, submit by ${formatDate(event.cfpClosesAt)}` : ""}`}
               subject={`Speak at ${event.name}`}
             />
           )}

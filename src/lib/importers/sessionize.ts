@@ -60,7 +60,7 @@ export async function fetchSessionize(endpointId: string): Promise<SzAll> {
   if (!res.ok) throw new SessionizeError(`Sessionize returned HTTP ${res.status}.`);
   const data = (await res.json()) as SzAll;
   if (!Array.isArray(data.sessions) || !Array.isArray(data.speakers)) {
-    throw new SessionizeError("Unexpected response — make sure the endpoint uses the “All” view in JSON format.");
+    throw new SessionizeError("Unexpected response. Make sure the endpoint uses the “All” view in JSON format.");
   }
   return data;
 }

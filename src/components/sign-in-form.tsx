@@ -184,7 +184,7 @@ export function SignInForm({ providers, emailPassword, devMailHint }: { provider
         {view === "code-email" && (
           <>
             <p>
-              No password needed — we&apos;ll email a code to your account address.
+              No password needed. We&apos;ll email a code to your account address.
               {emailPassword && <> <button type="button" className={link} onClick={() => go("password")}>Use a password instead</button></>}
             </p>
             {emailPassword && <p>New to SpeakerDesk? <button type="button" className={link} onClick={() => go("sign-up")}>Create an account</button></p>}

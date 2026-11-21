@@ -5,7 +5,7 @@ export const metadata: Metadata = { title: "Export" };
 
 const EXPORTS = [
   { href: "/api/export/json", title: "Full backup (JSON)", body: "Profile, sessions and submissions. Re-import it here any time, or use it in your own tooling." },
-  { href: "/api/export/markdown", title: "Speaker kit (Markdown)", body: "Bio, links and all active sessions in one document — ready to email to an organizer or convert to PDF." },
+  { href: "/api/export/markdown", title: "Speaker kit (Markdown)", body: "Bio, links and all active sessions in one document, ready to email to an organizer or convert to PDF." },
   { href: "/api/export/csv", title: "Sessions (CSV)", body: "One row per session for spreadsheets. The same columns are accepted by the CSV importer." },
 ];
 

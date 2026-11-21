@@ -10,6 +10,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ places: await searchPlaces(q) }, { headers: { "Cache-Control": "private, max-age=300" } });
   } catch (err) {
     console.error("venue search failed", err);
-    return NextResponse.json({ places: [], error: "Venue search is unavailable right now — type the details in by hand." }, { status: 502 });
+    return NextResponse.json({ places: [], error: "Venue search is unavailable right now. Type the details in by hand." }, { status: 502 });
   }
 }

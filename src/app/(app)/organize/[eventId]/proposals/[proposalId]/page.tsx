@@ -80,7 +80,7 @@ async function ProposalDetail({ params }: { params: Props["params"] }) {
 
         <Card title="Speaker">
           {anonymous ? (
-            <p className="text-sm text-ink-soft">This event uses anonymous review — speaker details are hidden from reviewers.</p>
+            <p className="text-sm text-ink-soft">This event uses anonymous review. Speaker details are hidden from reviewers.</p>
           ) : (
             <div className="flex gap-4">
               {profile?.headshotSquareUrl ? (
@@ -113,7 +113,7 @@ async function ProposalDetail({ params }: { params: Props["params"] }) {
           <Card title="Decision" actions={<DecisionBadge decision={p.decision} />}>
             <DecisionButtons key={p.decision} proposalId={p.id} decision={p.decision} />
             <p className="mt-3 text-xs text-ink-soft">
-              {p.decision === "UNDECIDED" ? "Speakers aren't notified until you publish decisions." : p.decisionPublished ? "Sent to the speaker." : "Not sent yet — publish from the overview."}
+              {p.decision === "UNDECIDED" ? "Speakers aren't notified until you publish decisions." : p.decisionPublished ? "Sent to the speaker." : "Not sent yet. Publish from the overview."}
             </p>
           </Card>
         )}

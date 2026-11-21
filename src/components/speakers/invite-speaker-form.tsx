@@ -21,7 +21,7 @@ export function InviteSpeakerForm({ speakerId, speakerName, events, talks, defau
           {events.map((ev) => <option key={ev.id} value={ev.id}>{ev.name}</option>)}
         </select>
       </Field>
-      <Field label="Talk" htmlFor="talkId" error={e?.talkId} hint="Optional — or let them pick.">
+      <Field label="Talk" htmlFor="talkId" error={e?.talkId} hint="Optional, or let them pick.">
         <select id="talkId" name="talkId" className="control" defaultValue={defaultTalkId ?? ""}>
           <option value="">Let {speakerName.split(" ")[0]} choose</option>
           {talks.map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}

@@ -115,7 +115,7 @@ async function Team({ params }: { params: Props["params"] }) {
                     <td data-label="Open tasks" className="px-5 py-3 tabular-nums">
                       {mine.length}{late > 0 && <span className="ml-2 text-xs font-medium text-rose-700">{late} overdue</span>}
                     </td>
-                    <td data-label="Reviews" className="px-5 py-3 tabular-nums text-ink-soft">{atLeast(m.role, "REVIEWER") ? reviews : "—"}</td>
+                    <td data-label="Reviews" className="px-5 py-3 tabular-nums text-ink-soft">{atLeast(m.role, "REVIEWER") ? reviews : "-"}</td>
                     <td data-label="Last active" className="px-5 py-3 text-xs text-ink-soft">{lastSeen(m.user.sessions[0]?.updatedAt)}</td>
                     <td className="px-5 py-3 text-right">
                       {canRemove && (

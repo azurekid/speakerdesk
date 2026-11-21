@@ -78,7 +78,7 @@ async function Onboarding() {
       </ol>
 
       <div className="mt-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-neutral-100 px-5 py-4">
-        <p className="text-sm text-ink-soft">{o.requiredDone ? "Ready when you are." : "Finish the required steps to complete setup — you can explore in the meantime."}</p>
+        <p className="text-sm text-ink-soft">{o.requiredDone ? "Ready when you are." : "Finish the required steps to complete setup. You can explore in the meantime."}</p>
         {o.requiredDone ? (
           <ActionButton action={finishOnboarding} variant="accent">{o.onboardedAt ? "Go to my home" : "Finish setup"}</ActionButton>
         ) : (

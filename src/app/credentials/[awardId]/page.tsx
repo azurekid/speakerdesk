@@ -84,7 +84,7 @@ async function Credential({ params }: { params: Props["params"] }) {
         title="Share this badge"
         url={`${appUrl()}/credentials/${a.id}`}
         text={`I earned the “${a.badge.name}” badge at ${a.event.name} 🎉`}
-        subject={`${a.badge.name} — ${a.event.name}`}
+        subject={`${a.badge.name} at ${a.event.name}`}
       />
     </article>
   );

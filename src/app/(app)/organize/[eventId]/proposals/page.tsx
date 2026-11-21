@@ -21,7 +21,7 @@ export default function ProposalsPage(props: Props) {
 }
 
 function Score({ value }: { value: number | null }) {
-  if (value === null) return <span className="text-neutral-400">—</span>;
+  if (value === null) return <span className="text-neutral-400">-</span>;
   return <span className="font-display tracking-tight text-lg tabular-nums">{value.toFixed(1)}</span>;
 }
 
@@ -70,7 +70,7 @@ async function ProposalTable({ params, searchParams }: { params: Props["params"]
 
       {rows.length === 0 ? (
         <EmptyState title={decision || track ? "Nothing matches" : "No proposals yet"} photo="/images/events/audience.jpg">
-          {decision || track ? "Try another filter." : "Share your public CfP link — proposals appear here as speakers submit."}
+          {decision || track ? "Try another filter." : "Share your public CfP link. Proposals appear here as speakers submit."}
         </EmptyState>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-line bg-surface">
@@ -98,10 +98,10 @@ async function ProposalTable({ params, searchParams }: { params: Props["params"]
                       {p.invited && <Badge className="bg-brand-50 text-brand-700 ring-brand-200">Invited</Badge>}
                     </div>
                   </td>
-                  <td data-label="Track" className="px-4 py-3 text-ink-soft"><span>{p.track || "—"}</span></td>
+                  <td data-label="Track" className="px-4 py-3 text-ink-soft"><span>{p.track || "-"}</span></td>
                   <td data-label="Average" className="px-4 py-3 text-right"><Score value={p.avgScore} /></td>
                   <td data-label="Reviews" className="px-4 py-3 text-right tabular-nums text-ink-soft"><span>{p.reviewCount}</span></td>
-                  <td data-label="Your score" className="px-4 py-3 text-right tabular-nums"><span>{p.myScore ?? <span className="text-neutral-400">—</span>}</span></td>
+                  <td data-label="Your score" className="px-4 py-3 text-right tabular-nums"><span>{p.myScore ?? <span className="text-neutral-400">-</span>}</span></td>
                   <td data-label="Decision" className="px-4 py-3">
                     {canManage(role) ? (
                       <div className="flex items-center gap-2">

@@ -173,7 +173,7 @@ export const auth = betterAuth({
           subject: copy.subject,
           kind: type,
           sensitive: true,
-          text: `${copy.line}:\n\n    ${otp}\n\nIt expires in 10 minutes. If you didn't ask for this, you can ignore this email.\n\n— SpeakerDesk`,
+          text: `${copy.line}:\n\n    ${otp}\n\nIt expires in 10 minutes. If you didn't ask for this, you can ignore this email.\n\nSpeakerDesk`,
         });
       },
     }),

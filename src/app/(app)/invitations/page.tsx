@@ -46,7 +46,7 @@ async function Invitations({ searchParams }: { searchParams: Props["searchParams
     <div className="space-y-6">
       {accepted === "1" && (
         <p role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-          Accepted — the session is on the programme and in your <Link href="/submissions" className="font-medium underline">tracker</Link>.
+          Accepted. The session is on the programme and in your <Link href="/submissions" className="font-medium underline">tracker</Link>.
         </p>
       )}
       {invitations.length === 0 ? (
@@ -73,7 +73,7 @@ async function Invitations({ searchParams }: { searchParams: Props["searchParams
               </div>
               <blockquote className="rounded-xl bg-neutral-50 px-4 py-3 text-sm">
                 <p className="whitespace-pre-wrap">{inv.message}</p>
-                <footer className="mt-2 text-xs text-ink-soft">— {inv.invitedBy?.name ?? "The organizers"}, {formatDate(inv.createdAt)}</footer>
+                <footer className="mt-2 text-xs text-ink-soft">From {inv.invitedBy?.name ?? "The organizers"}, {formatDate(inv.createdAt)}</footer>
               </blockquote>
               {inv.talk && <p className="text-sm"><span className="text-ink-soft">They&apos;d love to hear:</span> <span className="font-medium">{inv.talk.title}</span></p>}
               {inv.status === "PENDING" ? (

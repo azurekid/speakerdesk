@@ -102,7 +102,7 @@ export function TalkForm({
         </div>
       </Card>
 
-      <Card title="Outline & prep" description="Internal notes — not copied into CfPs unless you choose to.">
+      <Card title="Outline & prep" description="Internal notes, not copied into CfPs unless you choose to.">
         <CountedTextarea name="outline" label="Outline" defaultValue={talk.outline} rows={8} error={e?.outline} hint="Section-by-section flow, demo plan, timings." />
       </Card>
 

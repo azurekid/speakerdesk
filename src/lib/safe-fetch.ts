@@ -65,8 +65,8 @@ async function safeFetchBody(raw: string, init: { headers?: Record<string, strin
     cache: "no-store",
   });
   if (res.status >= 300 && res.status < 400) throw new SafeFetchError(`The server redirected (${res.status}); use the final URL instead.`);
-  if (res.status === 401 || res.status === 403) throw new SafeFetchError("Access denied — check your API token.");
-  if (res.status === 404) throw new SafeFetchError("Not found — check the URL / event slug.");
+  if (res.status === 401 || res.status === 403) throw new SafeFetchError("Access denied, check your API token.");
+  if (res.status === 404) throw new SafeFetchError("Not found, check the URL / event slug.");
   if (!res.ok) throw new SafeFetchError(`Request failed with HTTP ${res.status}.`);
 
   const reader = res.body?.getReader();

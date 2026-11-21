@@ -38,7 +38,7 @@ function SpeakerPicker({ state, children }: { state: Extract<LookupState, { step
         <select id="speakerId" name="speakerId" required className="control" defaultValue="">
           <option value="" disabled>Select yourself…</option>
           {state.speakers.map((s) => (
-            <option key={s.id} value={s.id}>{s.name}{s.tagline ? ` — ${s.tagline}` : ""} ({s.sessionCount})</option>
+            <option key={s.id} value={s.id}>{s.name}{s.tagline ? `, ${s.tagline}` : ""} ({s.sessionCount})</option>
           ))}
         </select>
       </Field>
@@ -60,7 +60,7 @@ export function ProfilePageImporter() {
         Also fill empty profile fields (bio, tagline, photo, location, links, topics)
       </label>
       <p className="text-xs text-ink-soft">
-        Only what&apos;s public on that page is imported — you never need to give SpeakerDesk your Sessionize or run.events password or login.
+        Only what&apos;s public on that page is imported. You never need to give SpeakerDesk your Sessionize or run.events password or login.
         Running it again won&apos;t create duplicates.
       </p>
       <SubmitButton pendingLabel="Importing…" pending={importing}>Import from profile</SubmitButton>

@@ -96,7 +96,7 @@ async function Overview() {
               {recentAudit.map((a) => (
                 <li key={a.id} className="flex items-center justify-between gap-3 py-2.5">
                   <span className="min-w-0 truncate"><Badge>{a.action}</Badge> <span className="text-ink-soft">{a.summary}</span></span>
-                  <span className="shrink-0 text-xs text-ink-soft">{a.actor?.name ?? (a.actorEmail || "—")}</span>
+                  <span className="shrink-0 text-xs text-ink-soft">{a.actor?.name ?? (a.actorEmail || "-")}</span>
                 </li>
               ))}
             </ul>

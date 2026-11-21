@@ -58,7 +58,7 @@ export function ProposalForm({ talks, rules, action, cancelHref, initialTalkId }
           </Field>
         ) : (
           <p className="text-sm text-ink-soft">
-            Your library is empty — fill in the proposal directly, or <Link href="/sessions/new" className="font-medium text-ink underline">write a session first</Link>.
+            Your library is empty. Fill in the proposal directly, or <Link href="/sessions/new" className="font-medium text-ink underline">write a session first</Link>.
             <input type="hidden" name="talkId" value="" />
           </p>
         )}

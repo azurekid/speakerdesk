@@ -11,7 +11,7 @@ export function OnboardingBanner({ left, total, done }: { left: number; total: n
     <Link href="/onboarding" className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-brand-200 bg-brand-50 px-5 py-3 hover:border-brand-500">
       <span className="text-sm">
         <span className="font-semibold text-brand-700">Finish setting up your account</span>{" "}
-        <span className="text-ink-soft">— {left} required step{left === 1 ? "" : "s"} left ({done}/{total} done)</span>
+        <span className="text-ink-soft">· {left} required step{left === 1 ? "" : "s"} left ({done}/{total} done)</span>
       </span>
       <span className="text-sm font-medium">Continue →</span>
     </Link>

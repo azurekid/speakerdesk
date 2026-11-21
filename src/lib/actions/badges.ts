@@ -6,7 +6,7 @@ import { eligibleRecipients } from "@/lib/badge-queries";
 import { BADGE_COLORS, BADGE_ICONS } from "@/lib/badges";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/dal";
-import { sendMail } from "@/lib/mailer";
+import { sendMailInBackground } from "@/lib/mailer";
 import { appUrl, eventAccessOrNull } from "@/lib/organizer";
 import { type ActionState, fieldErrors, formToObject } from "@/lib/validation";
 
@@ -26,7 +26,7 @@ const awardSchema = z.object({
 function revalidateBadges(eventId?: string) {
   if (eventId) revalidatePath(`/organize/${eventId}/badges`);
   revalidatePath("/badges");
-  revalidatePath("/", "layout"); // pending-badge banner
+  // The pending-badge banner and sidebar count are read per request, so nothing site-wide to purge.
 }
 
 // ─── Organizers ──────────────────────────────────────────────────────────────
@@ -84,14 +84,12 @@ export async function awardBadge(eventId: string, _prev: ActionState, form: Form
   if (toNotify.length) {
     const people = await prisma.user.findMany({ where: { id: { in: toNotify } }, select: { email: true, name: true } });
     const event = access.event;
-    for (const p of people) {
-      await sendMail({
-        to: p.email,
-        kind: "badge-award",
-        subject: `${event.name} gave you the “${badge.name}” badge`,
-        text: `Hi ${p.name.split(" ")[0]},\n\n${event.name} awarded you the “${badge.name}” badge${badge.description ? ` — ${badge.description}` : "."}${message ? `\n\n“${message}”` : ""}\n\nAccept it to add it to your SpeakerDesk profile:\n${appUrl()}/badges\n\n— SpeakerDesk`,
-      }).catch((e) => console.error("badge email failed", e));
-    }
+    sendMailInBackground(people.map((p) => ({
+      to: p.email,
+      kind: "badge-award",
+      subject: `${event.name} gave you the “${badge.name}” badge`,
+      text: `Hi ${p.name.split(" ")[0]},\n\n${event.name} awarded you the “${badge.name}” badge${badge.description ? `: ${badge.description}` : "."}${message ? `\n\n“${message}”` : ""}\n\nAccept it to add it to your SpeakerDesk profile:\n${appUrl()}/badges\n\nSpeakerDesk`,
+    })));
   }
   revalidateBadges(eventId);
   const sent = toNotify.length;

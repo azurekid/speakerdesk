@@ -92,7 +92,7 @@ export async function profilePageImport(_prev: ImportResult, form: FormData): Pr
     const site = page.source === "sessionize" ? "Sessionize" : "run.events";
     const note =
       page.talks.length === 0
-        ? `No public sessions were found on your ${site} profile.${page.source === "sessionize" ? " Sessionize only shows sessions you've made visible on your public profile — make them visible there, then import again." : ""}`
+        ? `No public sessions were found on your ${site} profile.${page.source === "sessionize" ? " Sessionize only shows sessions you've made visible on your public profile. Make them visible there, then import again." : ""}`
         : `Found ${page.talks.length} public session${page.talks.length === 1 ? "" : "s"} on ${site}. Format, level and duration aren't on public profiles, so check those on each session.`;
     return done(summary, note);
   } catch (err) {
@@ -109,7 +109,7 @@ export async function pretalxLookup(_prev: LookupState, form: FormData): Promise
     const token = String(form.get("token") ?? "");
     const { submissions } = await fetchPretalx(target, token);
     const speakers = listPretalxSpeakers(submissions);
-    if (!speakers.length) return { step: "error", error: "No submissions with speakers were visible. Public access only shows the published schedule — add an API token to see your own submissions." };
+    if (!speakers.length) return { step: "error", error: "No submissions with speakers were visible. Public access only shows the published schedule. Add an API token to see your own submissions." };
     return { step: "pick", speakers, context: { instance: target.instance, event: target.event, token } };
   } catch (err) {
     return { step: "error", error: message(err, "Could not load the Pretalx event.") };

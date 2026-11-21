@@ -19,14 +19,14 @@ export default function SignInPage() {
         <Link href="/"><Logo light /></Link>
         <div className="max-w-md">
           <p className="text-4xl font-semibold leading-tight tracking-tight">One desk for everyone who makes an event happen.</p>
-          <p className="mt-4 text-white/75">Speakers, organizers and sponsors — one account, and you can switch between them any time.</p>
+          <p className="mt-4 text-white/75">Speakers, organizers and sponsors share one account, and you can switch between them any time.</p>
         </div>
       </section>
       <section className="flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-sm">
           <Link href="/" className="mb-10 block lg:hidden"><Logo /></Link>
           <h1 className="text-3xl font-semibold tracking-tight">Sign in</h1>
-          <p className="mb-8 mt-2 text-sm text-ink-soft">Welcome back — or create your account in seconds.</p>
+          <p className="mb-8 mt-2 text-sm text-ink-soft">Welcome back, or create your account in seconds.</p>
           <Suspense fallback={<Skeleton rows={2} />}>
             <Methods />
           </Suspense>

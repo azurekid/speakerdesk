@@ -38,7 +38,7 @@ export function VenuePicker({ initial, errors }: { initial: VenueValues; errors?
         setActive(0);
         setOpen(true);
       } catch (e) {
-        if ((e as Error).name !== "AbortError") setError("Venue search failed — enter the details by hand.");
+        if ((e as Error).name !== "AbortError") setError("Venue search failed. Enter the details by hand.");
       } finally {
         setLoading(false);
       }

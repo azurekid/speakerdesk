@@ -37,11 +37,11 @@ export function ProfileForm({ profile, timezones }: { profile: ProfileInput; tim
         </div>
       </Card>
 
-      <Card title="Bios" description="Keep three lengths ready — CfPs ask for different ones.">
+      <Card title="Bios" description="Keep three lengths ready. CfPs ask for different ones.">
         <div className="space-y-4">
           <CountedTextarea name="bioShort" label="Short bio" limit={BIO_LIMITS.short} defaultValue={profile.bioShort} rows={3} error={errors?.bioShort} hint="One or two sentences, third person." />
           <CountedTextarea name="bioMedium" label="Medium bio" limit={BIO_LIMITS.medium} defaultValue={profile.bioMedium} rows={6} error={errors?.bioMedium} />
-          <CountedTextarea name="bioLong" label="Long bio" defaultValue={profile.bioLong} rows={10} error={errors?.bioLong} hint="No limit — for websites and press kits." />
+          <CountedTextarea name="bioLong" label="Long bio" defaultValue={profile.bioLong} rows={10} error={errors?.bioLong} hint="No limit, for websites and press kits." />
         </div>
       </Card>
 
@@ -80,7 +80,7 @@ export function ProfileForm({ profile, timezones }: { profile: ProfileInput; tim
         <div className="grid gap-4 sm:grid-cols-3">
           <Field label="T-shirt size" htmlFor="tshirtSize" error={errors?.tshirtSize}>
             <select id="tshirtSize" name="tshirtSize" defaultValue={profile.tshirtSize} className="control">
-              {TSHIRT_SIZES.map((s) => <option key={s} value={s}>{s || "—"}</option>)}
+              {TSHIRT_SIZES.map((s) => <option key={s} value={s}>{s || "-"}</option>)}
             </select>
           </Field>
           <Field label="Travel notes" htmlFor="travelNotes" error={errors?.travelNotes} className="sm:col-span-3">

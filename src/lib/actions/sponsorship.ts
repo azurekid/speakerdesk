@@ -123,7 +123,7 @@ export async function requestSponsorship(eventId: string, _prev: ActionState, fo
   if (packages.filter((p) => p.kind === "TIER").length > 1) return { ok: false, message: "Choose one sponsorship tier (add-ons can be combined).", errors: { packageIds: ["Only one tier"] } };
 
   const active = await prisma.sponsorship.count({ where: { eventId, sponsorOrgId: org.id, status: { in: SLOT_HOLDING_STATUSES } } });
-  if (active) return { ok: false, message: "You already have an open sponsorship for this event — talk to the organizers to change it." };
+  if (active) return { ok: false, message: "You already have an open sponsorship for this event. Talk to the organizers to change it." };
 
   try {
     await prisma.$transaction(
@@ -146,8 +146,8 @@ export async function requestSponsorship(eventId: string, _prev: ActionState, fo
       { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
     );
   } catch (err) {
-    if (err instanceof SoldOut) return { ok: false, message: `${err.message} just sold out — pick another option.` };
-    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2034") return { ok: false, message: "Someone else was booking at the same moment — please try again." };
+    if (err instanceof SoldOut) return { ok: false, message: `${err.message} just sold out. Pick another option.` };
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2034") return { ok: false, message: "Someone else was booking at the same moment, please try again." };
     throw err;
   }
   revalidateSponsorship(eventId, event.slug);

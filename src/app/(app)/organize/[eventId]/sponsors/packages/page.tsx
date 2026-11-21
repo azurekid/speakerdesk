@@ -81,7 +81,7 @@ function PackageCard({ p, eventId, currency, owner }: { p: PackageWithAvailabili
       {owner && (
         <div className="mt-5 flex gap-2 border-t border-line pt-4">
           <ButtonLink href={`/organize/${eventId}/sponsors/packages/${p.id}`} variant="secondary" size="sm">Edit</ButtonLink>
-          <ActionButton action={deletePackage.bind(null, p.id)} variant="ghost" confirmText={p.taken ? "This package has been sold — it will be hidden instead of deleted. Continue?" : `Delete ${p.name}?`}>
+          <ActionButton action={deletePackage.bind(null, p.id)} variant="ghost" confirmText={p.taken ? "This package has been sold. It will be hidden instead of deleted. Continue?" : `Delete ${p.name}?`}>
             {p.taken ? "Hide" : "Delete"}
           </ActionButton>
         </div>

@@ -106,7 +106,7 @@ async function Overview() {
         <Stat label="Active sessions" value={talkCount} href="/sessions" />
         <Stat label="Awaiting decision" value={pending} href="/submissions?status=SUBMITTED" />
         <Stat label="Accepted" value={accepted} href="/submissions?status=ACCEPTED" />
-        <Stat label="Acceptance rate" value={decided ? `${Math.round((accepted / decided) * 100)}%` : "—"} hint={decided ? `${accepted} of ${decided} decided` : "No decisions yet"} />
+        <Stat label="Acceptance rate" value={decided ? `${Math.round((accepted / decided) * 100)}%` : "-"} hint={decided ? `${accepted} of ${decided} decided` : "No decisions yet"} />
       </div>
 
       {completeness < 100 && (

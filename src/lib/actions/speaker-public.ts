@@ -18,7 +18,7 @@ export async function savePublicProfile(_prev: ActionState, form: FormData): Pro
   let slug = parsed.data.slug || profile.slug || slugFromName(profile.fullName || user.name);
   const taken = await prisma.speakerProfile.findFirst({ where: { slug, NOT: { userId: user.id } } });
   if (taken) {
-    if (parsed.data.slug) return { ok: false, message: "That address is taken.", errors: { slug: ["Already taken — try another"] } };
+    if (parsed.data.slug) return { ok: false, message: "That address is taken.", errors: { slug: ["Already taken, try another"] } };
     slug = `${slug}-${Math.random().toString(36).slice(2, 5)}`;
   }
   if (parsed.data.publicProfile && !profile.fullName) return { ok: false, message: "Add your name to the profile before going public." };

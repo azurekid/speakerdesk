@@ -85,7 +85,7 @@ async function Program({ params, searchParams }: { params: Props["params"]; sear
       {accepted.length > 0 && <ProductionChecklist sessions={accepted} />}
 
       {waitlist.length > 0 && (
-        <Card title="Waitlist" description="Highest rated first — your back-ups if someone drops out.">
+        <Card title="Waitlist" description="Highest rated first. Your back-ups if someone drops out.">
           <ol className="list-decimal space-y-1 pl-5 text-sm">
             {waitlist.map((p) => (
               <li key={p.id}>

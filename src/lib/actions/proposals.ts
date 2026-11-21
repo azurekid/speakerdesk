@@ -6,7 +6,7 @@ import { renderConfirmation } from "@/lib/confirmation-email";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/dal";
 import { cfpState, eventWhere } from "@/lib/domain";
-import { sendMail } from "@/lib/mailer";
+import { sendMailInBackground } from "@/lib/mailer";
 import { appUrl } from "@/lib/organizer";
 import { type ActionState, fieldErrors, formToObject, proposalSchema } from "@/lib/validation";
 
@@ -72,7 +72,7 @@ export async function submitProposal(eventId: string, _prev: ActionState, form: 
           DASHBOARD_URL: `${appUrl()}/submissions`,
         },
       );
-      await sendMail({ to: user.email, ...mail, kind: "proposal-confirmation" });
+      sendMailInBackground([{ to: user.email, ...mail, kind: "proposal-confirmation" }]);
     } catch (e) {
       console.error("proposal confirmation email failed", e);
     }

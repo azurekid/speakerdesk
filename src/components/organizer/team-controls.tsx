@@ -16,7 +16,7 @@ export function InviteForm({ eventId, roles }: { eventId: string; roles: EventRo
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Role" htmlFor="role">
           <select id="role" name="role" defaultValue={roles.includes("ORGANIZER") ? "ORGANIZER" : roles[0]} className="control">
-            {roles.map((r) => <option key={r} value={r}>{ROLE_LABELS[r]} — {ROLE_DESCRIPTIONS[r]}</option>)}
+            {roles.map((r) => <option key={r} value={r}>{ROLE_LABELS[r]}: {ROLE_DESCRIPTIONS[r]}</option>)}
           </select>
         </Field>
         <Field label="Title (optional)" htmlFor="title">

@@ -15,7 +15,7 @@ export function PublicProfileForm({ values, baseUrl, publishedTalks }: {
   return (
     <Card
       title="Public speaker page"
-      description="Let organizers find you and invite you to their events. Only your name, tagline, bio, photo, links, location, topics and published talks are shown — never your email or travel details."
+      description="Let organizers find you and invite you to their events. Only your name, tagline, bio, photo, links, location, topics and published talks are shown, never your email or travel details."
       actions={values.publicProfile && values.slug ? <Link href={`/speakers/${values.slug}`} target="_blank" className="text-sm text-ink-soft hover:text-ink">View page ↗</Link> : undefined}
     >
       <form onSubmit={onSubmit} className="space-y-4">

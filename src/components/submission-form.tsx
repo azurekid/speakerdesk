@@ -64,7 +64,7 @@ export function SubmissionForm({
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Session" htmlFor="talkId" error={e?.talkId} className="sm:col-span-2">
             <select id="talkId" name="talkId" defaultValue={values.talkId} className="control">
-              <option value="">— Not linked to a session —</option>
+              <option value="">Not linked to a session</option>
               {talks.map((t) => <option key={t.id} value={t.id}>{t.title}</option>)}
             </select>
           </Field>
@@ -75,7 +75,7 @@ export function SubmissionForm({
           </Field>
           {input("cfpDeadline", "CfP deadline", { type: "date" })}
           {input("submittedAt", "Submitted on", { type: "date" })}
-          {input("recordingUrl", "Recording URL", { type: "url", placeholder: "https://youtube.com/…", hint: "After the event — builds your delivery history." })}
+          {input("recordingUrl", "Recording URL", { type: "url", placeholder: "https://youtube.com/…", hint: "After the event. Builds your delivery history." })}
           <Field label="Notes" htmlFor="notes" error={e?.notes} className="sm:col-span-2">
             <textarea id="notes" name="notes" rows={4} defaultValue={values.notes} className="control" placeholder="Custom CfP answers, organizer contacts, travel arrangements…" />
           </Field>

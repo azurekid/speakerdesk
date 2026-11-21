@@ -70,7 +70,7 @@ export function DetailsStep({ values, timezones }: { values: Details; timezones:
             </label>
           ))}
         </div>
-        <p className="mt-1.5 text-xs text-ink-soft">You can do all three with one account — this decides where we start.</p>
+        <p className="mt-1.5 text-xs text-ink-soft">You can do all three with one account. This decides where we start.</p>
       </fieldset>
 
       <div className="grid gap-4 sm:grid-cols-2">

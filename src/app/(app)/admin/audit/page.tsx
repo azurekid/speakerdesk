@@ -84,7 +84,7 @@ async function Audit({ searchParams }: { searchParams: Props["searchParams"] }) 
               <tr key={a.id} className="align-top">
                 <td className="whitespace-nowrap px-4 py-2.5 text-xs text-ink-soft">{a.createdAt.toISOString().replace("T", " ").slice(0, 19)}</td>
                 <td data-label="Who" className="px-4 py-2.5">
-                  {a.actor ? <Link href={`/admin/users/${a.actor.id}`} className="underline">{a.actor.name}</Link> : a.actorEmail || <span className="text-ink-soft">—</span>}
+                  {a.actor ? <Link href={`/admin/users/${a.actor.id}`} className="underline">{a.actor.name}</Link> : a.actorEmail || <span className="text-ink-soft">-</span>}
                   {a.impersonatorId && <Badge className="ml-1 bg-amber-50 text-amber-800 ring-amber-200">via admin</Badge>}
                 </td>
                 <td data-label="Action" className="px-4 py-2.5"><Badge className={a.outcome === "failure" ? "bg-rose-50 text-rose-800 ring-rose-200" : undefined}>{a.action}</Badge></td>
@@ -95,7 +95,7 @@ async function Audit({ searchParams }: { searchParams: Props["searchParams"] }) 
                   {a.targetType !== "user" && a.summary && <div>{a.summary}</div>}
                   {a.metadata != null && <code className="break-all">{JSON.stringify(a.metadata)}</code>}
                 </td>
-                <td data-label="From" className="whitespace-nowrap px-4 py-2.5 font-mono text-xs text-ink-soft"><span>{a.ipAddress || "—"}</span></td>
+                <td data-label="From" className="whitespace-nowrap px-4 py-2.5 font-mono text-xs text-ink-soft"><span>{a.ipAddress || "-"}</span></td>
               </tr>
             ))}
             {entries.length === 0 && <tr><td colSpan={6} className="px-5 py-6 text-center text-ink-soft">No entries match.</td></tr>}

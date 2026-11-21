@@ -227,7 +227,7 @@ export function DeleteAccount({ email, hasPassword, blockingEvents }: { email: s
         ok: false,
         message: expired
           ? hasPassword
-            ? "For your security, enter your password — or sign out and back in — then try again."
+            ? "For your security, enter your password, or sign out and back in, then try again."
             : "For your security, sign out and sign in again (with a fresh code), then delete your account within 24 hours."
           : (r.error.message ?? "Couldn't delete the account."),
       });

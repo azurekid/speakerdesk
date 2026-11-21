@@ -41,12 +41,12 @@ async function Opportunities() {
     <>
       {!org && (
         <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-line bg-surface px-5 py-4">
-          <p className="text-sm"><span className="font-medium">Set up your company profile</span> <span className="text-ink-soft">— organizers see it with every request.</span></p>
+          <p className="text-sm"><span className="font-medium">Set up your company profile.</span> <span className="text-ink-soft">Organizers see it with every request.</span></p>
           <ButtonLink href="/sponsor/company" size="sm">Add company</ButtonLink>
         </div>
       )}
       {listed.length === 0 ? (
-        <EmptyState title="No open sponsorships right now" photo="/images/events/hall.jpg">Check back soon — new events publish their prospectus regularly.</EmptyState>
+        <EmptyState title="No open sponsorships right now" photo="/images/events/hall.jpg">Check back soon. New events publish their prospectus regularly.</EmptyState>
       ) : (
         <div className="grid gap-6 md:grid-cols-2">
           {listed.map(({ e, packages }) => {

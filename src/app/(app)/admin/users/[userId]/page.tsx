@@ -67,8 +67,8 @@ async function UserDetail({ params }: { params: Props["params"] }) {
         <Card title="Profile">
           <dl className="grid grid-cols-[120px_1fr] gap-y-1.5 text-sm">
             <dt className="text-ink-soft">Main role</dt><dd>{{ SPEAKER: "Speaker", ORGANIZER: "Organizer", SPONSOR: "Sponsor" }[u.primaryRole]}</dd>
-            <dt className="text-ink-soft">Location</dt><dd>{[p?.city, p?.country].filter(Boolean).join(", ") || "—"}{p?.timezone && ` · ${p.timezone}`}</dd>
-            <dt className="text-ink-soft">Work</dt><dd>{[p?.jobTitle, p?.company].filter(Boolean).join(" at ") || "—"}</dd>
+            <dt className="text-ink-soft">Location</dt><dd>{[p?.city, p?.country].filter(Boolean).join(", ") || "-"}{p?.timezone && ` · ${p.timezone}`}</dd>
+            <dt className="text-ink-soft">Work</dt><dd>{[p?.jobTitle, p?.company].filter(Boolean).join(" at ") || "-"}</dd>
             <dt className="text-ink-soft">Sign-in</dt><dd>{[hasPassword && "Password", ...u.accounts.filter((a) => a.providerId !== "credential").map((a) => a.providerId), "Email code"].filter(Boolean).join(", ")}</dd>
             <dt className="text-ink-soft">Content</dt><dd>{u._count.talks} talks · {u._count.proposals} proposals · {u._count.submissions} tracked submissions</dd>
             {u.sponsorOrg && <><dt className="text-ink-soft">Sponsor</dt><dd>{u.sponsorOrg.name}</dd></>}
@@ -84,7 +84,7 @@ async function UserDetail({ params }: { params: Props["params"] }) {
         </Card>
       </div>
 
-      <Card title="Password & sign-in" description={hasPassword ? "The user has a password." : "No password yet — they sign in with a code or social login."}>
+      <Card title="Password & sign-in" description={hasPassword ? "The user has a password." : "No password yet. They sign in with a code or social login."}>
         <div className="space-y-6">
           <div>
             <p className="mb-2 text-sm font-medium">Let them reset it themselves</p>
@@ -140,7 +140,7 @@ async function UserDetail({ params }: { params: Props["params"] }) {
               {audit.map((a) => (
                 <li key={a.id} className="flex justify-between gap-3 py-2">
                   <span><Badge className={a.outcome === "failure" ? "bg-rose-50 text-rose-800 ring-rose-200" : undefined}>{a.action}</Badge></span>
-                  <span className="text-xs text-ink-soft">{a.actor?.name ?? (a.actorEmail || "—")} · {formatDate(a.createdAt)}</span>
+                  <span className="text-xs text-ink-soft">{a.actor?.name ?? (a.actorEmail || "-")} · {formatDate(a.createdAt)}</span>
                 </li>
               ))}
             </ul>

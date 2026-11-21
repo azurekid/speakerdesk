@@ -60,7 +60,7 @@ async function Prospectus({ params }: { params: Props["params"] }) {
 
       {existing ? (
         <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-line bg-surface px-6 py-5">
-          <p>You already have a sponsorship for this event — status: <span className="font-semibold">{SPONSORSHIP_LABELS[existing.status]}</span>.</p>
+          <p>You already have a sponsorship for this event, status: <span className="font-semibold">{SPONSORSHIP_LABELS[existing.status]}</span>.</p>
           <ButtonLink href="/sponsor/deals">View my sponsorships</ButtonLink>
         </div>
       ) : !org ? (

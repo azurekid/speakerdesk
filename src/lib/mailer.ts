@@ -1,5 +1,6 @@
 import "server-only";
 import { EmailClient } from "@azure/communication-email";
+import { after } from "next/server";
 import { prisma } from "@/lib/db";
 
 type Mail = { to: string; subject: string; text: string; html?: string; kind: string; sensitive?: boolean };
@@ -40,6 +41,20 @@ export async function sendMail({ to, subject, text, html, kind, sensitive }: Mai
   }
   await prisma.outboundEmail.create({
     data: { to, subject, kind, status, error, text: status === "SENT" && sensitive ? "[redacted after delivery]" : text },
+  });
+}
+
+/**
+ * Queues emails to go out after the response has been sent, in parallel. Use this from server
+ * actions: delivery takes seconds (we wait for Azure to confirm), and Next.js holds back all
+ * navigation until an action returns, so awaiting mail there makes the whole app feel frozen.
+ * Every message is still recorded in Admin → Email outbox, with failures marked there.
+ * Sign-in codes keep using `sendMail` directly: the person is waiting for exactly that email.
+ */
+export function sendMailInBackground(mails: Mail[]) {
+  if (!mails.length) return;
+  after(async () => {
+    await Promise.allSettled(mails.map((m) => sendMail(m).catch((e) => console.error(`background email (${m.kind}) failed`, e))));
   });
 }
 

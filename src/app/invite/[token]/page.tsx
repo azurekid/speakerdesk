@@ -61,7 +61,7 @@ async function Invite({ params }: { params: Props["params"] }) {
         <div className="mt-8 flex gap-2">
           <ButtonLink href={`/sign-in?next=${next}`}>Sign in or create an account</ButtonLink>
         </div>
-        <p className="mt-3 text-xs text-ink-soft">Use {invite.email} — new accounts with that address join the team automatically.</p>
+        <p className="mt-3 text-xs text-ink-soft">Use {invite.email}. New accounts with that address join the team automatically.</p>
       </>
     );
   }
@@ -70,7 +70,7 @@ async function Invite({ params }: { params: Props["params"] }) {
       <>
         {intro}
         <p className="mt-6 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          You&apos;re signed in as {user.email}. This invite only works for {invite.email} — sign in with that address, or ask for an invite to this one.
+          You&apos;re signed in as {user.email}. This invite only works for {invite.email}. Sign in with that address, or ask for an invite to this one.
         </p>
       </>
     );
