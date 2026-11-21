@@ -26,6 +26,9 @@ param publicUrl string = ''
 @description('Custom domains for the app, e.g. [{ name: \'speakerdesk.eu\', certificateName: \'<managed certificate name>\' }]. Each domain must already be added to the app and have a managed certificate in the environment (docs/deploy-azure.md, section 4); the template keeps them bound on every deploy.')
 param customDomains array = []
 
+@description('Your own sender domain for email (e.g. speakerdesk.eu). Must be verified in the Email Communication Service (DNS records at the registrar). Leave empty to keep Azure\'s managed domain.')
+param customEmailDomain string = ''
+
 @description('PostgreSQL administrator login.')
 param postgresAdminLogin string = 'speakerdesk'
 
@@ -200,12 +203,28 @@ resource emailDomain 'Microsoft.Communication/emailServices/domains@2023-04-01' 
   }
 }
 
+// Your own domain (optional). Mail is sent as DoNotReply@<customEmailDomain>.
+resource customDomain 'Microsoft.Communication/emailServices/domains@2023-04-01' = if (!empty(customEmailDomain)) {
+  parent: emailService
+  name: customEmailDomain
+  location: 'global'
+  properties: {
+    domainManagement: 'CustomerManaged'
+    userEngagementTracking: 'Disabled'
+  }
+}
+
+var emailSender = empty(customEmailDomain)
+  ? 'DoNotReply@${emailDomain.properties.mailFromSenderDomain}'
+  : 'DoNotReply@${customEmailDomain}'
+
 resource communication 'Microsoft.Communication/communicationServices@2023-04-01' = {
   name: names.acs
   location: 'global'
   properties: {
     dataLocation: 'Europe'
-    linkedDomains: [emailDomain.id]
+    // Links the Azure-managed domain, and your own domain once it is set and verified.
+    linkedDomains: empty(customEmailDomain) ? [emailDomain.id] : [emailDomain.id, customDomain.id]
   }
 }
 
@@ -293,7 +312,7 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = if (deployApp) {
             { name: 'AZURE_STORAGE_CONTAINER', value: headshots.name }
             { name: 'AZURE_MAPS_KEY', secretRef: 'maps-key' }
             { name: 'AZURE_COMMUNICATION_CONNECTION_STRING', secretRef: 'acs-connection' }
-            { name: 'EMAIL_FROM', value: 'DoNotReply@${emailDomain.properties.mailFromSenderDomain}' }
+            { name: 'EMAIL_FROM', value: emailSender }
           ], flatten(map(enabledOauth, p => [
             { name: p.envId, value: p.clientId }
             { name: p.envSecret, secretRef: '${p.id}-client-secret' }
@@ -321,4 +340,4 @@ output containerAppName string = names.app
 output postgresServerName string = postgres.name
 output postgresHost string = postgres.properties.fullyQualifiedDomainName
 output storageAccountName string = storage.name
-output emailFrom string = 'DoNotReply@${emailDomain.properties.mailFromSenderDomain}'
+output emailFrom string = emailSender

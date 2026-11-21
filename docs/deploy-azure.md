@@ -318,9 +318,16 @@ For production, switch to **your own domain**:
 
 To switch:
 
-1. In the portal, open the Email Communication Service (`speakerdesk-email`) and choose **Provision domains → Custom domain**. Add the `TXT`, SPF and DKIM records it shows to your DNS and wait for verification.
-2. Under **Communication Services → Email → Domains**, connect the verified domain.
-3. Change the `EMAIL_FROM` value in `main.bicep` (or override it with `az containerapp update --set-env-vars EMAIL_FROM=noreply@example.com`).
+1. In the portal, open the Email Communication Service (`speakerdesk-email`) and choose **Provision domains → Custom domain**. Add the `TXT`, SPF and DKIM records it shows to your DNS and wait until the domain shows **Succeeded**.
+2. Set the GitHub variable that names the domain, then deploy. The template creates the domain resource, links it to Communication Services, and sends mail as `DoNotReply@<domain>`:
+
+   ```bash
+   gh variable set EMAIL_DOMAIN --env production --body "speakerdesk.eu"
+   ```
+
+   Leave the variable empty to keep the Azure-managed sender. Link the domain only after it has verified: an unverified domain makes the deployment fail at the link step.
+
+To check afterwards: `az containerapp show -g "$RG" -n speakerdesk --query "properties.template.containers[0].env[?name=='EMAIL_FROM'].value" -o tsv` should print the new sender.
 
 Every message, delivered or not, is recorded in **Admin → Email outbox**. Codes are redacted there once they've been delivered.
 

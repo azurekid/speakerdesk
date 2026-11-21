@@ -7,6 +7,9 @@ param publicUrl = readEnvironmentVariable('SPEAKERDESK_PUBLIC_URL', '')
 param image = readEnvironmentVariable('SPEAKERDESK_IMAGE', '')
 // JSON list, e.g. [{"name":"speakerdesk.eu","certificateName":"..."}]. Set the GitHub variable CUSTOM_DOMAINS.
 param customDomains = json(readEnvironmentVariable('SPEAKERDESK_CUSTOM_DOMAINS', '[]'))
+
+// Your verified email domain, e.g. speakerdesk.eu. Empty keeps the Azure-managed sender.
+param customEmailDomain = readEnvironmentVariable('SPEAKERDESK_EMAIL_DOMAIN', '')
 param deployApp = bool(readEnvironmentVariable('SPEAKERDESK_DEPLOY_APP', 'true'))
 
 // Secrets come from environment variables so they never land in git.
