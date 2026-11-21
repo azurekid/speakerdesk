@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { EventTabs } from "@/components/organizer/controls";
 import { WorkspaceTip } from "@/components/organizer/workspace-tips";
 import { CfpBadge, CoverImage, formatDateRange } from "@/components/ui";
-import { cfpState, eventWhere } from "@/lib/domain";
+import { isEventPublic, cfpState, eventWhere } from "@/lib/domain";
 import { requireEventAccess } from "@/lib/organizer";
 import { ROLE_LABELS } from "@/lib/permissions";
 
@@ -38,7 +38,7 @@ async function Header({ params }: { params: LayoutProps<"/organize/[eventId]">["
           <h1 className="mt-1 break-words font-display text-2xl font-semibold tracking-tight sm:text-3xl">{event.name}</h1>
           <p className="text-sm text-ink-soft">{formatDateRange(event.startDate, event.endDate)}{eventWhere(event) && ` · ${eventWhere(event)}`}</p>
         </div>
-        {(event.cfpPublished || event.programPublished) && (
+        {isEventPublic(event) && (
           <Link href={`/events/${event.slug}`} target="_blank" className="inline-flex min-h-10 items-center gap-1 text-sm text-ink-soft hover:text-ink max-sm:w-full">
             Public page <ExternalIcon className="size-3.5" />
           </Link>

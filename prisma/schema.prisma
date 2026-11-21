@@ -52,6 +52,7 @@ model User {
   speakerInvites   SpeakerInvitation[] @relation("InvitedSpeaker")
   speakerInvitesSent SpeakerInvitation[] @relation("SpeakerInviter")
   proposals        Proposal[]
+  registrations    Registration[]
   reviews          Review[]
   sponsorOrg       SponsorOrg?
   auditEntries     AuditLog[] @relation("AuditActor")
@@ -363,6 +364,13 @@ model Event {
   timezone          String  @default("Europe/Amsterdam")
   schedulePublished Boolean @default(false)
 
+  // Registration (tickets). SpeakerDesk issues free tickets with QR codes; it doesn't take payments.
+  registrationOpen        Boolean   @default(false)
+  registrationCapacity    Int?      // across all ticket types; null = no limit
+  registrationClosesAt    DateTime? // date-only, like the CfP: open through that day (UTC)
+  registrationNote        String    @default("") // shown above the form, e.g. "Free. Please cancel if you can't come."
+  sponsorSharingEnabled   Boolean   @default(false) // ask attendees whether sponsors may see their details
+
   // Sponsorship & budget (amounts in whole currency units)
   currency        String  @default("EUR")
   budgetTarget    Int?
@@ -381,6 +389,8 @@ model Event {
   badgeAwards  BadgeAward[]
   rooms         ScheduleRoom[]
   scheduleItems ScheduleItem[]
+  ticketTypes   TicketType[]
+  registrations Registration[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -830,4 +840,78 @@ model BadgeAward {
   @@index([recipientId, status])
   @@index([eventId])
   @@map("badge_award")
+}
+
+// ─── Tickets and registration ────────────────────────────────────────────────
+
+enum RegistrationStatus {
+  ACTIVE
+  CANCELLED
+}
+
+enum RegistrationSource {
+  SPEAKERDESK // registered on the public event page
+  IMPORT      // imported from another platform's export (Meetup, run.events, a CSV)
+  MANUAL      // added by an organizer
+}
+
+/// A kind of ticket: General admission, Student, Speaker, Crew… Unpublished types can only be
+/// handed out by organizers.
+model TicketType {
+  id          String  @id @default(cuid())
+  eventId     String
+  event       Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  name        String
+  description String  @default("")
+  capacity    Int?    // null = only the event's overall limit applies
+  priceLabel  String  @default("") // display only, e.g. "Free" or "€25 at the door"
+  published   Boolean @default(true)
+  position    Int     @default(0)
+
+  registrations Registration[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([eventId])
+  @@map("ticket_type")
+}
+
+/// One person's ticket. `code` is the unguessable value in the QR code and the ticket link.
+model Registration {
+  id           String      @id @default(cuid())
+  eventId      String
+  event        Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  ticketTypeId String?
+  ticketType   TicketType? @relation(fields: [ticketTypeId], references: [id], onDelete: SetNull)
+  userId       String?     // set when they registered while signed in
+  user         User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  code     String @unique
+  name     String
+  email    String @default("") // imports can lack an email; check them in by name
+  company  String @default("")
+  jobTitle String @default("")
+
+  status         RegistrationStatus @default(ACTIVE)
+  source         RegistrationSource @default(SPEAKERDESK)
+  sourcePlatform String             @default("") // for imports: "meetup" | "run.events" | "csv"
+
+  // Sponsor sharing: only with the attendee's own consent, and the organizer can still leave
+  // someone out of the export.
+  shareWithSponsors        Boolean   @default(false)
+  consentAt                DateTime?
+  excludeFromSponsorExport Boolean   @default(false)
+
+  ticketSentAt  DateTime?
+  checkedInAt   DateTime?
+  checkedInById String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([eventId, status])
+  @@index([eventId, email])
+  @@index([userId])
+  @@map("registration")
 }

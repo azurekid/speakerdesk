@@ -10,11 +10,10 @@ import { requireUser } from "@/lib/dal";
 import { DECISION_TO_STATUS, DECISIONS, type Decision } from "@/lib/domain";
 import { appUrl, eventAccessOrNull, slugify } from "@/lib/organizer";
 import type { EventRole } from "@/lib/permissions";
-import { type ActionState, eventSchema, fieldErrors, formToObject, reviewSchema } from "@/lib/validation";
+import { type ActionState, confirmationEmailSchema, eventCfpSchema, eventCoverSchema, eventDetailsSchema, fieldErrors, formToObject, reviewSchema } from "@/lib/validation";
+import { nextStep, settingsPath } from "@/lib/event-setup";
 
-function parseEvent(form: FormData) {
-  return eventSchema.safeParse(formToObject(form, ["tracks", "formats"]));
-}
+
 
 function revalidateEvent(eventId: string, slug?: string) {
   revalidatePath("/organize");
@@ -25,31 +24,45 @@ function revalidateEvent(eventId: string, slug?: string) {
 
 export async function createEvent(_prev: ActionState, form: FormData): Promise<ActionState> {
   const user = await requireUser();
-  const parsed = parseEvent(form);
+  const parsed = eventDetailsSchema.safeParse(formToObject(form));
   if (!parsed.success) return { ok: false, message: "Please fix the highlighted fields.", errors: fieldErrors(parsed.error) };
-  const { coverImage, ...data } = parsed.data;
   const event = await prisma.event.create({
-    data: {
-      ...data,
-      coverImage: coverImage || undefined,
-      slug: slugify(data.name),
-      members: { create: { userId: user.id, role: "OWNER" } },
-    },
+    data: { ...parsed.data, slug: slugify(parsed.data.name), members: { create: { userId: user.id, role: "OWNER" } } },
   });
   revalidatePath("/organize");
-  redirect(`/organize/${event.id}`);
+  // Straight into the guided setup: the next step is the banner.
+  redirect(`${settingsPath(event.id, "cover")}?new=1`);
 }
 
-export async function updateEvent(eventId: string, _prev: ActionState, form: FormData): Promise<ActionState> {
+const SECTION_SCHEMAS = {
+  details: eventDetailsSchema,
+  cover: eventCoverSchema,
+  cfp: eventCfpSchema,
+  emails: confirmationEmailSchema,
+} as const;
+const ARRAY_FIELDS: Partial<Record<keyof typeof SECTION_SCHEMAS, string[]>> = { cfp: ["tracks", "formats"] };
+
+/**
+ * Saves one setup step. With intent=continue (the "Save and continue" button) it moves on to
+ * the next step; otherwise it stays and confirms.
+ */
+export async function updateEventSection(eventId: string, section: keyof typeof SECTION_SCHEMAS, _prev: ActionState, form: FormData): Promise<ActionState> {
   const user = await requireUser();
   const access = await eventAccessOrNull(user, eventId, "ORGANIZER");
   if (!access) return { ok: false, message: "Only owners and co-organizers can change settings." };
-  const parsed = parseEvent(form);
+  const schema = SECTION_SCHEMAS[section];
+  if (!schema) return { ok: false, message: "Unknown section." };
+  const parsed = schema.safeParse(formToObject(form, ARRAY_FIELDS[section] ?? []));
   if (!parsed.success) return { ok: false, message: "Please fix the highlighted fields.", errors: fieldErrors(parsed.error) };
-  const { coverImage, ...data } = parsed.data;
-  await prisma.event.update({ where: { id: eventId }, data: { ...data, coverImage: coverImage || undefined } });
+  const data = { ...parsed.data } as Record<string, unknown>;
+  if (section === "cover" && !data.coverImage) delete data.coverImage; // keep the current photo
+  await prisma.event.update({ where: { id: eventId }, data });
   revalidateEvent(eventId, access.event.slug);
-  return { ok: true, message: "Event saved." };
+  if (form.get("intent") === "continue") {
+    const next = nextStep(section);
+    redirect(next ? settingsPath(eventId, next) : `/organize/${eventId}`);
+  }
+  return { ok: true, message: "Saved." };
 }
 
 export async function setCfpPublished(eventId: string, published: boolean): Promise<void> {

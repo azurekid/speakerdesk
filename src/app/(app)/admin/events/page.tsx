@@ -6,7 +6,7 @@ import { Badge, CfpBadge, formatDate, Skeleton } from "@/components/ui";
 import { adminDeleteEvent, adminJoinEvent, adminModerateEvent } from "@/lib/actions/admin";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/dal";
-import { cfpState } from "@/lib/domain";
+import { isEventPublic, cfpState } from "@/lib/domain";
 
 export const metadata: Metadata = { title: "Events · Admin" };
 
@@ -45,7 +45,7 @@ async function Events() {
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              {(e.cfpPublished || e.programPublished) && <Link href={`/events/${e.slug}`} className="rounded-lg px-2.5 py-1.5 text-xs text-ink-soft hover:bg-neutral-100">Public page</Link>}
+              {isEventPublic(e) && <Link href={`/events/${e.slug}`} className="rounded-lg px-2.5 py-1.5 text-xs text-ink-soft hover:bg-neutral-100">Public page</Link>}
               {isMember ? (
                 <Link href={`/organize/${e.id}`} className="rounded-lg px-2.5 py-1.5 text-xs text-ink-soft hover:bg-neutral-100">Workspace</Link>
               ) : (

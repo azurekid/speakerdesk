@@ -165,3 +165,22 @@ INSERT INTO badge_award (id, "badgeId", "eventId", "recipientId", "awardedById",
 -- Link Alex's two SpeakerDesk proposals to their tracker entries (the confirmation card needs it).
 UPDATE proposal SET "submissionId" = 'seed_sub_edge' WHERE id = 'seed_prop_edge';
 UPDATE proposal SET "submissionId" = 'seed_sub_platform' WHERE id = 'seed_prop_platform';
+
+-- ── Tickets: registration open, three ticket types and a few attendees ─────────
+UPDATE event SET "registrationOpen" = true, "registrationCapacity" = 600, "sponsorSharingEnabled" = true,
+  "registrationNote" = 'Free for everyone. Please cancel your ticket if you can''t come, so someone else can.'
+WHERE id = 'seed_evt_cloud';
+
+INSERT INTO ticket_type (id, "eventId", name, description, capacity, "priceLabel", published, position, "updatedAt") VALUES
+('seed_tt_pass', 'seed_evt_cloud', 'Two-day pass', 'Both conference days, lunch included', 500, 'Free', true, 0, now()),
+('seed_tt_work', 'seed_evt_cloud', 'Workshop day', 'Hands-on workshops on day two', 60, 'Free', true, 1, now()),
+('seed_tt_speaker', 'seed_evt_cloud', 'Speaker', 'For speakers and crew', NULL, '', false, 2, now());
+
+INSERT INTO registration (id, "eventId", "ticketTypeId", code, name, email, company, "jobTitle", status, source, "sourcePlatform", "shareWithSponsors", "consentAt", "ticketSentAt", "checkedInAt", "updatedAt") VALUES
+('seed_reg_1', 'seed_evt_cloud', 'seed_tt_pass', 'seedTicketDemoCode0001', 'Noor Jansen', 'noor.demo@example.com', 'Contoso Retail', 'Platform Engineer', 'ACTIVE', 'SPEAKERDESK', '', true, now(), now(), now() - interval '20 minutes', now()),
+('seed_reg_2', 'seed_evt_cloud', 'seed_tt_pass', 'seedTicketDemoCode0002', 'Tom Becker', 'tom.demo@example.com', 'Fabrikam', 'SRE Lead', 'ACTIVE', 'SPEAKERDESK', '', true, now(), now(), NULL, now()),
+('seed_reg_3', 'seed_evt_cloud', 'seed_tt_work', 'seedTicketDemoCode0003', 'Ines Moreau', 'ines.demo@example.com', 'Litware', 'Security Architect', 'ACTIVE', 'SPEAKERDESK', '', false, NULL, now(), NULL, now()),
+('seed_reg_4', 'seed_evt_cloud', 'seed_tt_pass', 'seedTicketDemoCode0004', 'Daan Visser', 'daan.demo@example.com', 'Northwind', 'Developer', 'ACTIVE', 'IMPORT', 'meetup', false, NULL, NULL, NULL, now()),
+('seed_reg_5', 'seed_evt_cloud', 'seed_tt_pass', 'seedTicketDemoCode0005', 'Mei Chen', '', '', '', 'ACTIVE', 'IMPORT', 'meetup', false, NULL, NULL, NULL, now()),
+('seed_reg_6', 'seed_evt_cloud', 'seed_tt_pass', 'seedTicketDemoCode0006', 'Lars Holm', 'lars.demo@example.com', 'Tailspin', 'CTO', 'CANCELLED', 'SPEAKERDESK', '', true, now(), now(), NULL, now()),
+('seed_reg_7', 'seed_evt_cloud', 'seed_tt_speaker', 'seedTicketDemoCode0007', 'Alex Rivera', 'demo-speaker@example.com', 'Contoso Cloud', 'Principal Engineer', 'ACTIVE', 'MANUAL', '', false, NULL, now(), NULL, now());

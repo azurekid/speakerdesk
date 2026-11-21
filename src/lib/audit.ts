@@ -29,7 +29,7 @@ export type AuditEntry = {
  * The client's IP. The Container Apps ingress *appends* the real peer address to
  * X-Forwarded-For, so the right-most entry is the one a client can't forge.
  */
-function clientIp(h: Headers | null): string {
+export function clientIp(h: Headers | null): string {
   const xff = h?.get("x-forwarded-for");
   if (!xff) return "";
   const parts = xff.split(",").map((p) => p.trim()).filter(Boolean);

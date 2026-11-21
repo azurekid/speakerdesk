@@ -27,6 +27,7 @@ export default function PrivacyPage() {
             <tr><td>Email address, name, password (stored hashed) or linked sign-in provider</td><td>Your account and signing in</td><td>Contract</td></tr>
             <tr><td>Profile: pronouns, country, city, timezone, company, job title, bios, headshots, links, T-shirt size, travel notes</td><td>What you choose to keep and share with organizers or publish</td><td>Contract; all optional fields are up to you</td></tr>
             <tr><td>Sessions, submissions, proposals, reviews, events, team roles, runbook tasks, sponsor company and deals</td><td>The features you use</td><td>Contract</td></tr>
+            <tr><td>Event registrations (tickets): name, email, and optionally company and job title; ticket type, check-in time, and whether you agreed to sponsor contact. Organizers can also import attendee lists from other platforms</td><td>Your ticket and entry to the event, and the organizer&apos;s attendee list</td><td>Contract (your registration with the organizer); sponsor contact only with your consent, which you can withdraw on your ticket page</td></tr>
             <tr><td>Sign-in sessions: IP address, browser and device</td><td>Keeping you signed in, showing &ldquo;where you&apos;re signed in&rdquo;, spotting misuse</td><td>Legitimate interest (security)</td></tr>
             <tr><td>Audit log: who did what and when (sign-ins and failed attempts, account changes, which records and fields were changed, never the values, and admin actions), with IP address and browser</td><td>Security, investigating abuse, accountability for admin access</td><td>Legitimate interest (security); legal obligations</td></tr>
             <tr><td>Emails we send you (sign-in codes are removed from our copy once delivered)</td><td>Delivering sign-in codes and notices, troubleshooting delivery</td><td>Contract; legitimate interest</td></tr>
@@ -40,6 +41,7 @@ export default function PrivacyPage() {
         <ul>
           <li><strong>Everyone</strong>: only what you publish, such as your public speaker page and published talks (if you opt in), and published calls for papers, programmes and sponsor lists.</li>
           <li><strong>Event organizers and their team</strong>: proposals you submit to their event (a snapshot), your profile details shown with them, sponsorship requests to their event, and team membership. Reviewers can be prevented from seeing speaker names (anonymous review).</li>
+          <li><strong>Attendees&apos; details</strong>: the organizers of the event you register for see your registration. Sponsors only receive your name, email, company and job title if you ticked &ldquo;sponsors may contact me&rdquo;, in a list the organizer downloads and passes on; the organizer can leave people out but never add anyone who didn&apos;t agree.</li>
           <li><strong>SpeakerDesk administrators</strong>: account data and the audit log, for support and security. Support access to your account (&ldquo;View as&rdquo;) is shown to you with a banner and is logged.</li>
           <li><strong>Our processors</strong>, under data processing agreements: Microsoft (Azure hosting, database, file storage, email delivery and map search, in the EU, region North Europe). If you sign in with GitHub, Google, LinkedIn or Microsoft, that provider confirms your identity to us.</li>
         </ul>
@@ -48,6 +50,7 @@ export default function PrivacyPage() {
       <Section title="How long we keep it">
         <ul>
           <li><strong>Account data</strong>: until you delete your account (or ask us to). Then it is deleted immediately; encrypted database backups roll off within 14 days.</li>
+          <li><strong>Event registrations</strong>: as long as the event exists on SpeakerDesk; the organizer decides when to delete it. You can cancel your ticket and withdraw sponsor consent at any time from your ticket page.</li>
           <li><strong>Sign-in sessions</strong>: until they expire (7 days of inactivity) or you sign out.</li>
           <li><strong>Audit log and server logs</strong>: {AUDIT_RETENTION_DAYS} days, then deleted automatically. After you delete your account, entries about it remain only until they reach that age.</li>
           <li><strong>Sent-email records</strong>: {AUDIT_RETENTION_DAYS} days; deleted straight away when you delete your account.</li>

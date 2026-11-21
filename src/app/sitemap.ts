@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { connection } from "next/server";
 import { prisma } from "@/lib/db";
+import { PUBLIC_EVENT_WHERE } from "@/lib/domain";
 import { SITE_URL } from "@/lib/site";
 import { RELEASES } from "@/lib/whats-new";
 
@@ -11,7 +12,7 @@ import { RELEASES } from "@/lib/whats-new";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   await connection();
   const [events, speakers, badges] = await Promise.all([
-    prisma.event.findMany({ where: { OR: [{ cfpPublished: true }, { programPublished: true }] }, select: { slug: true, updatedAt: true }, take: 5000 }),
+    prisma.event.findMany({ where: PUBLIC_EVENT_WHERE, select: { slug: true, updatedAt: true }, take: 5000 }),
     prisma.speakerProfile.findMany({ where: { publicProfile: true, slug: { not: null } }, select: { slug: true, updatedAt: true }, take: 10000 }),
     prisma.badgeAward.findMany({ where: { status: "ACCEPTED", showOnProfile: true }, select: { id: true, respondedAt: true }, take: 10000 }),
   ]);

@@ -75,12 +75,23 @@ const TIPS: Record<string, { title: string; body: React.ReactNode }> = {
     ),
   },
   settings: {
-    title: "Event details and CfP rules",
+    title: "Set up your event, one step at a time",
     body: (
       <ul>
-        <li>Everything on the public event page: dates, venue, description and cover photo.</li>
-        <li>Your CfP rules: tracks, formats, character limits, proposals per speaker and blind review.</li>
-        <li>The emails speakers get when they submit and when you publish decisions.</li>
+        <li>Five steps on the left: details, banner, call for papers, registration and emails. A tick means a step is done.</li>
+        <li>&quot;Save and continue&quot; takes you to the next step. You can come back to any step later.</li>
+        <li>Nothing is public until you publish the CfP or open registration.</li>
+      </ul>
+    ),
+  },
+  tickets: {
+    title: "Attendees, tickets and the door",
+    body: (
+      <ul>
+        <li>Everyone who registers on your event page gets a ticket with a QR code by email.</li>
+        <li>Import people who signed up on Meetup or run.events, then email them their tickets with one click.</li>
+        <li>At the event, open <strong>Check in at the door</strong> on any phone: scan tickets, or search by name.</li>
+        <li>The sponsor export only includes attendees who agreed to be contacted.</li>
       </ul>
     ),
   },

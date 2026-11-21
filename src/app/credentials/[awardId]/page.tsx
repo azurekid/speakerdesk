@@ -8,6 +8,7 @@ import { ShareButtons } from "@/components/share";
 import { formatDate, Skeleton } from "@/components/ui";
 import { appUrl } from "@/lib/app-url";
 import { prisma } from "@/lib/db";
+import { isEventPublic } from "@/lib/domain";
 
 type Props = PageProps<"/credentials/[awardId]">;
 
@@ -17,7 +18,7 @@ async function loadCredential(awardId: string) {
     where: { id: awardId },
     include: {
       badge: true,
-      event: { select: { name: true, slug: true, startDate: true, cfpPublished: true, programPublished: true } },
+      event: { select: { name: true, slug: true, startDate: true, cfpPublished: true, programPublished: true, registrationOpen: true } },
       recipient: { select: { name: true, profile: { select: { fullName: true, publicProfile: true, slug: true, headshotSquareUrl: true } } } },
     },
   });
@@ -56,7 +57,7 @@ async function Credential({ params }: { params: Props["params"] }) {
   if (!a) notFound();
   const who = a.recipient.profile?.fullName || a.recipient.name;
   const profile = a.recipient.profile;
-  const eventPublic = a.event.cfpPublished || a.event.programPublished;
+  const eventPublic = isEventPublic(a.event);
 
   return (
     <article className="rounded-2xl border border-line bg-surface p-6 text-center sm:p-10">

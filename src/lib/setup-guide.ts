@@ -19,7 +19,7 @@ export type GuideStep = {
 };
 
 export async function getSetupGuide(eventId: string, userId: string) {
-  const [event, members, proposals, rooms, tasks, awards, packages, me] = await Promise.all([
+  const [event, members, proposals, rooms, tasks, awards, packages, me, registrations] = await Promise.all([
     prisma.event.findUniqueOrThrow({ where: { id: eventId } }),
     prisma.eventMember.count({ where: { eventId } }),
     prisma.proposal.findMany({
@@ -31,6 +31,7 @@ export async function getSetupGuide(eventId: string, userId: string) {
     prisma.badgeAward.count({ where: { eventId } }),
     prisma.sponsorPackage.count({ where: { eventId, published: true } }),
     prisma.eventMember.findUnique({ where: { eventId_userId: { eventId, userId } }, select: { guideHidden: true } }),
+    prisma.registration.count({ where: { eventId } }),
   ]);
   const base = `/organize/${eventId}`;
   const accepted = proposals.filter((p) => p.decision === "ACCEPTED" && p.confirmation !== "DECLINED");
@@ -51,7 +52,7 @@ export async function getSetupGuide(eventId: string, userId: string) {
       title: "Shape your call for papers",
       why: "Clear rules get you proposals that fit: the right formats, the right tracks and abstracts of a usable length.",
       how: ["Set when the CfP opens and closes", "Add your tracks and the session formats you accept", "Write what you're looking for (topics, level, audience)"],
-      href: `${base}/settings`,
+      href: `${base}/settings/cfp`,
       cta: "Set up the CfP",
       done: Boolean(event.cfpClosesAt && (event.tracks.length || event.formats.length || event.cfpGuidelines.trim())),
     },
@@ -75,6 +76,16 @@ export async function getSetupGuide(eventId: string, userId: string) {
       done: event.cfpPublished,
     },
     {
+      id: "registration",
+      title: "Open registration",
+      why: "Attendees register on your event page and get a ticket with a QR code. Already using Meetup or run.events? Import that list instead, and everyone still gets a ticket for the door.",
+      how: ["Add ticket types if you need them (days, students, crew)", "Set a maximum number of attendees", "Decide whether to ask attendees if sponsors may contact them", "Open registration, or import attendees on the Tickets tab"],
+      href: `${base}/settings/registration`,
+      cta: "Set up registration",
+      optional: true,
+      done: event.registrationOpen || registrations > 0,
+    },
+    {
       id: "review",
       title: "Review the proposals",
       why: "Scores from your team make the shortlist easy to defend, and averages sort the waitlist for you.",
@@ -87,7 +98,7 @@ export async function getSetupGuide(eventId: string, userId: string) {
       id: "decide",
       title: "Decide and tell the speakers",
       why: "Speakers are waiting to plan travel. Accepted speakers are asked to confirm, so you know who is really coming.",
-      how: ["Accept, waitlist or reject each proposal", "Check the decision emails in Settings", "Press Publish decisions: speakers get an email and see it in their tracker"],
+      how: ["Accept, waitlist or reject each proposal", "Check the decision emails in Settings, under Emails", "Press Publish decisions: speakers get an email and see it in their tracker"],
       href: `${base}/proposals`,
       cta: "Make decisions",
       done: decided.length > 0 && decided.every((p) => p.decisionPublished) && proposals.every((p) => p.decision !== "UNDECIDED"),

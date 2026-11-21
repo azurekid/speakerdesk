@@ -2,6 +2,64 @@
   "$comment": "One entry per screenshot on /whats-new. Each id matches a release item's `shot` in src/lib/whats-new.ts and becomes public/whats-new/<id>.jpg. role = demo account (seed.mjs); selector = element to crop to (omit for the top of the page); maxHeight caps the crop in CSS px; click/wait/hover run before the shot.",
   "shots": [
     {
+      "id": "guided-event-setup",
+      "role": "organizer",
+      "path": "/organize/seed_evt_cloud/settings/cfp",
+      "selector": "main",
+      "maxHeight": 900
+    },
+    {
+      "id": "registration-settings",
+      "role": "organizer",
+      "path": "/organize/seed_evt_cloud/settings/registration",
+      "selector": "main",
+      "maxHeight": 1000
+    },
+    {
+      "id": "register-for-event",
+      "role": "anonymous",
+      "path": "/events/cloud-summit-demo",
+      "selector": "#register",
+      "maxHeight": 900
+    },
+    {
+      "id": "qr-ticket",
+      "role": "anonymous",
+      "path": "/tickets/seedTicketDemoCode0002",
+      "selector": "main",
+      "maxHeight": 900,
+      "width": 520,
+      "height": 900
+    },
+    {
+      "id": "door-check-in",
+      "role": "organizer",
+      "path": "/organize/seed_evt_cloud/tickets/check-in",
+      "selector": "main",
+      "maxHeight": 700
+    },
+    {
+      "id": "import-attendees",
+      "role": "organizer",
+      "path": "/organize/seed_evt_cloud/tickets",
+      "selector": "[data-shot=import-attendees]",
+      "maxHeight": 900
+    },
+    {
+      "id": "sponsor-attendee-export",
+      "role": "organizer",
+      "path": "/organize/seed_evt_cloud/tickets",
+      "selector": "[data-shot=sponsor-export]",
+      "maxHeight": 700
+    },
+    {
+      "id": "attendee-list",
+      "role": "organizer",
+      "path": "/organize/seed_evt_cloud/tickets?show=all",
+      "selector": "[data-shot=attendee-list]",
+      "maxHeight": 900
+    },
+    {
       "id": "schedule-builder",
       "role": "organizer",
       "path": "/organize/seed_evt_cloud/schedule",
@@ -18,7 +76,7 @@
     {
       "id": "decision-emails",
       "role": "organizer",
-      "path": "/organize/seed_evt_cloud/settings",
+      "path": "/organize/seed_evt_cloud/settings/emails",
       "selector": "[data-shot=decision-emails]",
       "maxHeight": 1000
     },

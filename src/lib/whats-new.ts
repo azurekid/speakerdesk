@@ -38,6 +38,21 @@ export type Release = {
 export const RELEASES: Release[] = [
   {
     date: "2026-11-21",
+    title: "Tickets, check-in and a guided event setup",
+    summary: "Run registration for your event on SpeakerDesk, or bring the list from Meetup or run.events, and check people in at the door with their QR ticket.",
+    items: [
+      { audience: "organizers", title: "Guided event setup", shot: "guided-event-setup", body: "Event settings are now five short steps: details, banner, call for papers, registration and emails. A tick shows what's done, and \"Save and continue\" takes you to the next step. A new event starts with the basics only." },
+      { audience: "organizers", title: "Registration and ticket types", shot: "registration-settings", body: "Open free registration on your event page, set a maximum number of attendees and a closing date, and add ticket types such as a two-day pass, a workshop day, or Speaker and Crew tickets you hand out yourself." },
+      { audience: "everyone", title: "Register and get a QR ticket", shot: "register-for-event", href: "/events", body: "Attendees register on the event page with their name and email, and get their ticket with a QR code by email straight away. No account needed." },
+      { audience: "everyone", title: "Your ticket on your phone", shot: "qr-ticket", body: "Every ticket has its own page with the QR code, the event details and a calendar link. Can't come after all? Cancel from the same page, so someone else can have your place." },
+      { audience: "organizers", title: "Check in at the door", shot: "door-check-in", body: "Open the check-in screen on any phone and scan tickets with the camera, or search by name for people without one. A ticket can only be used once, and volunteers on your team can run the door too." },
+      { audience: "organizers", title: "Import from Meetup and run.events", shot: "import-attendees", body: "Upload the attendee export from Meetup, run.events or any spreadsheet. You check which column is which before anything is saved, then email everyone their QR ticket with one click." },
+      { audience: "organizers", title: "Attendee list and exports", shot: "attendee-list", body: "See who registered, who has their ticket and who is in. Resend or cancel tickets, filter the list, and download it as a spreadsheet." },
+      { audience: "sponsors", title: "Attendee contacts for sponsors", shot: "sponsor-attendee-export", body: "Organizers can give sponsors a list of attendees who agreed to be contacted when they registered, with only the columns they choose. Attendees can withdraw that consent from their ticket at any time." },
+    ],
+  },
+  {
+    date: "2026-11-21",
     title: "Schedules, calendar files and decision emails",
     summary: "Build a timetable with rooms and time slots, tell every speaker the outcome by email, and put sessions straight into anyone's calendar.",
     items: [

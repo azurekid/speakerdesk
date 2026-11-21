@@ -12,15 +12,17 @@ import { appUrl } from "@/lib/app-url";
 import { jsonLd, SITE_URL } from "@/lib/site";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/dal";
-import { cfpState, FORMAT_LABELS, LEVEL_LABELS, eventWhere } from "@/lib/domain";
+import { isEventPublic, cfpState, FORMAT_LABELS, LEVEL_LABELS, eventWhere } from "@/lib/domain";
 import { dayKey, formatDayLabel, formatRange } from "@/lib/schedule";
 import { getSchedule } from "@/lib/schedule-queries";
+import { RegisterForm } from "@/components/events/register-form";
+import { registrationState, ticketAvailability } from "@/lib/tickets";
 
 /** Title, description and cover for link previews (LinkedIn, X, Slack, WhatsApp…). */
 export async function generateMetadata({ params }: PageProps<"/events/[slug]">): Promise<Metadata> {
   const { slug } = await params;
   const event = await prisma.event.findUnique({ where: { slug } });
-  if (!event || (!event.cfpPublished && !event.programPublished)) return { title: "Event" };
+  if (!event || !isEventPublic(event)) return { title: "Event" };
   const description = (event.tagline || event.description || `${event.name} on SpeakerDesk`).slice(0, 200);
   const url = `${SITE_URL}/events/${event.slug}`;
   const image = event.coverImage.startsWith("/") ? `${SITE_URL}${event.coverImage}` : event.coverImage;
@@ -50,7 +52,7 @@ async function EventDetail({ params, searchParams }: { params: Params; searchPar
   const { submitted } = await searchParams;
   const event = await prisma.event.findUnique({ where: { slug } });
   // Unpublished events are only visible to their team (via /organize).
-  if (!event || (!event.cfpPublished && !event.programPublished)) notFound();
+  if (!event || !isEventPublic(event)) notFound();
   const state = cfpState(event);
 
   return (
@@ -103,6 +105,11 @@ async function EventDetail({ params, searchParams }: { params: Params; searchPar
         </div>
 
         <aside className="space-y-6 lg:sticky lg:top-8 lg:self-start">
+          {event.registrationOpen && (
+            <Suspense fallback={null}>
+              <Registration event={event} />
+            </Suspense>
+          )}
           <ShareButtons
             title="Share this event"
             url={`${appUrl()}/events/${event.slug}`}
@@ -222,6 +229,36 @@ async function Program({ event }: { event: { id: string; slug: string; name: str
           );
         })}
       </ul>
+    </section>
+  );
+}
+
+/** Get a ticket: the registration form, or why registration isn't possible right now. */
+async function Registration({ event }: { event: Parameters<typeof registrationState>[0] & { id: string; name: string; registrationNote: string; sponsorSharingEnabled: boolean } }) {
+  const { types, total } = await ticketAvailability(event.id);
+  const state = registrationState(event, total);
+  const left = event.registrationCapacity !== null ? Math.max(0, event.registrationCapacity - total) : null;
+  return (
+    <section id="register" className="scroll-mt-6 rounded-xl border border-ink bg-surface p-5">
+      <h2 className="font-display text-xl font-semibold tracking-tight">Attend</h2>
+      {state === "open" ? (
+        <>
+          {left !== null && left <= 25 && <p className="mt-1 text-sm text-amber-800">{left} {left === 1 ? "place" : "places"} left</p>}
+          <div className="mt-4">
+            <RegisterForm
+              eventId={event.id}
+              eventName={event.name}
+              note={event.registrationNote}
+              askSponsorConsent={event.sponsorSharingEnabled}
+              types={types.filter((t) => t.published).map((t) => ({ id: t.id, name: t.name, description: t.description, priceLabel: t.priceLabel, left: t.left }))}
+            />
+          </div>
+        </>
+      ) : (
+        <p className="mt-2 rounded-md bg-neutral-100 px-3 py-2 text-sm text-ink-soft">
+          {{ full: "This event is full.", closed: "Registration has closed.", ended: "This event has ended.", "not-open": "Registration isn't open yet." }[state]}
+        </p>
+      )}
     </section>
   );
 }

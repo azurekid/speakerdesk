@@ -149,6 +149,12 @@ export const CFP_STATE_LABELS: Record<CfpState, string> = {
   closed: "CfP closed",
 };
 
+/** An event has a public page once it publishes its CfP or programme, or opens registration. */
+export const isEventPublic = (e: { cfpPublished: boolean; programPublished: boolean; registrationOpen: boolean }) => e.cfpPublished || e.programPublished || e.registrationOpen;
+
+/** The same rule as a database filter. */
+export const PUBLIC_EVENT_WHERE = { OR: [{ cfpPublished: true }, { programPublished: true }, { registrationOpen: true }] };
+
 export function cfpState(e: { cfpPublished: boolean; cfpOpensAt: Date | null; cfpClosesAt: Date | null }, now = new Date()): CfpState {
   if (!e.cfpPublished) return "draft";
   if (e.cfpOpensAt && now < e.cfpOpensAt) return "upcoming";
