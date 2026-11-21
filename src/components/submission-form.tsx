@@ -82,7 +82,8 @@ export function SubmissionForm({
           {input("cfpDeadline", "CfP deadline", { type: "date" })}
           {input("submittedAt", "Submitted on", { type: "date" })}
           {input("recordingUrl", "Recording URL", { type: "url", placeholder: "https://youtube.com/…", hint: "After the event. Builds your delivery history." })}
-          <Card title="Delivery details" description="For reporting this talk to the MVP portal or similar. Fill in after the event: the numbers are usually known then." className="sm:col-span-2">
+          <div data-shot="mvp-details" className="sm:col-span-2">
+          <Card title="Delivery details" description="For reporting this talk to the MVP portal or similar. Fill in after the event: the numbers are usually known then.">
             <div className="grid gap-4 sm:grid-cols-2">
               {input("mvpTechnologyArea", "Technology area", { placeholder: "e.g. Azure, Microsoft 365, Security", hint: "Use the name the portal shows for this area." })}
               {input("targetAudience", "Target audience", { placeholder: "e.g. Developers, IT pros, Students", hint: "Who the talk was for." })}
@@ -95,6 +96,7 @@ export function SubmissionForm({
               </label>
             </div>
           </Card>
+          </div>
           <Field label="Notes" htmlFor="notes" error={e?.notes} className="sm:col-span-2">
             <textarea id="notes" name="notes" rows={4} defaultValue={values.notes} className="control" placeholder="Custom CfP answers, organizer contacts, travel arrangements…" />
           </Field>

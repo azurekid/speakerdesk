@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { PublicHeader } from "@/components/public-header";
@@ -64,6 +65,16 @@ function ReleaseEntry({ release }: { release: Release }) {
                   <li key={item.title} className="py-4">
                     <p className="font-medium text-ink">{item.title}</p>
                     <p className="mt-1 text-sm leading-relaxed text-ink-soft">{item.body}</p>
+                    <figure className="mt-4 overflow-hidden rounded-xl border border-line bg-neutral-100">
+                      <Image
+                        src={`/whats-new/${item.shot}.jpg`}
+                        alt={`Screenshot: ${item.title}`}
+                        width={1280}
+                        height={800}
+                        sizes="(min-width: 1024px) 720px, (min-width: 768px) 60vw, 100vw"
+                        className="h-auto w-full"
+                      />
+                    </figure>
                     {item.href && (
                       <Link href={item.href} className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-ink underline decoration-brand-500 decoration-2 underline-offset-4 hover:text-brand-700">
                         Try it <ArrowRight className="size-3.5" />

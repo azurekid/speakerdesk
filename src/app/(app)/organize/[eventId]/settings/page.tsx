@@ -42,6 +42,7 @@ async function Settings({ params }: { params: Props["params"] }) {
           confirmationEmailEnabled: event.confirmationEmailEnabled, confirmationEmailSubject: event.confirmationEmailSubject, confirmationEmailBody: event.confirmationEmailBody,
         }}
       />
+      <div data-shot="decision-emails">
       <DecisionEmailsForm
         eventId={eventId}
         eventName={event.name}
@@ -49,6 +50,7 @@ async function Settings({ params }: { params: Props["params"] }) {
         enabled={event.decisionEmailsEnabled}
         templates={parseDecisionEmails(event.decisionEmails)}
       />
+      </div>
       {owner && (
         <Card title="Delete event">
           <div className="flex flex-wrap items-center justify-between gap-4">

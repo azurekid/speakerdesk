@@ -1,0 +1,272 @@
+{
+  "$comment": "One entry per screenshot on /whats-new. Each id matches a release item's `shot` in src/lib/whats-new.ts and becomes public/whats-new/<id>.jpg. role = demo account (seed.mjs); selector = element to crop to (omit for the top of the page); maxHeight caps the crop in CSS px; click/wait/hover run before the shot.",
+  "shots": [
+    {
+      "id": "schedule-builder",
+      "role": "organizer",
+      "path": "/organize/seed_evt_cloud/schedule",
+      "selector": "main",
+      "maxHeight": 1000,
+      "height": 1000
+    },
+    {
+      "id": "publish-schedule",
+      "role": "organizer",
+      "path": "/organize/seed_evt_cloud/schedule",
+      "maxHeight": 320
+    },
+    {
+      "id": "decision-emails",
+      "role": "organizer",
+      "path": "/organize/seed_evt_cloud/settings",
+      "selector": "[data-shot=decision-emails]",
+      "maxHeight": 1000
+    },
+    {
+      "id": "speaker-confirmation",
+      "role": "organizer",
+      "path": "/organize/seed_evt_cloud/program",
+      "selector": "main",
+      "maxHeight": 1000
+    },
+    {
+      "id": "confirm-accepted-sessions",
+      "role": "speaker",
+      "path": "/submissions/seed_sub_platform/edit",
+      "selector": "#confirm",
+      "maxHeight": 600
+    },
+    {
+      "id": "time-slot-calendar",
+      "role": "speaker",
+      "path": "/submissions/seed_sub_edge/edit",
+      "selector": "#confirm",
+      "maxHeight": 600
+    },
+    {
+      "id": "add-to-calendar",
+      "role": "anonymous",
+      "path": "/events/cloud-summit-demo",
+      "selector": "aside",
+      "maxHeight": 700
+    },
+    {
+      "id": "speaker-profile",
+      "role": "speaker",
+      "path": "/profile",
+      "selector": "main",
+      "maxHeight": 1000
+    },
+    {
+      "id": "session-library",
+      "role": "speaker",
+      "path": "/sessions",
+      "selector": "main",
+      "maxHeight": 1000
+    },
+    {
+      "id": "copy-ready-text",
+      "role": "speaker",
+      "path": "/sessions/seed_talk_edge",
+      "selector": "main",
+      "maxHeight": 1000
+    },
+    {
+      "id": "submission-tracker",
+      "role": "speaker",
+      "path": "/submissions",
+      "selector": "main",
+      "maxHeight": 1000
+    },
+    {
+      "id": "submit-open-call",
+      "role": "speaker",
+      "path": "/events/cloud-summit-demo/submit",
+      "selector": "main",
+      "maxHeight": 1000
+    },
+    {
+      "id": "import-history",
+      "role": "speaker",
+      "path": "/import",
+      "selector": "main",
+      "maxHeight": 1000
+    },
+    {
+      "id": "export-data",
+      "role": "speaker",
+      "path": "/export",
+      "selector": "main",
+      "maxHeight": 1000
+    },
+    {
+      "id": "mvp-delivery-details",
+      "role": "speaker",
+      "path": "/submissions/seed_sub_edge/edit",
+      "selector": "[data-shot=mvp-details]",
+      "maxHeight": 1000
+    },
+    {
+      "id": "public-speaker-page",
+      "role": "anonymous",
+      "path": "/speakers/alex-rivera",
+      "selector": "main",
+      "maxHeight": 1000
+    },
+    {
+      "id": "speaking-invitations",
+      "role": "speaker-3",
+      "path": "/invitations",
+      "selector": "main",
+      "maxHeight": 800
+    },
+    {
+      "id": "badges-credentials",
+      "role": "speaker",
+      "path": "/badges",
+      "selector": "main",
+      "maxHeight": 1000
+    },
+    {
+      "id": "session-requirements",
+      "role": "speaker",
+      "path": "/events/cloud-summit-demo/submit",
+      "selector": "main",
+      "maxHeight": 1000
+    },
+    {
+      "id": "publish-call-for-papers",
+      "role": "organizer",
+      "path": "/organize/new",
+      "selector": "main",
+      "maxHeight": 1000
+    },
+    {
+      "id": "public-event-page",
+      "role": "anonymous",
+      "path": "/events/cloud-summit-demo",
+      "selector": "main",
+      "maxHeight": 1000
+    },
+    {
+      "id": "complete-proposals",
+      "role": "organizer",
+      "path": "/organize/seed_evt_cloud/proposals/seed_prop_edge",
+      "selector": "main",
+      "maxHeight": 1000
+    },
+    {
+      "id": "review-with-team",
+      "role": "organizer",
+      "path": "/organize/seed_evt_cloud/proposals",
+      "selector": "main",
+      "maxHeight": 1000
+    },
+    {
+      "id": "decisions-and-programme",
+      "role": "organizer",
+      "path": "/organize/seed_evt_cloud",
+      "selector": "main",
+      "maxHeight": 1000
+    },
+    {
+      "id": "invite-speakers",
+      "role": "organizer",
+      "path": "/organize/seed_evt_cloud/program?find=Priya",
+      "selector": "#invite",
+      "maxHeight": 800
+    },
+    {
+      "id": "event-team-roles",
+      "role": "organizer",
+      "path": "/organize/seed_evt_cloud/team",
+      "selector": "main",
+      "maxHeight": 1000
+    },
+    {
+      "id": "event-runbook",
+      "role": "organizer",
+      "path": "/organize/seed_evt_cloud/runbook",
+      "selector": "main",
+      "maxHeight": 1000
+    },
+    {
+      "id": "sponsor-packages-budget",
+      "role": "organizer",
+      "path": "/organize/seed_evt_cloud/sponsors",
+      "selector": "main",
+      "maxHeight": 1000
+    },
+    {
+      "id": "sponsor-deliverables",
+      "role": "organizer",
+      "path": "/organize/seed_evt_cloud/sponsors",
+      "selector": "main",
+      "maxHeight": 1000
+    },
+    {
+      "id": "badges-for-team",
+      "role": "organizer",
+      "path": "/organize/seed_evt_cloud/badges",
+      "selector": "main",
+      "maxHeight": 1000
+    },
+    {
+      "id": "find-events-to-sponsor",
+      "role": "sponsor",
+      "path": "/sponsor",
+      "selector": "main",
+      "maxHeight": 1000
+    },
+    {
+      "id": "request-package",
+      "role": "sponsor",
+      "path": "/sponsor/cloud-summit-demo",
+      "selector": "main",
+      "maxHeight": 1000
+    },
+    {
+      "id": "sponsor-company-profile",
+      "role": "sponsor",
+      "path": "/sponsor/company",
+      "selector": "main",
+      "maxHeight": 1000
+    },
+    {
+      "id": "track-sponsorships",
+      "role": "sponsor",
+      "path": "/sponsor/deals",
+      "selector": "main",
+      "maxHeight": 1000
+    },
+    {
+      "id": "one-account-three-roles",
+      "role": "speaker",
+      "path": "/dashboard",
+      "height": 900,
+      "maxHeight": 900
+    },
+    {
+      "id": "sign-in-options",
+      "role": "anonymous",
+      "path": "/sign-in",
+      "selector": "main",
+      "maxHeight": 800
+    },
+    {
+      "id": "privacy-by-design",
+      "role": "anonymous",
+      "path": "/privacy",
+      "selector": "main",
+      "maxHeight": 800
+    },
+    {
+      "id": "works-on-phone",
+      "role": "organizer",
+      "path": "/organize/seed_evt_cloud/runbook",
+      "width": 390,
+      "height": 844,
+      "maxHeight": 844
+    }
+  ]
+}
