@@ -9,7 +9,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/dal";
 import { ROLE_DESCRIPTIONS, ROLE_LABELS } from "@/lib/permissions";
 
-export const metadata: Metadata = { title: "Team invitation" };
+export const metadata: Metadata = { title: "Team invitation", robots: { index: false, follow: false } };
 
 type Props = PageProps<"/invite/[token]">;
 

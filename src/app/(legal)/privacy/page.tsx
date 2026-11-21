@@ -4,7 +4,7 @@ import { LegalDoc, Section } from "@/components/legal";
 import { AUDIT_RETENTION_DAYS } from "@/lib/audit-constants";
 import { OPERATOR } from "@/lib/legal";
 
-export const metadata: Metadata = { title: "Privacy notice" };
+export const metadata: Metadata = { title: "Privacy notice", description: "What personal data SpeakerDesk keeps, why, who sees it, how long we keep it and your rights under the GDPR.", alternates: { canonical: "/privacy" } };
 
 // Draft for legal review — keep in sync with what the code actually does (see src/lib/legal.ts).
 export default function PrivacyPage() {

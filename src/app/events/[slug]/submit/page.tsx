@@ -9,7 +9,7 @@ import { prisma } from "@/lib/db";
 import { getOrCreateProfile, requireUser } from "@/lib/dal";
 import { cfpState } from "@/lib/domain";
 
-export const metadata: Metadata = { title: "Submit a session" };
+export const metadata: Metadata = { title: "Submit a session", robots: { index: false } };
 
 export default function SubmitPage(props: PageProps<"/events/[slug]/submit">) {
   return (

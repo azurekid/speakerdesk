@@ -9,6 +9,10 @@ import { EventCard } from "@/components/events/event-card";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { ButtonLink, Eyebrow, Logo } from "@/components/ui";
 import { getOpenCalls } from "@/lib/public-events";
+import { jsonLd, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 const SPEAKER_POINTS = [
   "One profile with short, medium and long bios and hosted headshots",
@@ -23,9 +27,19 @@ const ORGANIZER_POINTS = [
   "Accept, waitlist or reject, then publish decisions and your programme",
 ];
 
+/** Tells search engines who runs the site and what it is (Organization + WebSite). */
+const STRUCTURED_DATA = jsonLd({
+  "@context": "https://schema.org",
+  "@graph": [
+    { "@type": "Organization", "@id": `${SITE_URL}/#org`, name: SITE_NAME, url: SITE_URL, logo: `${SITE_URL}/favicon.ico` },
+    { "@type": "WebSite", "@id": `${SITE_URL}/#site`, name: SITE_NAME, url: SITE_URL, description: SITE_DESCRIPTION, publisher: { "@id": `${SITE_URL}/#org` }, inLanguage: "en" },
+  ],
+});
+
 export default function Home() {
   return (
     <div className="min-h-screen">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: STRUCTURED_DATA }} />
       {/* Hero: a real stage, not a gradient */}
       <section className="relative isolate min-h-[640px] overflow-hidden bg-night text-white">
         <Image src="/images/events/main-stage.jpg" alt="A speaker on a large conference stage in front of a full audience" fill priority sizes="100vw" className="-z-10 object-cover" />

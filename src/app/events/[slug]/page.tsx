@@ -9,6 +9,7 @@ import { VenueMap } from "@/components/venue-map";
 import { ShareButtons, ShareMenu } from "@/components/share";
 import { withdrawProposal } from "@/lib/actions/proposals";
 import { appUrl } from "@/lib/app-url";
+import { jsonLd, SITE_URL } from "@/lib/site";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/dal";
 import { cfpState, FORMAT_LABELS, LEVEL_LABELS, eventWhere } from "@/lib/domain";
@@ -19,8 +20,8 @@ export async function generateMetadata({ params }: PageProps<"/events/[slug]">):
   const event = await prisma.event.findUnique({ where: { slug } });
   if (!event || (!event.cfpPublished && !event.programPublished)) return { title: "Event" };
   const description = (event.tagline || event.description || `${event.name} on SpeakerDesk`).slice(0, 200);
-  const url = `${appUrl()}/events/${event.slug}`;
-  const image = event.coverImage.startsWith("/") ? `${appUrl()}${event.coverImage}` : event.coverImage;
+  const url = `${SITE_URL}/events/${event.slug}`;
+  const image = event.coverImage.startsWith("/") ? `${SITE_URL}${event.coverImage}` : event.coverImage;
   const title = cfpState(event) === "open" ? `Call for papers: ${event.name}` : event.name;
   return {
     title: event.name,
@@ -51,6 +52,8 @@ async function EventDetail({ params, searchParams }: { params: Params; searchPar
   const state = cfpState(event);
 
   return (
+    <>
+    {event.startDate && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: eventStructuredData(event) }} />}
     <main className="mx-auto max-w-6xl px-6 py-8">
       <PhotoBanner src={event.coverImage} fit={event.coverFit} position={event.coverPosition} priority className="min-h-[380px]">
         <div className="flex min-h-[380px] flex-col justify-end p-8 sm:p-12">
@@ -129,6 +132,7 @@ async function EventDetail({ params, searchParams }: { params: Params; searchPar
         </aside>
       </div>
     </main>
+    </>
   );
 }
 
@@ -258,4 +262,30 @@ async function Sponsors({ eventId }: { eventId: string }) {
       )}
     </section>
   );
+}
+
+/**
+ * schema.org Event, so the event can show up as an event result in search (date, place,
+ * online/in person). Only rendered when the event has a start date, which search engines require.
+ */
+function eventStructuredData(event: {
+  name: string; slug: string; tagline: string; description: string; coverImage: string; startDate: Date | null; endDate: Date | null;
+  format: "IN_PERSON" | "ONLINE" | "HYBRID"; venue: string; address: string; location: string; website: string; onlinePlatform: string;
+}) {
+  const url = `${SITE_URL}/events/${event.slug}`;
+  const place = { "@type": "Place", name: event.venue || event.location || event.name, address: event.address || event.location || undefined };
+  const virtual = { "@type": "VirtualLocation", url: event.website || url };
+  return jsonLd({
+    "@context": "https://schema.org",
+    "@type": "Event",
+    name: event.name,
+    description: (event.tagline || event.description).slice(0, 500) || undefined,
+    url,
+    image: [event.coverImage.startsWith("/") ? `${SITE_URL}${event.coverImage}` : event.coverImage],
+    startDate: event.startDate?.toISOString().slice(0, 10),
+    endDate: (event.endDate ?? event.startDate)?.toISOString().slice(0, 10),
+    eventStatus: "https://schema.org/EventScheduled",
+    eventAttendanceMode: `https://schema.org/${event.format === "ONLINE" ? "Online" : event.format === "HYBRID" ? "Mixed" : "Offline"}EventAttendanceMode`,
+    location: event.format === "ONLINE" ? virtual : event.format === "HYBRID" ? [place, virtual] : place,
+  });
 }

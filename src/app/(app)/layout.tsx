@@ -12,6 +12,10 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Logo } from "@/components/ui";
 import { getOrCreateProfile, getPrimaryRole, requireUser } from "@/lib/dal";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { robots: { index: false, follow: false } };
+
 export default function AppLayout({ children }: LayoutProps<"/">) {
   return (
     <div className="min-h-screen md:flex">

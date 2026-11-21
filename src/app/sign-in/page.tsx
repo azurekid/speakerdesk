@@ -8,7 +8,11 @@ import { Logo, Skeleton } from "@/components/ui";
 import { emailPasswordEnabled, enabledSocialProviders } from "@/lib/auth-providers";
 import { mailConfigured } from "@/lib/mailer";
 
-export const metadata: Metadata = { title: "Sign in" };
+export const metadata: Metadata = {
+  title: "Sign in or create a free account",
+  description: "Create a free SpeakerDesk account in seconds, as a speaker, organizer or sponsor. Sign in with a one-time code, a password or your GitHub, Google, LinkedIn or Microsoft account.",
+  alternates: { canonical: "/sign-in" },
+};
 
 export default function SignInPage() {
   return (

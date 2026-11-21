@@ -23,6 +23,9 @@ param image string = ''
 @description('Public URL of the app, e.g. https://speakerdesk.example.com. Leave empty on the first deployment to use the Container Apps URL.')
 param publicUrl string = ''
 
+@description('Custom domains for the app, e.g. [{ name: \'speakerdesk.eu\', certificateName: \'<managed certificate name>\' }]. Each domain must already be added to the app and have a managed certificate in the environment (docs/deploy-azure.md, section 4); the template keeps them bound on every deploy.')
+param customDomains array = []
+
 @description('PostgreSQL administrator login.')
 param postgresAdminLogin string = 'speakerdesk'
 
@@ -222,6 +225,12 @@ resource containerEnv 'Microsoft.App/managedEnvironments@2024-03-01' = {
   }
 }
 
+// Managed certificates created in the environment (az containerapp env certificate create).
+resource domainCerts 'Microsoft.App/managedEnvironments/managedCertificates@2024-03-01' existing = [for d in customDomains: {
+  parent: containerEnv
+  name: d.certificateName
+}]
+
 var defaultUrl = 'https://${names.app}.${containerEnv.properties.defaultDomain}'
 var appUrl = startsWith(publicUrl, 'http') ? publicUrl : defaultUrl // anything else (empty, stray quotes) falls back to the default URL
 var databaseUrl = 'postgresql://${postgresAdminLogin}:${uriComponent(postgresAdminPassword)}@${postgres.properties.fullyQualifiedDomainName}:5432/${database.name}?sslmode=require'
@@ -252,6 +261,11 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = if (deployApp) {
         targetPort: 3000
         transport: 'auto'
         allowInsecure: false
+        customDomains: [for (d, i) in customDomains: {
+          name: d.name
+          certificateId: domainCerts[i].id
+          bindingType: 'SniEnabled'
+        }]
       }
       registries: [{ server: registry.properties.loginServer, identity: identity.id }]
       secrets: concat([

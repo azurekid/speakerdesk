@@ -6,6 +6,7 @@ import { Suspense } from "react";
 import { ShareMenu } from "@/components/share";
 import { InviteSpeakerForm } from "@/components/speakers/invite-speaker-form";
 import { appUrl } from "@/lib/app-url";
+import { jsonLd, SITE_URL } from "@/lib/site";
 import { ButtonLink, ExternalLink, FormatBadge, Skeleton } from "@/components/ui";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/dal";
@@ -19,7 +20,7 @@ export async function generateMetadata({ params }: PageProps<"/speakers/[slug]">
   const { slug } = await params;
   const p = await prisma.speakerProfile.findFirst({ where: { slug, publicProfile: true }, select: { fullName: true, tagline: true, bioShort: true, headshotSquareUrl: true } });
   if (!p) return { title: "Speaker" };
-  const url = `${appUrl()}/speakers/${slug}`;
+  const url = `${SITE_URL}/speakers/${slug}`;
   const description = (p.tagline || p.bioShort || `${p.fullName} on SpeakerDesk`).slice(0, 200);
   const images = p.headshotSquareUrl ? [{ url: p.headshotSquareUrl, alt: p.fullName }] : undefined;
   return {
@@ -56,8 +57,27 @@ async function Speaker({ params }: { params: Props["params"] }) {
   const links = ([["Website", p.websiteUrl], ["LinkedIn", p.linkedinUrl], ["GitHub", p.githubUrl], ["X", p.xUrl], ["Bluesky", p.blueskyUrl], ["Mastodon", p.mastodonUrl], ["YouTube", p.youtubeUrl]] as const).filter(([, u]) => u);
   const bio = p.bioMedium || p.bioLong || p.bioShort;
 
+  // schema.org ProfilePage + Person: helps search engines connect this page to the speaker.
+  const personLd = jsonLd({
+    "@context": "https://schema.org",
+    "@type": "ProfilePage",
+    url: `${SITE_URL}/speakers/${slug}`,
+    mainEntity: {
+      "@type": "Person",
+      name: p.fullName,
+      description: p.tagline || undefined,
+      image: p.headshotSquareUrl || undefined,
+      jobTitle: p.jobTitle || undefined,
+      worksFor: p.company ? { "@type": "Organization", name: p.company } : undefined,
+      homeLocation: p.city || p.country ? { "@type": "Place", name: [p.city, p.country].filter(Boolean).join(", ") } : undefined,
+      knowsAbout: p.topics.length ? p.topics : undefined,
+      sameAs: links.map(([, u]) => u),
+    },
+  });
+
   return (
     <div className="grid gap-10 lg:grid-cols-[1fr_340px]">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: personLd }} />
       <div className="min-w-0 space-y-10">
         <header className="flex flex-wrap items-center gap-6">
           {p.headshotSquareUrl ? (

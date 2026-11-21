@@ -5,7 +5,12 @@ import { Suspense } from "react";
 import { cx, EmptyState, PageHeader, Skeleton } from "@/components/ui";
 import { popularTopics, searchSpeakers } from "@/lib/speaker-directory";
 
-export const metadata: Metadata = { title: "Find speakers" };
+export const metadata: Metadata = {
+  title: "Find speakers for your conference or meetup",
+  description: "Browse public speaker profiles by name, topic or talk, and invite speakers to your event's programme on SpeakerDesk.",
+  alternates: { canonical: "/speakers" },
+  openGraph: { title: "Find speakers", url: "/speakers" },
+};
 
 type Props = PageProps<"/speakers">;
 

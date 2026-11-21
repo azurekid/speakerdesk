@@ -1,13 +1,20 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { SITE_DESCRIPTION, SITE_IMAGE, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/site";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: { default: "SpeakerDesk", template: "%s · SpeakerDesk" },
-  description: "Where speakers keep their talks and organizers run their call for papers.",
+  // Makes every relative URL in metadata (canonical, og:image…) absolute on the public domain.
+  metadataBase: new URL(SITE_URL),
+  title: { default: `${SITE_NAME}: ${SITE_TAGLINE}`, template: `%s · ${SITE_NAME}` },
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 } },
+  openGraph: { type: "website", siteName: SITE_NAME, locale: "en_GB", images: [{ url: SITE_IMAGE, alt: "A speaker on a conference stage" }] },
+  twitter: { card: "summary_large_image" },
 };
 
 export const viewport: Viewport = {

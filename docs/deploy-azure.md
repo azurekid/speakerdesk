@@ -175,30 +175,44 @@ Sign up on the site with an address listed in `SPEAKERDESK_ADMIN_EMAILS`. That a
 
 ## 4. Custom domain
 
-1. Add the domain to the app and validate it:
+Production runs on **https://speakerdesk.eu** (registered at GoDaddy, DNS at GoDaddy). Container Apps issues and renews a free managed certificate.
+
+1. **DNS at the registrar.** Get the values with
+   `az containerapp env show -g "$RG" -n speakerdesk-env --query "properties.{ip:staticIp, verify:customDomainConfiguration.customDomainVerificationId}"`, then create:
+
+   | Type | Name | Value |
+   | --- | --- | --- |
+   | `A` | `@` | the environment's static IP |
+   | `TXT` | `asuid` | the verification ID |
+   | `CNAME` | `www` | `speakerdesk.eu` (or the app's default hostname) |
+   | `TXT` | `asuid.www` | the verification ID (only if you bind `www` too) |
+
+   Remove any parking or forwarding records the registrar added for `@`.
+
+2. **Add the hostname and request the certificate** (one time per domain):
 
    ```bash
-   export DOMAIN=speakerdesk.example.com
-   az containerapp hostname add -g "$RG" -n speakerdesk --hostname "$DOMAIN"
+   az containerapp hostname add -g "$RG" -n speakerdesk --hostname speakerdesk.eu
+   az containerapp env certificate create -g "$RG" -n speakerdesk-env \
+     --hostname speakerdesk.eu --validation-method HTTP     # apex: HTTP; subdomains: CNAME
+   az containerapp env certificate list -g "$RG" -n speakerdesk-env -o table   # wait for Succeeded
    ```
 
-   The command prints a `TXT` record (`asuid.<domain>`). Create that record plus a `CNAME` from your domain to the app's default hostname (`<app>.<env>.<region>.azurecontainerapps.io`).
-
-2. Bind a free managed certificate:
+3. **Tell the pipeline.** Every deploy re-applies `infra/main.bicep`, which binds exactly the domains in `CUSTOM_DOMAINS` (anything else is removed), and `PUBLIC_URL` becomes `BETTER_AUTH_URL`:
 
    ```bash
-   az containerapp hostname bind -g "$RG" -n speakerdesk --hostname "$DOMAIN" \
-     --environment speakerdesk-env --validation-method CNAME
+   gh variable set CUSTOM_DOMAINS --env production --body '[{"name":"speakerdesk.eu","certificateName":"<name from the list above>"}]'
+   gh variable set PUBLIC_URL     --env production --body "https://speakerdesk.eu"
    ```
 
-3. **Point the app at its new URL.** Sign-in only accepts requests from `BETTER_AUTH_URL`, so redeploy with it set:
+   Then push or re-run the workflow. To bind immediately without a deploy:
+   `az containerapp hostname bind -g "$RG" -n speakerdesk --hostname speakerdesk.eu --environment speakerdesk-env --certificate <name>`.
 
-   ```bash
-   SPEAKERDESK_PUBLIC_URL="https://$DOMAIN" SPEAKERDESK_IMAGE="$ACR_SERVER/speakerdesk:$TAG" \
-   az deployment group create -g "$RG" -f infra/main.bicep -p infra/main.bicepparam -n set-domain
-   ```
+4. **Canonical host.** `src/lib/site.ts` (`SITE_URL`) is the address search engines index. `www.` and the `*.azurecontainerapps.io` address redirect there with a 301 (`src/proxy.ts`).
 
-4. Update the callback URLs of any OAuth apps (section 6).
+5. Update the callback URLs of any OAuth apps (section 6).
+
+6. **Search engines.** Verify the domain in Google Search Console and Bing Webmaster Tools (a DNS `TXT` record at the registrar is easiest) and submit `https://speakerdesk.eu/sitemap.xml`.
 
 ---
 

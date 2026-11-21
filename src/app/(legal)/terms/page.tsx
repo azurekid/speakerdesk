@@ -3,7 +3,7 @@ import Link from "next/link";
 import { LegalDoc, Section } from "@/components/legal";
 import { OPERATOR } from "@/lib/legal";
 
-export const metadata: Metadata = { title: "Terms of use" };
+export const metadata: Metadata = { title: "Terms of use", description: "The terms for using SpeakerDesk as a speaker, organizer or sponsor.", alternates: { canonical: "/terms" } };
 
 // Draft for legal review — see src/lib/legal.ts.
 export default function TermsPage() {

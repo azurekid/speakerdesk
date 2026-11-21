@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-export const metadata: Metadata = { title: "Account deleted" };
+export const metadata: Metadata = { title: "Account deleted", robots: { index: false } };
 
 export default function GoodbyePage() {
   return (

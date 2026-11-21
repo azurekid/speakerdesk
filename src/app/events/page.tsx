@@ -4,7 +4,12 @@ import { EventCard } from "@/components/events/event-card";
 import { ButtonLink, EmptyState, PageHeader, Skeleton } from "@/components/ui";
 import { getOpenCalls } from "@/lib/public-events";
 
-export const metadata: Metadata = { title: "Open calls for papers" };
+export const metadata: Metadata = {
+  title: "Open calls for papers: submit a talk to tech conferences",
+  description: "Conferences and meetups accepting talk proposals right now. Find an open call for papers and submit a session straight from your SpeakerDesk library.",
+  alternates: { canonical: "/events" },
+  openGraph: { title: "Open calls for papers", url: "/events" },
+};
 
 export default function OpenCallsPage() {
   return (
