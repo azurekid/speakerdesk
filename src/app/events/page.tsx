@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { EventCard } from "@/components/events/event-card";
 import { ButtonLink, EmptyState, PageHeader, Skeleton } from "@/components/ui";
-import { getOpenCalls } from "@/lib/public-events";
+import { getOpenCalls, getPastEvents } from "@/lib/public-events";
 
 export const metadata: Metadata = {
   title: "Open calls for papers: submit a talk to tech conferences",
@@ -23,6 +23,9 @@ export default function OpenCallsPage() {
       <Suspense fallback={<Skeleton rows={3} />}>
         <List />
       </Suspense>
+      <Suspense fallback={null}>
+        <PastEvents />
+      </Suspense>
     </main>
   );
 }
@@ -40,5 +43,20 @@ async function List() {
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {events.map((e) => <EventCard key={e.id} event={e} />)}
     </div>
+  );
+}
+
+/** Closed and finished events: every published event gets a crawlable link from here. */
+async function PastEvents() {
+  const events = await getPastEvents(200);
+  if (!events.length) return null;
+  return (
+    <section className="mt-16" aria-labelledby="past-events">
+      <h2 id="past-events" className="font-display text-2xl font-semibold tracking-tight">Past and closed events</h2>
+      <p className="mt-1 text-sm text-ink-soft">Events that have closed their call for papers or published their programme.</p>
+      <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {events.map((e) => <EventCard key={e.id} event={e} />)}
+      </div>
+    </section>
   );
 }

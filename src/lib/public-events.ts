@@ -13,3 +13,24 @@ export async function getOpenCalls(limit = 12) {
     take: limit,
   });
 }
+
+/**
+ * Every published event that isn't an open call any more: CfPs that have closed, and events
+ * whose programme is published without a CfP. Newest first. Linked from /events so search
+ * engines can crawl each event page, not just the open ones.
+ */
+export async function getPastEvents(limit = 200) {
+  await connection();
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
+  return prisma.event.findMany({
+    where: {
+      OR: [
+        { cfpPublished: true, cfpClosesAt: { lt: today } },
+        { cfpPublished: false, programPublished: true },
+      ],
+    },
+    orderBy: [{ startDate: { sort: "desc", nulls: "last" } }, { createdAt: "desc" }],
+    take: limit,
+  });
+}
