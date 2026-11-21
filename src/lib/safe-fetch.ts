@@ -55,10 +55,11 @@ export async function assertPublicUrl(raw: string): Promise<URL> {
   return url;
 }
 
-export async function safeFetchJson<T = unknown>(raw: string, init: { headers?: Record<string, string> } = {}): Promise<T> {
+/** Fetches a user-supplied public https URL with the guards above and returns the raw body. */
+async function safeFetchBody(raw: string, init: { headers?: Record<string, string> }, accept: string): Promise<string> {
   const url = await assertPublicUrl(raw);
   const res = await fetch(url, {
-    headers: { Accept: "application/json", "User-Agent": "SpeakerDesk-Importer/1.0", ...init.headers },
+    headers: { Accept: accept, "User-Agent": "SpeakerDesk-Importer/1.0", ...init.headers },
     redirect: "manual",
     signal: AbortSignal.timeout(TIMEOUT_MS),
     cache: "no-store",
@@ -82,9 +83,19 @@ export async function safeFetchJson<T = unknown>(raw: string, init: { headers?: 
     }
     chunks.push(value);
   }
+  return Buffer.concat(chunks).toString("utf8");
+}
+
+export async function safeFetchJson<T = unknown>(raw: string, init: { headers?: Record<string, string> } = {}): Promise<T> {
+  const body = await safeFetchBody(raw, init, "application/json");
   try {
-    return JSON.parse(Buffer.concat(chunks).toString("utf8")) as T;
+    return JSON.parse(body) as T;
   } catch {
     throw new SafeFetchError("The response was not valid JSON.");
   }
+}
+
+/** For public HTML pages (e.g. a speaker's profile page). */
+export async function safeFetchText(raw: string, init: { headers?: Record<string, string> } = {}): Promise<string> {
+  return safeFetchBody(raw, init, "text/html,application/xhtml+xml");
 }

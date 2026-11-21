@@ -5,7 +5,7 @@ import { useState } from "react";
 import { SubmitButton, useFormAction } from "@/components/form-controls";
 import { Card, cx, Field } from "@/components/ui";
 import {
-  csvImport, type ImportResult, jsonBackupImport, type LookupState, pretalxImport, pretalxLookup, sessionizeImport, sessionizeLookup,
+  csvImport, type ImportResult, jsonBackupImport, type LookupState, pretalxImport, pretalxLookup, profilePageImport, sessionizeImport, sessionizeLookup,
 } from "@/lib/actions/import";
 
 function Result({ result }: { result: ImportResult }) {
@@ -22,6 +22,7 @@ function Result({ result }: { result: ImportResult }) {
         )}
         {s.profileFieldsFilled > 0 && <li>{s.profileFieldsFilled} empty profile field{s.profileFieldsFilled === 1 ? "" : "s"} filled</li>}
       </ul>
+      {result.note && <p className="mt-2 text-xs">{result.note}</p>}
       <p className="mt-2 text-xs">
         <Link href="/sessions" className="font-medium underline">View sessions</Link> · <Link href="/submissions" className="font-medium underline">View submissions</Link>
       </p>
@@ -43,6 +44,28 @@ function SpeakerPicker({ state, children }: { state: Extract<LookupState, { step
       </Field>
       {children}
     </>
+  );
+}
+
+/** One URL: the speaker's public profile on Sessionize or run.events. */
+export function ProfilePageImporter() {
+  const [result, onImport, importing] = useFormAction(profilePageImport, undefined);
+  return (
+    <form onSubmit={onImport} className="space-y-3">
+      <Field label="Your public profile URL" htmlFor="profileUrl" hint="e.g. https://sessionize.com/your-name or https://speakers.run.events/your-name">
+        <input id="profileUrl" name="profileUrl" type="url" inputMode="url" required placeholder="https://sessionize.com/your-name" className="control" />
+      </Field>
+      <label className="flex items-center gap-2 text-sm text-ink">
+        <input type="checkbox" name="includeProfile" defaultChecked className="rounded border-line" />
+        Also fill empty profile fields (bio, tagline, photo, location, links, topics)
+      </label>
+      <p className="text-xs text-ink-soft">
+        Only what&apos;s public on that page is imported — you never need to give SpeakerDesk your Sessionize or run.events password or login.
+        Running it again won&apos;t create duplicates.
+      </p>
+      <SubmitButton pendingLabel="Importing…" pending={importing}>Import from profile</SubmitButton>
+      <Result result={result} />
+    </form>
   );
 }
 
@@ -128,14 +151,15 @@ export function FileImporter({ kind }: { kind: "csv" | "json" }) {
 }
 
 const TABS = [
-  { id: "sessionize", label: "Sessionize" },
+  { id: "profile", label: "Profile page" },
+  { id: "sessionize", label: "Sessionize event" },
   { id: "pretalx", label: "Pretalx" },
   { id: "csv", label: "CSV / run.events" },
   { id: "json", label: "SpeakerDesk backup" },
 ] as const;
 
 export function ImportTabs() {
-  const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("sessionize");
+  const [tab, setTab] = useState<(typeof TABS)[number]["id"]>("profile");
   return (
     <div className="space-y-4">
       <div role="tablist" className="flex flex-wrap gap-1 rounded-lg bg-neutral-100 p-1">
@@ -153,8 +177,13 @@ export function ImportTabs() {
       </div>
 
       {/* Keep every importer mounted so in-progress state survives tab switches. */}
+      <div hidden={tab !== "profile"}>
+        <Card title="Import from your speaker profile" description="Paste your public Sessionize or run.events profile. Your public sessions become sessions in your library.">
+          <ProfilePageImporter />
+        </Card>
+      </div>
       <div hidden={tab !== "sessionize"}>
-        <Card title="Import from Sessionize" description="Pulls your published sessions (and optionally your profile) from an event's public API endpoint.">
+        <Card title="Import from a Sessionize event" description="Pulls your sessions at one event (with format, level and track) from the event's public API endpoint, and tracks the submission.">
           <SessionizeImporter />
         </Card>
       </div>

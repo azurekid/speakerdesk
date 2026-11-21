@@ -1,11 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/dal";
 import { backupSchema } from "@/lib/backup";
 import { profileSchema } from "@/lib/validation";
 import { parseTalksCsv } from "@/lib/importers/csv";
 import { emptySummary, fillEmptyProfile, persistSubmission, persistTalks } from "@/lib/importers/persist";
+import { fetchProfilePage, ProfilePageError } from "@/lib/importers/profile-page";
 import { fetchPretalx, listPretalxSpeakers, mapPretalxTalks, parsePretalxTarget, PretalxError } from "@/lib/importers/pretalx";
 import {
   fetchSessionize, listSpeakers, mapSpeakerProfile, mapSpeakerTalks, parseSessionizeId, SessionizeError,
@@ -19,20 +21,20 @@ export type LookupState =
   | { step: "pick"; speakers: SpeakerChoice[]; context: Record<string, string>; error?: undefined }
   | { step: "error"; error: string };
 
-export type ImportResult = undefined | { ok: true; summary: ImportSummary } | { ok: false; error: string };
+export type ImportResult = undefined | { ok: true; summary: ImportSummary; note?: string } | { ok: false; error: string };
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
 
-function done(summary: ImportSummary): ImportResult {
+function done(summary: ImportSummary, note?: string): ImportResult {
   revalidatePath("/sessions");
   revalidatePath("/submissions");
   revalidatePath("/dashboard");
   revalidatePath("/profile");
-  return { ok: true, summary };
+  return { ok: true, summary, ...(note ? { note } : {}) };
 }
 
 function message(err: unknown, fallback: string) {
-  if (err instanceof SessionizeError || err instanceof PretalxError) return err.message;
+  if (err instanceof SessionizeError || err instanceof PretalxError || err instanceof ProfilePageError) return err.message;
   console.error(err);
   return fallback;
 }
@@ -65,6 +67,36 @@ export async function sessionizeImport(_prev: ImportResult, form: FormData): Pro
     return done(summary);
   } catch (err) {
     return { ok: false, error: message(err, "Import from Sessionize failed.") };
+  }
+}
+
+// ─── Public profile page (Sessionize / run.events) ───────────────────────────
+
+export async function profilePageImport(_prev: ImportResult, form: FormData): Promise<ImportResult> {
+  const user = await requireUser();
+  try {
+    const page = await fetchProfilePage(String(form.get("profileUrl") ?? ""));
+    const source = page.source === "sessionize" ? "sessionize-profile" : "runevents-profile";
+    const { summary } = await persistTalks(user.id, source, page.talks);
+    if (form.get("includeProfile") === "on") {
+      summary.profileFieldsFilled = await fillEmptyProfile(user.id, page.profile);
+      // Topics feed the public speaker directory; only set them if the speaker has none yet.
+      if (page.topics.length) {
+        const current = await prisma.speakerProfile.findUnique({ where: { userId: user.id }, select: { topics: true } });
+        if (current && current.topics.length === 0) {
+          await prisma.speakerProfile.update({ where: { userId: user.id }, data: { topics: page.topics.slice(0, 15).map((t) => t.slice(0, 50)) } });
+          summary.profileFieldsFilled++;
+        }
+      }
+    }
+    const site = page.source === "sessionize" ? "Sessionize" : "run.events";
+    const note =
+      page.talks.length === 0
+        ? `No public sessions were found on your ${site} profile.${page.source === "sessionize" ? " Sessionize only shows sessions you've made visible on your public profile — make them visible there, then import again." : ""}`
+        : `Found ${page.talks.length} public session${page.talks.length === 1 ? "" : "s"} on ${site}. Format, level and duration aren't on public profiles, so check those on each session.`;
+    return done(summary, note);
+  } catch (err) {
+    return { ok: false, error: message(err, "Import from the profile page failed.") };
   }
 }
 
