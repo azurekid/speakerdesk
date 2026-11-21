@@ -47,8 +47,11 @@ const SPONSOR: Section = {
 };
 
 export type NavRole = "SPEAKER" | "ORGANIZER" | "SPONSOR";
-const sectionsFor = (role: NavRole) =>
-  role === "ORGANIZER" ? [ORGANIZER, SPEAKER, DATA] : role === "SPONSOR" ? [SPONSOR, SPEAKER, ORGANIZER, DATA] : [SPEAKER, ORGANIZER, DATA];
+/**
+ * Each view shows only its own menu. Switching views (sidebar footer) is how you reach the
+ * other side. Import/Export belong to the speaker view: they move a speaker's own data.
+ */
+const sectionsFor = (role: NavRole) => (role === "ORGANIZER" ? [ORGANIZER] : role === "SPONSOR" ? [SPONSOR] : [SPEAKER, DATA]);
 
 /** Highlights the current section. Must sit inside <Suspense> (reads the URL). */
 export function NavLinks({ role }: { role: NavRole }) {
@@ -56,7 +59,9 @@ export function NavLinks({ role }: { role: NavRole }) {
 }
 
 /** Plain list without an active state — the Suspense fallback for NavLinks. */
-export function NavList({ pathname = "", role = "SPEAKER" }: { pathname?: string; role?: NavRole }) {
+export function NavList({ pathname = "", role }: { pathname?: string; role?: NavRole }) {
+  // Before the session (and so the view) is known, show placeholders rather than the wrong menu.
+  if (!role) return <div className="space-y-2 px-1" aria-hidden>{[0, 1, 2, 3, 4].map((i) => <div key={i} className="h-9 animate-pulse rounded-lg bg-neutral-100" />)}</div>;
   return (
     <nav className="flex flex-col gap-6">
       {sectionsFor(role).map((section) => (
