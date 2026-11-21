@@ -19,7 +19,7 @@ export function TaskStatusSelect({ id, status, disabled }: { id: string; status:
         const next = e.target.value as TaskStatus;
         startTransition(() => setTaskStatus(id, next));
       }}
-      className={cx("rounded-full border-0 py-1 pl-2.5 pr-7 text-xs font-medium ring-1 ring-inset disabled:opacity-100", TASK_STATUS_STYLES[status], pending && "opacity-60")}
+      className={cx("rounded-full border-0 py-1.5 pl-3 pr-8 text-base font-medium ring-1 ring-inset disabled:opacity-100 sm:py-1 sm:pl-2.5 sm:pr-7 sm:text-xs", TASK_STATUS_STYLES[status], pending && "opacity-60")}
     >
       {TASK_STATUSES.map((s) => <option key={s} value={s}>{TASK_STATUS_LABELS[s]}</option>)}
     </select>
@@ -37,7 +37,7 @@ export function TaskAssigneeSelect({ id, assigneeId, members }: { id: string; as
         const next = e.target.value;
         startTransition(() => assignTask(id, next));
       }}
-      className={cx("max-w-36 truncate rounded-lg border-0 bg-transparent py-1 pl-1 pr-6 text-xs text-ink-soft hover:bg-neutral-100", pending && "opacity-60")}
+      className={cx("max-w-44 truncate rounded-lg border-0 bg-transparent py-1.5 pl-1 pr-7 text-base text-ink-soft hover:bg-neutral-100 sm:max-w-36 sm:py-1 sm:pr-6 sm:text-xs", pending && "opacity-60")}
     >
       <option value="">Unassigned</option>
       {members.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}

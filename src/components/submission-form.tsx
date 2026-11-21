@@ -103,7 +103,7 @@ export function StatusSelect({ id, status }: { id: string; status: SubmissionSta
         const next = ev.target.value as SubmissionStatus;
         startTransition(() => setSubmissionStatus(id, next));
       }}
-      className={cx("rounded-md border-0 py-1 pl-2 pr-7 text-xs font-medium ring-1 ring-inset", STATUS_STYLES[status], pending && "opacity-60")}
+      className={cx("rounded-md border-0 py-1.5 pl-2.5 pr-8 text-base font-medium ring-1 ring-inset sm:py-1 sm:pl-2 sm:pr-7 sm:text-xs", STATUS_STYLES[status], pending && "opacity-60")}
     >
       {SUBMISSION_STATUSES.map((s) => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
     </select>

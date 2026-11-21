@@ -78,14 +78,13 @@ export function ProfileForm({ profile, timezones }: { profile: ProfileInput; tim
 
       <Card title="Travel & logistics" description="Often requested after acceptance. Only you can see this. Don't store passport, health or other sensitive details here.">
         <div className="grid gap-4 sm:grid-cols-3">
-          <Text name="homeAirport" label="Home airport" profile={profile} errors={errors} placeholder="AMS" hint="IATA code" />
           <Field label="T-shirt size" htmlFor="tshirtSize" error={errors?.tshirtSize}>
             <select id="tshirtSize" name="tshirtSize" defaultValue={profile.tshirtSize} className="control">
               {TSHIRT_SIZES.map((s) => <option key={s} value={s}>{s || "—"}</option>)}
             </select>
           </Field>
           <Field label="Travel notes" htmlFor="travelNotes" error={errors?.travelNotes} className="sm:col-span-3">
-            <textarea id="travelNotes" name="travelNotes" rows={3} defaultValue={profile.travelNotes} className="control" placeholder="Seat preference, preferred arrival times…" />
+            <textarea id="travelNotes" name="travelNotes" rows={3} defaultValue={profile.travelNotes} className="control" placeholder="Nearest airport or station, seat preference, preferred arrival times…" />
           </Field>
         </div>
       </Card>

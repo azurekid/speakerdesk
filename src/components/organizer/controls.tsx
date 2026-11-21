@@ -52,7 +52,7 @@ export function DecisionSelect({ proposalId, decision }: { proposalId: string; d
         const next = ev.target.value as Decision;
         startTransition(() => setDecision(proposalId, next));
       }}
-      className={cx("rounded border-0 py-1 pl-2 pr-7 text-xs font-medium ring-1 ring-inset", DECISION_STYLES[decision], pending && "opacity-60")}
+      className={cx("rounded border-0 py-1.5 pl-2.5 pr-8 text-base font-medium ring-1 ring-inset sm:py-1 sm:pl-2 sm:pr-7 sm:text-xs", DECISION_STYLES[decision], pending && "opacity-60")}
     >
       {DECISIONS.map((d) => <option key={d} value={d}>{DECISION_OPTION_LABELS[d]}</option>)}
     </select>

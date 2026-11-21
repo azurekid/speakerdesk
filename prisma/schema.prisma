@@ -153,7 +153,6 @@ model SpeakerProfile {
   sessionizeUrl String @default("")
 
   // Travel / logistics (often requested after acceptance)
-  homeAirport         String @default("") // IATA code
   tshirtSize          String @default("")
   travelNotes         String @default("")
 

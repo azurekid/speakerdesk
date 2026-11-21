@@ -25,7 +25,7 @@ export default function PrivacyPage() {
           <thead><tr><th>Data</th><th>Why</th><th>Legal basis</th></tr></thead>
           <tbody>
             <tr><td>Email address, name, password (stored hashed) or linked sign-in provider</td><td>Your account and signing in</td><td>Contract</td></tr>
-            <tr><td>Profile: pronouns, country, city, timezone, company, job title, bios, headshots, links, home airport, T-shirt size, travel notes</td><td>What you choose to keep and share with organizers or publish</td><td>Contract; all optional fields are up to you</td></tr>
+            <tr><td>Profile: pronouns, country, city, timezone, company, job title, bios, headshots, links, T-shirt size, travel notes</td><td>What you choose to keep and share with organizers or publish</td><td>Contract; all optional fields are up to you</td></tr>
             <tr><td>Sessions, submissions, proposals, reviews, events, team roles, runbook tasks, sponsor company and deals</td><td>The features you use</td><td>Contract</td></tr>
             <tr><td>Sign-in sessions: IP address, browser and device</td><td>Keeping you signed in, showing &ldquo;where you&apos;re signed in&rdquo;, spotting misuse</td><td>Legitimate interest (security)</td></tr>
             <tr><td>Audit log: who did what and when (sign-ins and failed attempts, account changes, which records and fields were changed — never the values — and admin actions), with IP address and browser</td><td>Security, investigating abuse, accountability for admin access</td><td>Legitimate interest (security); legal obligations</td></tr>

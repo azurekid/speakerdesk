@@ -10,14 +10,14 @@ export const TERMS_VERSION = "2026-11-21";
 
 export const OPERATOR = {
   /** Legal name of the company or person operating SpeakerDesk. */
-  name: "[Rogier Dijkman]",
+  name: "Rogier Dijkman",
   /** Registered address, and chamber of commerce / company number if applicable. */
-  address: "[]",
+  address: "",
   registration: "",
   /** Where people send privacy requests and questions about the terms. */
   contactEmail: "rogierdijkman@hotmail.com",
   /** Law that governs the terms, e.g. "the Netherlands". */
-  governingLaw: "[The Netherlands]",
+  governingLaw: "The Netherlands",
 };
 
 export const LEGAL_UPDATED = "21 November 2026";

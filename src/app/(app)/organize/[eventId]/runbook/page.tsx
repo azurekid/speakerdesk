@@ -233,40 +233,52 @@ function TaskList({ tasks, today, eventId, manager, userId, people, flat }: {
         const late = isOverdue({ status: t.effectiveStatus, dueDate: t.dueDate }, today);
         const mine = t.assigneeId === userId;
         return (
-          <li key={t.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-5 py-3">
-            {t.autoCheck ? (
-              <span title={AUTO_CHECKS[t.autoCheck as AutoCheck]}>
-                <Badge className={t.autoDone ? "bg-emerald-50 text-emerald-800 ring-emerald-200" : "bg-surface text-ink-soft ring-line"}>
-                  <Zap className="size-3" />{t.autoDone ? "Done" : "Auto"}
-                </Badge>
-              </span>
-            ) : (
-              <TaskStatusSelect key={`${t.id}-${t.status}`} id={t.id} status={t.status} disabled={!manager && !mine} />
-            )}
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                {t.priority === "HIGH" && <Flag className="size-3.5 shrink-0 fill-brand-500 text-brand-500" aria-label="High priority" />}
+          // Phones: title on its own line(s), then status · due · assignee underneath.
+          // From sm up: one row (status | title | due | assignee) — the meta wrapper becomes `contents`.
+          <li key={t.id} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:gap-4 sm:px-5">
+            <div className="min-w-0 sm:order-2 sm:flex-1">
+              <div className="flex items-start gap-2 sm:items-center">
+                {t.priority === "HIGH" && <Flag className="mt-1 size-3.5 shrink-0 fill-brand-500 text-brand-500 sm:mt-0" aria-label="High priority" />}
                 {manager ? (
-                  <Link href={`/organize/${eventId}/runbook/${t.id}`} className={cx("truncate text-sm font-medium hover:text-brand-700", t.effectiveStatus === "DONE" && "text-ink-soft line-through")}>{t.title}</Link>
+                  <Link href={`/organize/${eventId}/runbook/${t.id}`} className={cx("break-words text-[15px] font-medium hover:text-brand-700 sm:truncate sm:text-sm", t.effectiveStatus === "DONE" && "text-ink-soft line-through")}>{t.title}</Link>
                 ) : (
-                  <span className={cx("truncate text-sm font-medium", t.effectiveStatus === "DONE" && "text-ink-soft line-through")}>{t.title}</span>
+                  <span className={cx("break-words text-[15px] font-medium sm:truncate sm:text-sm", t.effectiveStatus === "DONE" && "text-ink-soft line-through")}>{t.title}</span>
                 )}
               </div>
-              <p className="text-xs text-ink-soft">
+              <p className="mt-0.5 text-xs text-ink-soft">
                 {t.category}
+                {/* Phones: the due date lives here, so status and assignee fit on one line below. */}
+                {t.dueDate && (
+                  <span className={cx("sm:hidden", late && "font-medium text-rose-700")}> · {t.effectiveStatus === "DONE" ? formatDate(t.dueDate) : relative(t.dueDate, today)}</span>
+                )}
                 {t.autoCheck && !t.autoDone && <> · <Sparkles className="inline size-3" /> {AUTO_CHECKS[t.autoCheck as AutoCheck]}</>}
               </p>
             </div>
-            {t.dueDate && (
-              <span className={cx("whitespace-nowrap text-xs tabular-nums", late ? "font-medium text-rose-700" : "text-ink-soft")} title={formatDate(t.dueDate)}>
-                {t.effectiveStatus === "DONE" ? formatDate(t.dueDate) : relative(t.dueDate, today)}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2 sm:contents">
+              <span className="sm:order-1">
+                {t.autoCheck ? (
+                  <span title={AUTO_CHECKS[t.autoCheck as AutoCheck]}>
+                    <Badge className={t.autoDone ? "bg-emerald-50 text-emerald-800 ring-emerald-200" : "bg-surface text-ink-soft ring-line"}>
+                      <Zap className="size-3" />{t.autoDone ? "Done" : "Auto"}
+                    </Badge>
+                  </span>
+                ) : (
+                  <TaskStatusSelect key={`${t.id}-${t.status}`} id={t.id} status={t.status} disabled={!manager && !mine} />
+                )}
               </span>
-            )}
-            {manager ? (
-              <TaskAssigneeSelect key={`${t.id}-${t.assigneeId}`} id={t.id} assigneeId={t.assigneeId} members={people} />
-            ) : (
-              <span className="w-28 truncate text-right text-xs text-ink-soft">{t.assignee?.name ?? "Unassigned"}</span>
-            )}
+              {t.dueDate && (
+                <span className={cx("hidden whitespace-nowrap text-xs tabular-nums sm:order-3 sm:inline", late ? "font-medium text-rose-700" : "text-ink-soft")} title={formatDate(t.dueDate)}>
+                  {t.effectiveStatus === "DONE" ? formatDate(t.dueDate) : relative(t.dueDate, today)}
+                </span>
+              )}
+              <span className="ml-auto sm:order-4 sm:ml-0">
+                {manager ? (
+                  <TaskAssigneeSelect key={`${t.id}-${t.assigneeId}`} id={t.id} assigneeId={t.assigneeId} members={people} />
+                ) : (
+                  <span className="block max-w-40 truncate text-right text-xs text-ink-soft sm:w-28">{t.assignee?.name ?? "Unassigned"}</span>
+                )}
+              </span>
+            </div>
           </li>
         );
       })}

@@ -58,7 +58,7 @@ export function RoleSelect({ memberId, role, options }: { memberId: string; role
         const next = e.target.value as EventRole;
         startTransition(() => changeMemberRole(memberId, next));
       }}
-      className={cx("rounded-full border-0 py-1 pl-2.5 pr-7 text-xs font-medium ring-1 ring-inset", ROLE_STYLES[role], pending && "opacity-60")}
+      className={cx("rounded-full border-0 py-1.5 pl-3 pr-8 text-base font-medium ring-1 ring-inset sm:py-1 sm:pl-2.5 sm:pr-7 sm:text-xs", ROLE_STYLES[role], pending && "opacity-60")}
     >
       {options.map((r) => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
     </select>

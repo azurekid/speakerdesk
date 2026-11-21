@@ -48,7 +48,7 @@ export function DealStatusSelect({ id, status }: { id: string; status: Sponsorsh
         const next = ev.target.value as SponsorshipStatus;
         startTransition(() => setDealStatus(id, next));
       }}
-      className={cx("rounded-full border-0 py-1 pl-2.5 pr-7 text-xs font-medium ring-1 ring-inset", SPONSORSHIP_STYLES[status], pending && "opacity-60")}
+      className={cx("rounded-full border-0 py-1.5 pl-3 pr-8 text-base font-medium ring-1 ring-inset sm:py-1 sm:pl-2.5 sm:pr-7 sm:text-xs", SPONSORSHIP_STYLES[status], pending && "opacity-60")}
     >
       {SPONSORSHIP_STATUSES.map((s) => <option key={s} value={s}>{SPONSORSHIP_LABELS[s]}</option>)}
     </select>

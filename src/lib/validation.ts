@@ -56,12 +56,6 @@ export const profileSchema = z.object({
   mastodonUrl: url,
   youtubeUrl: url,
   sessionizeUrl: url,
-  homeAirport: z
-    .string()
-    .trim()
-    .toUpperCase()
-    .default("")
-    .refine((v) => v === "" || /^[A-Z]{3}$/.test(v), "Use a 3-letter IATA code, e.g. AMS"),
   tshirtSize: text(10),
   travelNotes: text(2000),
 });
