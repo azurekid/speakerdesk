@@ -7,7 +7,6 @@ import { AwardBadgeForm, CreateBadgeForm } from "@/components/organizer/badge-co
 import { Badge, Card, formatDate, Skeleton } from "@/components/ui";
 import { archiveEventBadge, revokeBadgeAward } from "@/lib/actions/badges";
 import { availableBadges, eligibleRecipients } from "@/lib/badge-queries";
-import { badgeTopText } from "@/lib/badges";
 import { prisma } from "@/lib/db";
 import { requireEventAccess } from "@/lib/organizer";
 
@@ -49,7 +48,7 @@ async function Badges({ params }: { params: Props["params"] }) {
       <Card title="Award a badge" description="Recognise speakers and your team. They accept it first, then choose whether it shows on their public profile.">
         <AwardBadgeForm
           eventId={eventId}
-          topText={badgeTopText(event.name, event.startDate)}
+          eventName={event.name} date={event.startDate?.toISOString() ?? null}
           badges={badges.map((b) => ({ id: b.id, name: b.name, description: b.description, icon: b.icon, color: b.color, platform: !b.eventId }))}
           recipients={recipients}
         />
@@ -85,7 +84,7 @@ async function Badges({ params }: { params: Props["params"] }) {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card title="Create a badge" description="Your own badge for this event — e.g. “Best demo” or “Hackathon winner”.">
-          <CreateBadgeForm eventId={eventId} topText={badgeTopText(event.name, event.startDate)} />
+          <CreateBadgeForm eventId={eventId} eventName={event.name} date={event.startDate?.toISOString() ?? null} />
         </Card>
         <Card title="Your event's badges">
           {own.length === 0 ? (

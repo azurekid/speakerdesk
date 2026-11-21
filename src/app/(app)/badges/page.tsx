@@ -7,7 +7,6 @@ import { EmptyState, formatDate, PageHeader, Skeleton } from "@/components/ui";
 import { respondToBadge, setBadgeVisibility } from "@/lib/actions/badges";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/dal";
-import { badgeTopText } from "@/lib/badges";
 
 export const metadata: Metadata = { title: "Badges" };
 
@@ -46,7 +45,7 @@ async function MyBadges() {
           <ul className="space-y-3">
             {pending.map((a) => (
               <li key={a.id} className="flex flex-col items-center gap-4 rounded-2xl border border-brand-200 bg-brand-50/40 p-5 text-center sm:flex-row sm:text-left">
-                <BadgeMedal icon={a.badge.icon} color={a.badge.color} size="lg" label={a.badge.name} topText={badgeTopText(a.event.name, a.event.startDate)} />
+                <BadgeMedal icon={a.badge.icon} color={a.badge.color} size="lg" label={a.badge.name} eventName={a.event.name} date={a.event.startDate} />
                 <div className="min-w-0 flex-1">
                   <p className="font-medium">{a.badge.name}</p>
                   <p className="text-sm text-ink-soft">From {a.event.name}{a.awardedBy && ` · given by ${a.awardedBy.name}`} · {formatDate(a.createdAt)}</p>
@@ -76,7 +75,7 @@ async function MyBadges() {
           <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {accepted.map((a) => (
               <li key={a.id} className="flex flex-col items-center rounded-2xl border border-line bg-surface p-5 text-center">
-                <BadgeMedal icon={a.badge.icon} color={a.badge.color} size="lg" muted={!a.showOnProfile} label={a.badge.name} topText={badgeTopText(a.event.name, a.event.startDate)} className="size-44" />
+                <BadgeMedal icon={a.badge.icon} color={a.badge.color} size="lg" muted={!a.showOnProfile} label={a.badge.name} eventName={a.event.name} date={a.event.startDate} className="size-44" />
                 <p className="mt-3 font-medium">{a.badge.name}</p>
                 <p className="text-xs text-ink-soft">{a.event.name} · {formatDate(a.createdAt)}</p>
                 <div className="mt-4 flex flex-wrap items-center justify-center gap-2">

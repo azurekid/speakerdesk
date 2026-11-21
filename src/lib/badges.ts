@@ -42,9 +42,3 @@ export const BADGE_COLORS: Record<BadgeColor, { label: string; ring: string }> =
 
 export const isBadgeIcon = (v: string): v is BadgeIcon => (BADGE_ICONS as readonly string[]).includes(v);
 export const isBadgeColor = (v: string): v is BadgeColor => v in BADGE_THEMES;
-
-/** "CLOUD ONLINE 2027" → top-band text, adding the year when the name doesn't already have it. */
-export function badgeTopText(eventName: string, date?: Date | null) {
-  const year = date ? String(date.getUTCFullYear()) : "";
-  return year && !eventName.includes(year) ? `${eventName} • ${year}` : eventName;
-}

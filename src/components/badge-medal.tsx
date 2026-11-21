@@ -4,14 +4,14 @@ import { badgeSvg } from "@/lib/badge-art";
 const SIZES = { sm: "size-10", md: "size-16", lg: "size-36", xl: "size-64 sm:size-72" } as const;
 
 /**
- * A badge patch. Small sizes drop the curved text and scene details so they stay legible;
- * lg/xl show the full patch with the event on top and the badge name at the bottom.
+ * A badge. Small sizes show just the glowing icon so they stay legible; lg/xl show the full
+ * design with the event name, the badge title, the ID card and the date.
  */
-export function BadgeMedal({ icon, color, size = "md", muted = false, label, topText, className }: {
-  icon: string; color: string; size?: keyof typeof SIZES; muted?: boolean; label?: string; topText?: string; className?: string;
+export function BadgeMedal({ icon, color, size = "md", muted = false, label, eventName, date, className }: {
+  icon: string; color: string; size?: keyof typeof SIZES; muted?: boolean; label?: string; eventName?: string; date?: string | Date | null; className?: string;
 }) {
   const detailed = size === "lg" || size === "xl";
-  const svg = badgeSvg({ icon, color, muted, compact: size === "sm", label: detailed ? label : undefined, topText: detailed ? topText : undefined });
+  const svg = badgeSvg({ icon, color, muted, compact: size === "sm", ...(detailed ? { label, eventName, date } : {}) });
   return (
     <span
       role="img"

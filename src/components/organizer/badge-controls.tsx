@@ -10,7 +10,7 @@ import { BADGE_COLORS, BADGE_ICONS, type BadgeColor, type BadgeIcon } from "@/li
 type BadgeOption = { id: string; name: string; description: string; icon: string; color: string; platform: boolean };
 type RecipientOption = { id: string; name: string; group: string; detail: string };
 
-export function AwardBadgeForm({ eventId, badges, recipients, topText }: { eventId: string; badges: BadgeOption[]; recipients: RecipientOption[]; topText: string }) {
+export function AwardBadgeForm({ eventId, badges, recipients, eventName, date }: { eventId: string; badges: BadgeOption[]; recipients: RecipientOption[]; eventName: string; date: string | null }) {
   const [state, onSubmit, pending] = useFormAction(awardBadge.bind(null, eventId), undefined);
   const [badgeId, setBadgeId] = useState(badges[0]?.id ?? "");
   const [picked, setPicked] = useState<Set<string>>(new Set());
@@ -27,7 +27,7 @@ export function AwardBadgeForm({ eventId, badges, recipients, topText }: { event
     <form onSubmit={onSubmit} className="space-y-5">
       <Field label="Badge" htmlFor="badgeId" error={e?.badgeId}>
         <div className="flex flex-col items-center gap-4 sm:flex-row">
-          {badge && <BadgeMedal icon={badge.icon} color={badge.color} size="lg" label={badge.name} topText={topText} />}
+          {badge && <BadgeMedal icon={badge.icon} color={badge.color} size="lg" label={badge.name} eventName={eventName} date={date} />}
           <select id="badgeId" name="badgeId" value={badgeId} onChange={(ev) => setBadgeId(ev.target.value)} className="control">
             <optgroup label="SpeakerDesk badges">
               {badges.filter((b) => b.platform).map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
@@ -81,7 +81,7 @@ export function AwardBadgeForm({ eventId, badges, recipients, topText }: { event
   );
 }
 
-export function CreateBadgeForm({ eventId, topText }: { eventId: string; topText: string }) {
+export function CreateBadgeForm({ eventId, eventName, date }: { eventId: string; eventName: string; date: string | null }) {
   const [state, onSubmit, pending] = useFormAction(createEventBadge.bind(null, eventId), undefined);
   const [icon, setIcon] = useState<BadgeIcon>("award");
   const [color, setColor] = useState<BadgeColor>("brand");
@@ -90,7 +90,7 @@ export function CreateBadgeForm({ eventId, topText }: { eventId: string; topText
   return (
     <form onSubmit={onSubmit} className="space-y-4" key={state?.ok ? state.message : "form"}>
       <div className="flex flex-col items-center gap-1">
-        <BadgeMedal icon={icon} color={color} size="lg" label={name || "Your badge"} topText={topText} className="size-44" />
+        <BadgeMedal icon={icon} color={color} size="lg" label={name || "Your badge"} eventName={eventName} date={date} className="size-44" />
         <p className="text-xs text-ink-soft">Preview</p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
@@ -106,7 +106,7 @@ export function CreateBadgeForm({ eventId, topText }: { eventId: string; topText
         <input type="hidden" name="icon" value={icon} />
         <div className="flex flex-wrap gap-2">
           {BADGE_ICONS.map((i) => (
-            <button key={i} type="button" onClick={() => setIcon(i)} aria-pressed={icon === i} aria-label={i} className={cx("rounded-full p-0.5 ring-offset-2", icon === i && "ring-2 ring-ink")}>
+            <button key={i} type="button" onClick={() => setIcon(i)} aria-pressed={icon === i} aria-label={i} className={cx("rounded-t-xl rounded-b-full p-0.5 ring-offset-2", icon === i && "ring-2 ring-ink")}>
               <BadgeMedal icon={i} color={color} size="sm" />
             </button>
           ))}
@@ -118,7 +118,7 @@ export function CreateBadgeForm({ eventId, topText }: { eventId: string; topText
         <div className="flex flex-wrap gap-3">
           {(Object.keys(BADGE_COLORS) as BadgeColor[]).map((c) => (
             <button key={c} type="button" onClick={() => setColor(c)} aria-pressed={color === c} className="flex flex-col items-center gap-1 text-[11px] text-ink-soft">
-              <span className={cx("rounded-full ring-offset-2", color === c && "ring-2 ring-ink")}><BadgeMedal icon={icon} color={c} size="md" /></span>
+              <span className={cx("rounded-t-xl rounded-b-full ring-offset-2", color === c && "ring-2 ring-ink")}><BadgeMedal icon={icon} color={c} size="md" /></span>
               {BADGE_COLORS[c].label}
             </button>
           ))}

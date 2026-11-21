@@ -7,7 +7,6 @@ import { BadgeMedal } from "@/components/badge-medal";
 import { ShareButtons } from "@/components/share";
 import { formatDate, Skeleton } from "@/components/ui";
 import { appUrl } from "@/lib/app-url";
-import { badgeTopText } from "@/lib/badges";
 import { prisma } from "@/lib/db";
 
 type Props = PageProps<"/credentials/[awardId]">;
@@ -61,7 +60,7 @@ async function Credential({ params }: { params: Props["params"] }) {
 
   return (
     <article className="rounded-2xl border border-line bg-surface p-6 text-center sm:p-10">
-      <BadgeMedal icon={a.badge.icon} color={a.badge.color} size="xl" label={a.badge.name} topText={badgeTopText(a.event.name, a.event.startDate)} className="mx-auto" />
+      <BadgeMedal icon={a.badge.icon} color={a.badge.color} size="xl" label={a.badge.name} eventName={a.event.name} date={a.event.startDate} className="mx-auto" />
       <h1 className="mt-6 text-3xl font-semibold tracking-tight">{a.badge.name}</h1>
       {a.badge.description && <p className="mx-auto mt-2 max-w-md text-ink-soft">{a.badge.description}</p>}
       <p className="mt-6 text-lg">
